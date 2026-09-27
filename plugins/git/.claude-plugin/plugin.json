@@ -1,8 +1,0 @@
-{
-  "name": "git",
-  "description": "Git management",
-  "version": "0.2.1",
-  "author": {
-    "name": "Jean-Marc Fontaine"
-  }
-}

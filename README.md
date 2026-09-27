@@ -1,28 +1,50 @@
-# Claude Plugins
+# Agent Skills
 
-A collection of plugins for [Claude](https://claude.com/product/overview) and
-[Claude Code](https://claude.com/product/claude-code) I built these for my own use, but they might help you, either
-to use directly or as inspiration for your own custom tools.
+A collection of [Agent Skills](https://agentskills.io) for Claude Code, Claude, ChatGPT, Codex, omp, and any other agent that supports the format. I built these for my own use, but they might help you, either to use directly or as inspiration for your own skills.
+
+## Available Skills
+
+- [git-branch](skills/git-branch/SKILL.md): Git branch naming guidelines based on Conventional Branch.
+- [git-commit](skills/git-commit/SKILL.md): Git commit guidelines based on Conventional Commits.
+- [project-review](skills/project-review/SKILL.md): Review project files for consistency, completeness, and correctness.
+- [uv](skills/uv/SKILL.md): Python package management with uv.
 
 ## Installation
 
-In Claude Code, use the `/plugin` command to manage plugins:
+### Coding Agents
+
+Install with the [skills CLI](https://github.com/vercel-labs/skills), which supports Claude Code, Codex, and [many other agents](https://github.com/vercel-labs/skills#supported-agents):
 
 ```shell
-# Add the plugin marketplace
-/plugin marketplace add jmfontaine/jmf-claude-plugins
+# Choose skills and agents interactively
+npx skills add jmfontaine/agent-skills
 
-# Install a plugin from the collection
-/plugin install <plugin>@jmf-claude-plugins
+# Install all skills globally for Claude Code and Codex
+npx skills add jmfontaine/agent-skills --skill '*' -a claude-code -a codex -g -y
+
+# Update installed skills
+npx skills update
 ```
 
-## Plugins
+omp is not an `npx skills` agent target. It loads skills from `~/.agents/skills` and `.agents/skills`, so include `-a codex`, which writes there for both project and global installs.
 
-- [better-assistant](./plugins/better-assistant): Guidelines for clearer thinking, disciplined coding, and concise communication.
-- [git](./plugins/git): Git management with commit and branch naming guidelines.
-- [project-qa](./plugins/project-qa): Review project files for consistency, completeness, and correctness.
-- [python-dev](./plugins/python-dev): Python development assistant.
+### Claude and ChatGPT
+
+Claude and ChatGPT install skills from uploaded files. Zip the skill folder so that it is the top-level entry of the archive:
+
+```shell
+git clone https://github.com/jmfontaine/agent-skills.git
+cd agent-skills/skills
+zip -r ~/Downloads/git-commit.zip git-commit
+```
+
+- **Claude:** Go to **Customize → Skills**, click **+**, choose **Create skill → Upload a skill**, and select the ZIP. Requires **Code execution and file creation** in **Settings → Capabilities**.
+- **ChatGPT:** Go to **Plugins → Skills**, click **Create**, choose **Upload from your computer**, and select the ZIP or the skill folder. Available on Business, Enterprise, Healthcare, and Edu plans.
+
+## Usage
+
+Agents load a skill when a task matches its description. Most agents also let you invoke a skill by name, such as `/git-commit` in Claude Code.
 
 ## License
 
-Claude Plugins is licensed under the [Apache License 2.0](LICENSE.txt).
+Agent Skills is licensed under the [Apache License 2.0](LICENSE.txt).

@@ -1,8 +1,0 @@
-{
-  "name": "project-qa",
-  "description": "Project quality assurance: review configuration and documentation files for consistency, completeness, and correctness",
-  "version": "0.1.0",
-  "author": {
-    "name": "Jean-Marc Fontaine"
-  }
-}

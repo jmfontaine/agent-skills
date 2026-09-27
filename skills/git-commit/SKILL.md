@@ -1,7 +1,7 @@
 ---
-name: commit
+name: git-commit
 description: Git commit guidelines. Use when creating, amending, squashing, or rewording git commits, staging files, or writing commit messages.
-allowed-tools: Bash(git add:*), Bash(git commit:*), Bash(git diff:*), Bash(git log:*), Bash(git status:*)
+allowed-tools: Bash(git add:*) Bash(git commit:*) Bash(git diff:*) Bash(git log:*) Bash(git status:*)
 ---
 
 # Git Commit Guidelines

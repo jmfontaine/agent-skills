@@ -1,7 +1,7 @@
 ---
-name: create-branch
+name: git-branch
 description: Git branch naming guidelines. Use when creating, renaming, or checking out new branches.
-allowed-tools: Bash(git branch:*), Bash(git checkout:*), Bash(git switch:*)
+allowed-tools: Bash(git branch:*) Bash(git checkout:*) Bash(git switch:*)
 ---
 
 # Git Branch Naming Guidelines

@@ -1,7 +1,7 @@
 ---
 name: uv
 description: Python package management with uv. Use when installing, adding, removing, upgrading, or syncing Python dependencies.
-allowed-tools: Bash(uv add:*), Bash(uv remove:*), Bash(uv sync:*)
+allowed-tools: Bash(uv add:*) Bash(uv remove:*) Bash(uv sync:*)
 ---
 
 - Always use `uv` to manage Python packages. Never modify `pyproject.toml` directly

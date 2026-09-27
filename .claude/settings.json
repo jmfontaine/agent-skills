@@ -1,6 +1,6 @@
 {
   "permissions": {
-    "allow": ["Bash(find:*)", "Bash(wc:*)", "Skill(commit)"],
+    "allow": ["Bash(find:*)", "Bash(wc:*)", "Skill(git-commit)"],
     "deny": [],
     "ask": []
   }

@@ -4,6 +4,7 @@
     "frontmatter",
     "jmfontaine",
     "justfile",
+    "oneline",
     "pyproject"
   ]
 }

@@ -6,16 +6,15 @@ allowed-tools: Bash(git add:*) Bash(git commit:*) Bash(git diff:*) Bash(git log:
 
 # Git Commit Guidelines
 
-Follow Conventional Commits with these overrides:
+## Message Style
 
-- Allowed types: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `ci`
-- Message format: `<type>: <lowercase imperative description>`
-- No scopes — do not use `<type>(scope):` form
-- Add body, separated by blank line, only when subject line insufficient
+Match the repository's existing style. Run `git log --oneline -20` (or `git log -20 --format=%B` when you need bodies) and mirror the prevailing subject format, casing, tense, prefixes, scopes, and body usage.
+
+If the history is too short to show a style, use [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## Pre-Commit Review
 
-Before committing, review all staged and unstaged changes to determine if they should be split into multiple commits. Changes belong in separate commits when they have different types (e.g., `feat` + `fix`), affect unrelated areas, or serve distinct purposes.
+Before committing, review all staged and unstaged changes to determine if they should be split into multiple commits. Changes belong in separate commits when they are different kinds of change (e.g., a feature and a bug fix), affect unrelated areas, or serve distinct purposes.
 
 If the user has not explicitly asked to split, suggest doing so and list the proposed commits. Proceed with a single commit only if all changes are logically cohesive.
 
@@ -23,7 +22,7 @@ Also check for changes made outside the current session (e.g., editor saves, oth
 
 ## First Commit
 
-Unless the user instructs otherwise, the first commit of a repository (no commits yet, so `git log` reports none) must use this exact message, overriding the Conventional Commits format above:
+Unless the user instructs otherwise, the first commit of a repository (no commits yet, so `git log` reports none) must use this exact message, overriding the message style rules above:
 
 ```text
 That's one small step for mankind, one giant leap for a man

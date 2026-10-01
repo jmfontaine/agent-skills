@@ -20,6 +20,8 @@ If the user has not explicitly asked to split, suggest doing so and list the pro
 
 Also check for changes made outside the current session (e.g., editor saves, other tools). If they are relevant to the commit, offer to include them. If they are unrelated, silently ignore them unless the user asks to include them.
 
+cSpell words added outside the session (typically by the user, in `cspell.json`, `.cspell.json`, `.vscode/settings.json`, or a custom dictionary file) are an exception: include them, without asking, in the commit that introduces the text using them. When commits are split, put each word in the commit it relates to.
+
 ## First Commit
 
 Unless the user instructs otherwise, the first commit of a repository (no commits yet, so `git log` reports none) must use this exact message, overriding the message style rules above:

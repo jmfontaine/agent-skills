@@ -1,7 +1,7 @@
 ---
 name: git-commit
 description: Git commit guidelines. Use when creating, amending, squashing, or rewording git commits, staging files, or writing commit messages.
-allowed-tools: Bash(git add:*) Bash(git commit:*) Bash(git diff:*) Bash(git log:*) Bash(git status:*)
+allowed-tools: Bash(git add:*) Bash(git branch:*) Bash(git commit:*) Bash(git diff:*) Bash(git log:*) Bash(git rebase:*) Bash(git status:*)
 ---
 
 # Git Commit Guidelines
@@ -30,11 +30,16 @@ Unless the user instructs otherwise, the first commit of a repository (no commit
 That's one small step for mankind, one giant leap for a man
 ```
 
-## New Commit vs. Amend
+## Clean History
 
-When changes closely follow a previous commit (e.g., a quick fix or forgotten file), evaluate whether amending the previous commit is more appropriate than creating a new one. Amending is preferable when the change corrects or completes the previous commit and that commit has not been pushed.
+The user typically rebase-merges pull requests, so every commit lands on the main branch as-is. Keep the commit history clean at all times: each commit should be a complete, logical change with no "fix typo" or "address review" follow-ups.
 
-Never amend without the user's explicit approval. Present the two options (new commit vs. amend) and let the user decide.
+When changes correct or complete a previous commit (e.g., a quick fix or forgotten file), fold them into that commit instead of creating a new one:
+
+- **Not pushed:** amend it without asking. Use `git commit --amend` for the last commit, or `git commit --fixup=<commit>` followed by `git rebase --autosquash <commit>~1` for an older one.
+- **Pushed:** rewriting it requires a force push. Ask the user whether to amend and force push, or create a new commit.
+
+To check whether a commit has been pushed, run `git branch -r --contains <commit>`. Empty output means it is unpushed.
 
 ## Additional Guidelines
 

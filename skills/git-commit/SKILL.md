@@ -1,7 +1,7 @@
 ---
 name: git-commit
-description: Git commit guidelines. Use when creating, amending, squashing, or rewording git commits, staging files, or writing commit messages.
-allowed-tools: Bash(git add:*) Bash(git branch:*) Bash(git commit:*) Bash(git diff:*) Bash(git log:*) Bash(git rebase:*) Bash(git status:*)
+description: Git commit guidelines, including GitHub stacked pull requests. Use when creating, amending, squashing, or rewording git commits, staging files, writing commit messages, or splitting dependent changes into stacked branches and pull requests.
+allowed-tools: Bash(git add:*) Bash(git branch:*) Bash(git commit:*) Bash(git diff:*) Bash(git log:*) Bash(git rebase:*) Bash(git status:*) Bash(gh extension list:*) Bash(gh stack add:*) Bash(gh stack bottom:*) Bash(gh stack checkout:*) Bash(gh stack down:*) Bash(gh stack init:*) Bash(gh stack rebase:*) Bash(gh stack top:*) Bash(gh stack up:*) Bash(gh stack view:*)
 ---
 
 # Git Commit Guidelines
@@ -40,6 +40,48 @@ When changes correct or complete a previous commit (e.g., a quick fix or forgott
 - **Pushed:** rewriting it requires a force push. Ask the user whether to amend and force push, or create a new commit.
 
 To check whether a commit has been pushed, run `git branch -r --contains <commit>`. Empty output means it is unpushed.
+
+## Stacked Pull Requests
+
+Use [GitHub stacked pull requests](https://docs.github.com/en/pull-requests/get-started/about-stacked-prs) when the work spans several dependent concerns that each deserve their own review, such as a schema change, then the API using it, then the UI. Each concern gets its own branch, and each branch builds on the one below it. A single cohesive change needs one branch, not a stack. Independent changes go on separate branches off the trunk.
+
+### Availability
+
+Stacks are available when the repository is hosted on GitHub and the `gh stack` extension is installed. Check with `gh extension list` and look for `github/gh-stack`. Do NOT run a `gh stack` command to find out: recent GitHub CLI versions install the extension silently when `gh stack` is invoked.
+
+- **`gh` is missing or the repository is not on GitHub:** skip stacks and use plain git branches.
+- **Extension missing:** ask the user whether to install it with `gh extension install github/gh-stack`. If they decline, use plain git branches and do not ask again in this session.
+- **A `gh stack` command exits with code 9:** stacked pull requests are not enabled for the repository. Tell the user and fall back to plain git branches.
+
+### Building a Stack
+
+When splitting changes during the pre-commit review, group the proposed commits by layer and list the proposed branches with their commits. Order the layers so code sits in the same branch as its dependencies or above them.
+
+1. Only after `gh extension list` shows `github/gh-stack`, run `gh stack view --short`. Exit code 0 means the current branch already belongs to a stack; exit code 2 means it does not.
+2. To start a stack, run `gh stack init <branch>` from the trunk to create and check out the bottom branch. When the current branch already holds the first concern, run `gh stack init <current-branch>` to adopt it. Pass `--base <trunk>` when the trunk is not the repository's default branch.
+3. Commit the layer's changes with `git commit -S`.
+4. For the next layer, run `gh stack add <branch>` from the top branch, then commit. Do NOT use `gh stack add -m`: it can commit on the current branch instead of the new one, and it does not sign the commit.
+
+Name branches following the repository's branch naming guidelines.
+
+### Rebase Only
+
+Use rebase for every cross-branch operation. Never merge one branch into another or cherry-pick between branches.
+
+- **Fix a lower layer:** check out its branch with `gh stack down` or `gh stack checkout <branch>`, fold the change into the right commit as described in Clean History, then run `gh stack rebase --upstack` to replay the layers above.
+- **Catch up with the trunk:** run `gh stack rebase`.
+- **Move commits between layers or reorder them:** from the top branch, run `git rebase -i --update-refs <trunk>` so every branch moves with its commits. Supply the todo list through `GIT_SEQUENCE_EDITOR` (e.g., write the edited todo to a file and run `GIT_SEQUENCE_EDITOR='cp <todo-file>' git rebase -i --update-refs <trunk>`), since an agent cannot drive an interactive editor. Keep each `update-ref refs/heads/<branch>` line after the last commit of its layer. Do NOT use `gh stack modify`: it needs an interactive terminal and folds branches by cherry-picking.
+- **Conflicts:** resolve them and stage with `git add`. During `gh stack rebase`, run `gh stack rebase --continue`, or `gh stack rebase --abort` to restore every branch. During a plain `git rebase`, run `git rebase --continue` or `git rebase --abort`, then `gh stack rebase --upstack` if a lower layer changed.
+
+Rewriting a pushed layer, including the layers above it that a cascading rebase replays, follows the pushed-commit rule in Clean History: ask before force pushing.
+
+### Pushing and Merging
+
+Push, open pull requests, or merge only when the user asks.
+
+- **Open pull requests:** run `gh stack submit --auto`. It pushes every branch, opens one pull request per branch, and links them into a stack. Without `--auto`, it opens an editor that needs an interactive terminal. New pull requests are drafts unless you pass `--open`.
+- **Push after rewriting layers:** run `gh stack push`, which uses `--force-with-lease`.
+- **Merge:** run `gh stack merge --rebase <pr-number>` to merge every pull request up to and including that one.
 
 ## Additional Guidelines
 

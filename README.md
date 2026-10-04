@@ -4,7 +4,7 @@ A collection of [Agent Skills](https://agentskills.io) for Claude Code, Claude, 
 
 ## Available Skills
 
-- [git-branch](skills/git-branch/SKILL.md): Git branch naming guidelines based on Conventional Branch.
+- [git-branch](skills/git-branch/SKILL.md): Git branch naming guidelines that match the repository's style, falling back to Conventional Branch.
 - [git-commit](skills/git-commit/SKILL.md): Git commit guidelines that match the repository's message style, falling back to Conventional Commits, and organize dependent changes into GitHub stacked pull requests.
 - [product-development-system](skills/product-development-system/SKILL.md): Guide product vision, mapping, technical foundation, rolling milestone planning, slice briefs, and review through focused references and templates.
 - [project-review](skills/project-review/SKILL.md): Review project files for consistency, completeness, correctness, and simplicity.

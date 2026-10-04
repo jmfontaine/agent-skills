@@ -62,7 +62,7 @@ When splitting changes during the pre-commit review, group the proposed commits 
 3. Commit the layer's changes with `git commit -S`.
 4. For the next layer, run `gh stack add <branch>` from the top branch, then commit. Do NOT use `gh stack add -m`: it can commit on the current branch instead of the new one, and it does not sign the commit.
 
-Name branches following the repository's branch naming guidelines.
+Name each branch following the `git-branch` skill if installed; otherwise mirror the repository's existing branch names (`git branch -a`).
 
 ### Rebase Only
 

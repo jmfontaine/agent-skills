@@ -39,6 +39,9 @@ pre-commit hooks (`.pre-commit-config.yaml`). Recipes live in the `justfile`:
 - `just format`: Format Markdown. Run after editing any Markdown file.
 - `just qa`: Check formatting and lint.
 
+The QA workflow (`.github/workflows/qa.yml`) runs the same hooks on pushes and pull
+requests to `main`. Dependabot updates the pinned actions and hook revisions weekly.
+
 ## Gotchas
 
 - Keep skills flat at `skills/<skill-name>/SKILL.md`. omp does not discover nested

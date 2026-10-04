@@ -10,6 +10,11 @@ repos:
       - id: mixed-line-ending
       - id: trailing-whitespace
 
+  - repo: https://github.com/rhysd/actionlint
+    rev: 914e7df21a07ef503a81201c76d2b11c789d3fca  # frozen: v1.7.12
+    hooks:
+      - id: actionlint
+
   - repo: https://github.com/rvben/rumdl-pre-commit
     rev: 83cecb6b523a053d7d3dfdc4798d705b505a88f9  # frozen: v0.2.78
     hooks:

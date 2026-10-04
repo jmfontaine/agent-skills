@@ -10,11 +10,11 @@ A collection of agent-agnostic skills following the [Agent Skills specification]
 
 ```
 skills/
-├── git-branch/            # Git branch naming guidelines
-├── git-commit/            # Git commit guidelines
-├── manifesto-refinement/  # Product manifesto refinement
-├── project-review/        # Project file review
-└── uv/                    # Python package management with uv
+├── git-branch/                  # Git branch naming guidelines
+├── git-commit/                  # Git commit guidelines
+├── product-development-system/  # Product development lifecycle and focused resources
+├── project-review/              # Project file review
+└── uv/                          # Python package management with uv
 ```
 
 Each skill is a directory containing a `SKILL.md` (YAML frontmatter plus Markdown instructions) and optional `scripts/`, `references/`, or `assets/` directories.

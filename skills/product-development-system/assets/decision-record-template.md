@@ -2,7 +2,8 @@
 
 - **Date:** [Date]
 - **Status:** [Proposed, accepted, or superseded; link replacement when applicable]
-- **Related artifacts:** [Relevant slice, Technical Foundation section, or product intent]
+- **Related artifacts:** [Relevant slice, Technical Foundation section, or product
+  intent]
 
 ## Context
 
@@ -14,8 +15,10 @@
 
 ## Rationale and alternatives
 
-[Explain why this choice was made, which meaningful alternatives were considered, and the tradeoffs.]
+[Explain why this choice was made, which meaningful alternatives were considered, and
+the tradeoffs.]
 
 ## Consequences
 
-[State benefits, accepted costs or constraints, and evidence that would justify revisiting the decision.]
+[State benefits, accepted costs or constraints, and evidence that would justify
+revisiting the decision.]

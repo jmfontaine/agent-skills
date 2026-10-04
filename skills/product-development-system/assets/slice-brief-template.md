@@ -4,11 +4,13 @@
 
 ## Goal and context
 
-[State the new user capability. Link the milestone, Product Map capability, and relevant Technical Foundation or Decision Records.]
+[State the new user capability. Link the milestone, Product Map capability, and relevant
+Technical Foundation or Decision Records.]
 
 ## Primary scenario
 
-[Describe one end-to-end workflow from input or trigger to useful output and verification.]
+[Describe one end-to-end workflow from input or trigger to useful output and
+verification.]
 
 ## In scope
 
@@ -20,11 +22,13 @@
 
 ## Requirements
 
-[State necessary behavior and constraints. Make their relationship to the scenario and milestone clear.]
+[State necessary behavior and constraints. Make their relationship to the scenario and
+milestone clear.]
 
 ## Design decisions
 
-[Record decisions constraining this slice. Link established durable choices; keep new slice-local choices here.]
+[Record decisions constraining this slice. Link established durable choices; keep new
+slice-local choices here.]
 
 ## Blocking questions
 
@@ -32,12 +36,15 @@
 
 ## Acceptance criteria
 
-[Describe observable outcomes, including important failure behavior, and how they will be verified.]
+[Describe observable outcomes, including important failure behavior, and how they will
+be verified.]
 
 ## Manifesto alignment
 
-[Identify capabilities, principles, and boundaries that this work advances or must respect.]
+[Identify capabilities, principles, and boundaries that this work advances or must
+respect.]
 
 ## Appetite and scope cuts
 
-[State the agreed effort budget. Name what to cut first if work outgrows it while preserving a meaningful vertical outcome.]
+[State the agreed effort budget. Name what to cut first if work outgrows it while
+preserving a meaningful vertical outcome.]

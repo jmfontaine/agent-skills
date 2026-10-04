@@ -8,9 +8,11 @@ allowed-tools: Bash(git branch:*) Bash(git checkout:*) Bash(git switch:*)
 
 ## Naming Style
 
-Match the repository's existing branch names. Run `git branch -a` and mirror the prevailing prefixes, separators, casing, and ticket formats.
+Match the repository's existing branch names. Run `git branch -a` and mirror the
+prevailing prefixes, separators, casing, and ticket formats.
 
-If the repository has no branches besides the default branch, use [Conventional Branch](https://conventionalbranch.org/) with one of these prefixes:
+If the repository has no branches besides the default branch, use
+[Conventional Branch](https://conventionalbranch.org/) with one of these prefixes:
 
 - `feat/`: New features (e.g., `feat/add-login-page`)
 - `fix/`: Bug fixes (e.g., `fix/header-bug`)

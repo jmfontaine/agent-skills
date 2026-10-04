@@ -5,7 +5,9 @@
     "jmfontaine",
     "justfile",
     "oneline",
+    "prek",
     "pyproject",
+    "rumdl",
     "untriaged"
   ]
 }

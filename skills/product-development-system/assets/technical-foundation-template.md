@@ -4,63 +4,79 @@
 
 ## Engineering principles
 
-[Record adopted durable engineering preferences. Prompts include simple mature technology, maintainability, operational simplicity, interoperability, useful automation, and observable and testable behavior.]
+[Record adopted durable engineering preferences. Prompts include simple mature
+technology, maintainability, operational simplicity, interoperability, useful
+automation, and observable and testable behavior.]
 
 ## Application shape
 
-[State the actual or committed shape: CLI, library, web app, service, desktop app, worker, or a necessary combination.]
+[State the actual or committed shape: CLI, library, web app, service, desktop app,
+worker, or a necessary combination.]
 
 ## Language, runtime, and tooling
 
-[Record chosen languages and versions, major frameworks, package manager, formatting, linting, type checking, and code generation where established.]
+[Record chosen languages and versions, major frameworks, package manager, formatting,
+linting, type checking, and code generation where established.]
 
 ## Repository structure
 
-[Describe useful navigation conventions. Link existing contributor and agent guidance rather than duplicating it.]
+[Describe useful navigation conventions. Link existing contributor and agent guidance
+rather than duplicating it.]
 
 ## Supported platforms
 
-[State verified platforms and architecture or runtime constraints. Distinguish tested support from intentions.]
+[State verified platforms and architecture or runtime constraints. Distinguish tested
+support from intentions.]
 
 ## Persistence and storage
 
-[Record settled storage choices and applicable migration, backup, and integrity expectations.]
+[Record settled storage choices and applicable migration, backup, and integrity
+expectations.]
 
 ## APIs and integrations
 
-[Record established interface, format, compatibility, authentication, error, and machine-readable access conventions. Do not design unused interfaces.]
+[Record established interface, format, compatibility, authentication, error, and
+machine-readable access conventions. Do not design unused interfaces.]
 
 ## Testing
 
-[State the baseline for meaningful behavior checks, system boundaries, primary workflows, regressions, and supported platforms.]
+[State the baseline for meaningful behavior checks, system boundaries, primary
+workflows, regressions, and supported platforms.]
 
 ## Observability and diagnostics
 
-[Record applicable logging, metrics, tracing, or diagnostic expectations, scaled to this project.]
+[Record applicable logging, metrics, tracing, or diagnostic expectations, scaled to this
+project.]
 
 ## Security and secrets
 
-[State applicable secret handling, privilege, sensitive data, dependency, and authorization expectations. Never include credentials.]
+[State applicable secret handling, privilege, sensitive data, dependency, and
+authorization expectations. Never include credentials.]
 
 ## Packaging and distribution
 
-[State committed build artifacts, versioning, installation and publishing channels, and signing requirements where applicable.]
+[State committed build artifacts, versioning, installation and publishing channels, and
+signing requirements where applicable.]
 
 ## CI/CD and automation
 
-[Record established required checks, build/test matrix, and release or dependency automation.]
+[Record established required checks, build/test matrix, and release or dependency
+automation.]
 
 ## AI and agent support
 
-[Record the actual role of coding agents, agent users or operators, machine-readable interfaces, and deterministic or independently verifiable boundaries.]
+[Record the actual role of coding agents, agent users or operators, machine-readable
+interfaces, and deterministic or independently verifiable boundaries.]
 
 ## Dependency policy
 
-[Record adopted rules for dependency selection, version constraints, maintenance burden, and infrastructure additions.]
+[Record adopted rules for dependency selection, version constraints, maintenance burden,
+and infrastructure additions.]
 
 ## Architectural constraints
 
-[State durable cross-cutting constraints that future slices may assume. Link Decision Records for consequential rationale.]
+[State durable cross-cutting constraints that future slices may assume. Link Decision
+Records for consequential rationale.]
 
 ## Current Technical Baseline
 

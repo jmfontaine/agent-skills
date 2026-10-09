@@ -9,7 +9,7 @@ purpose; a newer timestamp or a planning item does not silently override product
 | Private Notion | Exploration, research, rough drafts, private discussion, project-specific context, Parking Lot | Never a dependency for contributors or the authority over promoted Git artifacts |
 | Git | Durable product intent, project baseline, Slice Briefs, consequential decisions, contributor and agent guidance | Change through Git and review as diffs after promotion |
 | GitHub Projects | Rolling milestone plan, current/next slices, execution status and sequencing | Planned work, not a collection of vague possibilities |
-| GitHub Issues | User-reported intake and actionable committed implementation work | Intake may be untriaged; internally created issues represent deliberate planning decisions |
+| GitHub Issues | User-reported intake, actionable committed implementation work, and the active slice's parent issue | Intake may be untriaged; internally created issues represent deliberate planning decisions |
 
 ## Promote cleanly
 
@@ -52,8 +52,10 @@ erase valid intake for being unplanned, or automatically move every report onto 
 roadmap.
 
 For an internal issue, ensure there is a concrete actionable outcome, a link to its
-committed active or near-term slice, and a way to verify completion. Do not turn distant
-milestones into speculative issue trees.
+committed active or near-term slice, and a way to verify completion. Group the active
+slice's issues as sub-issues of one parent issue that links the brief instead of
+restating it. Do not turn distant milestones into speculative issue trees. The
+`github-workflow` skill, if installed, covers issue format and mechanics.
 
 ## Preserve consequential rationale
 

@@ -5,9 +5,9 @@ the canonical brief and available evidence, then reconcile affected artifacts. A
 retrospective document alone is not the outcome.
 
 Read the current brief and acceptance criteria, relevant implementation or demo
-evidence, test results, and user feedback. Distinguish observed behavior from
-assumptions and missing evidence. Do not claim a slice is complete just because tasks
-were closed.
+evidence, test results, and user feedback. Merged pull requests, their reviews, and the
+slice's issues are evidence too. Distinguish observed behavior from assumptions and
+missing evidence. Do not claim a slice is complete just because tasks were closed.
 
 ## Review four areas
 
@@ -35,8 +35,10 @@ For each meaningful finding, name the evidence, implication, and destination:
 
 Apply changes already authorized by the user. Separate product choices still requiring a
 decision from mechanical updates. Preserve unresolved acceptance gaps in the brief or
-linked work, and report unverified results honestly. Avoid a new report format when a
-short review attached to the slice or an existing review location is enough.
+linked work, and report unverified results honestly. Decide explicitly whether each
+open issue in the slice is finished now, moved to later work, or closed as not planned.
+Avoid a new report format when a short review attached to the slice is enough, such as
+a comment on the slice's parent issue, which closes once the review is reconciled.
 
 Update affected canonical artifacts and reassess the milestone plan before committing to
 the next slice. If an external system is unavailable, prepare exact proposed updates and

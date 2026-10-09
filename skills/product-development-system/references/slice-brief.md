@@ -46,7 +46,8 @@ continue independent preparation rather than filling it in as fact.
 A contributor should be able to implement from repository context without private Notion
 discussion. Create actionable internal issues only after work has this context and is
 part of the committed active or near-term plan; a brief does not require an issue for
-every requirement.
+every requirement. Each issue links the brief and the requirement or acceptance
+criterion it covers rather than copying them, and sits under the slice's parent issue.
 
 ## During implementation
 
@@ -55,3 +56,7 @@ appetite, or a durable constraint, surface the tradeoff and update the relevant 
 through Git within the user's authorization. Do not quietly expand scope or mark
 criteria complete without evidence. Promote product-wide technical choices to the
 Foundation when durable, with consequential rationale in Decision Records.
+
+Keep artifact changes reviewable apart from the code. A clarification that leaves scope
+unchanged goes in its own commit. A change to scope, acceptance criteria, or appetite
+goes in its own pull request, merged before the implementation that depends on it.

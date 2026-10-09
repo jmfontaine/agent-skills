@@ -85,7 +85,8 @@ Repository paths are relative to the project's repository root.
 During Build, work from the current canonical Slice Brief, relevant higher-level
 artifacts, Decision Records, and repository guidance. Keep implementation bounded;
 surface discoveries that change scope or durable decisions. This skill adds no separate
-implementation framework.
+implementation framework; follow the `github-workflow` skill, if installed, for issues,
+pull requests, and reviews.
 
 ## Templates, only when creating the corresponding artifact
 

@@ -8,6 +8,8 @@
     "prek",
     "pyproject",
     "rumdl",
-    "untriaged"
+    "triaging",
+    "untriaged",
+    "worktree"
   ]
 }

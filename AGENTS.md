@@ -15,6 +15,7 @@ or are uploaded to Claude and ChatGPT.
 skills/
 ├── git-branch/                  # Git branch naming guidelines
 ├── git-commit/                  # Git commit guidelines
+├── github-workflow/             # GitHub issues, pull requests, and reviews
 ├── product-development-system/  # Product development lifecycle and focused resources
 ├── project-review/              # Project file review
 └── uv/                          # Python package management with uv

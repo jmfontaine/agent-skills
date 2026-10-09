@@ -11,6 +11,8 @@ but they might help you, either to use directly or as inspiration for your own s
 - [git-commit](skills/git-commit/SKILL.md): Git commit guidelines that match the
   repository's message style, falling back to Conventional Commits, and organize
   dependent changes into GitHub stacked pull requests.
+- [github-workflow](skills/github-workflow/SKILL.md): Track work in GitHub issues and
+  deliver it through pull requests, with agent spec reviews alongside AI review bots.
 - [product-development-system](skills/product-development-system/SKILL.md): Guide
   product vision, mapping, technical foundation, rolling milestone planning, slice
   briefs, and review through focused references and templates.

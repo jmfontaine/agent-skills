@@ -19,7 +19,8 @@ Check for reproduction steps or evidence, search for duplicates
 product's boundaries. Then do one of:
 
 - Ask for the missing information.
-- Close it as a duplicate or out of scope, linking the reason.
+- Close it as a duplicate with `gh issue close <n> --duplicate-of <original>`, or as out
+  of scope with a comment giving the reason.
 - Keep it as accepted intake, unscheduled.
 - Turn it into a task, linking the active slice when one applies.
 
@@ -43,7 +44,9 @@ Use the repository's issue template if one exists, otherwise
 
 Size each task for one pull request. Split work that needs several independent reviews
 into separate issues; dependent layers of one change can stay in one issue and ship as
-stacked pull requests. Record ordering with `--blocked-by` rather than prose.
+stacked pull requests. Record ordering as relationships rather than prose:
+`--blocked-by` or `--blocking` on `gh issue create`, `--add-blocked-by` or
+`--add-blocking` on `gh issue edit`.
 
 Create issues only for committed work in the active or near-term plan. Do not build
 speculative issue trees for distant work.

@@ -38,7 +38,9 @@ Load only the reference the task needs. Paths are relative to this skill directo
   when the user asks or has already authorized them, without adding routine
   confirmation. Reading is always fine.
 - **Link, don't copy.** Issues link the brief or report they come from. Pull requests
-  link their issues. Restate only what a reader needs to act.
+  link their issues. Restate only what a reader needs to act. When `gh` can record a
+  link as an issue relationship (parent, blocked by, blocking, duplicate of), set the
+  relationship instead of writing the link in the body, where it would go stale.
 - **Report real evidence.** Claim a verification step only after running it. Mark
   anything unverified as such; never tick a checkbox without evidence.
 - **Prefix agent comments.** Start agent-authored comments, replies, and review bodies

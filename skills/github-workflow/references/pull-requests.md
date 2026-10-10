@@ -11,6 +11,10 @@ own branch and pull request, opening an issue for it when it is committed work.
 
 ## Before opening
 
+- Before each commit, have a reviewer that did not write the change, such as a fresh
+  subagent, check the uncommitted diff against the issue's outcome and verification,
+  and for defects. Fix valid findings and review again until none is blocking. Note
+  any rejected finding for the Scope notes.
 - Run the issue's verification and the repository's QA checks. Note each command or
   scenario and its result.
 - Compare the diff with the issue's outcome, its out-of-scope list, and the brief's
@@ -67,9 +71,24 @@ After pushing fixes, request a re-review only where the reviewer expects it, suc
 
 Merge only when the user asks. Before merging, confirm that checks pass
 (`gh pr checks <n>`), blocking findings are resolved, and the user has reviewed the PR.
-Use the repository's merge method, such as `gh pr merge <n> --rebase`, or
-`gh stack merge` for a stack. Delete the branch if the repository does. Never use
-`--admin` to bypass branch protection.
+Use the repository's merge method and delete the branch if the repository does. Never
+use `--admin` to bypass branch protection.
+
+GitHub's **Rebase and merge** rewrites the commits on its servers and cannot sign them,
+so each merged commit loses its signature (squash and merge commits are signed by
+GitHub's own key). When the repository requires signed commits, or rebases to keep a
+linear history, merge with a local fast-forward instead, which lands the pull request's
+own signed commits unchanged:
+
+1. Run `git fetch origin` and check that the branch contains the base:
+   `git merge-base --is-ancestor origin/<base> origin/<branch>`. If it does not,
+   rebase the branch onto `origin/<base>`, which signs the rewritten commits with your
+   key, force push it with `--force-with-lease` after asking, and wait for the checks.
+2. Push the branch's head to the base: `git push origin origin/<branch>:<base>`.
+   GitHub marks the pull request merged once its head is on the base branch. For a
+   stack, pushing the top branch merges every layer below it.
+3. Delete each merged remote branch (`git push origin --delete <branch>`) if the
+   repository deletes merged branches.
 
 After the merge, confirm that the linked issues closed. If the merge closed the last
 open sub-issue of a slice, the next step is the slice review, not closing the parent.

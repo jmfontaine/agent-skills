@@ -141,8 +141,11 @@ Push, open pull requests, or merge only when the user asks.
   an editor that needs an interactive terminal. New pull requests are drafts unless you
   pass `--open`.
 - **Push after rewriting layers:** run `gh stack push`, which uses `--force-with-lease`.
-- **Merge:** run `gh stack merge --rebase <pr-number>` to merge every pull request up to
-  and including that one.
+- **Merge:** follow the `github-workflow` skill's merge section, bottom-up. When the
+  repository merges by rebase, a local fast-forward of the top branch merges the whole
+  stack and keeps every commit's signature. Otherwise, `gh stack merge <pr-number>`
+  with the repository's merge method merges every pull request up to and including
+  that one.
 
 ## Additional Guidelines
 

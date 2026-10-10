@@ -22,7 +22,9 @@ own branch and pull request, opening an issue for it when it is committed work.
 
 ## Open
 
-Push and open the pull request only when the user asks. Use the repository's template
+Push and open the pull request only when the user asks. Launching an unattended run,
+such as with the `parallel-issues` skill, is that request for the runs it starts. Use
+the repository's template
 (`.github/pull_request_template.md`) if one exists, otherwise
 `assets/pull-request-template.md`. Write the body to a file and pass it with
 `--body-file`.

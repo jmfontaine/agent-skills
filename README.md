@@ -13,6 +13,9 @@ but they might help you, either to use directly or as inspiration for your own s
   dependent changes into GitHub stacked pull requests.
 - [github-workflow](skills/github-workflow/SKILL.md): Track work in GitHub issues and
   deliver it through pull requests, with agent spec reviews alongside AI review bots.
+- [parallel-issues](skills/parallel-issues/SKILL.md): Run unattended agents on several
+  GitHub issues at once, one Herdr worktree per group, each group delivered as a stack
+  of signed, reviewed pull requests.
 - [product-development-system](skills/product-development-system/SKILL.md): Guide
   product vision, mapping, technical foundation, rolling milestone planning, slice
   briefs, and review through focused references and templates.

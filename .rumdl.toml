@@ -5,8 +5,10 @@ line-length = 88
 reflow = true
 
 # CLAUDE.md only imports AGENTS.md and has no heading. Issue and pull request templates
-# are bodies; GitHub holds their titles separately.
+# are bodies; GitHub holds their titles separately. The parallel-issues prompt is sent
+# to an agent as is.
 [per-file-ignores]
 "CLAUDE.md" = ["MD041"]
 "skills/github-workflow/assets/issue-template.md" = ["MD041"]
 "skills/github-workflow/assets/pull-request-template.md" = ["MD041"]
+"skills/parallel-issues/assets/prompt.md" = ["MD041"]

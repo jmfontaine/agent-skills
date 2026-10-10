@@ -142,10 +142,10 @@ Push, open pull requests, or merge only when the user asks.
   pass `--open`.
 - **Push after rewriting layers:** run `gh stack push`, which uses `--force-with-lease`.
 - **Merge:** follow the `github-workflow` skill's merge section, bottom-up. When the
-  repository merges by rebase, a local fast-forward of the top branch merges the whole
-  stack and keeps every commit's signature. Otherwise, `gh stack merge <pr-number>`
-  with the repository's merge method merges every pull request up to and including
-  that one.
+  repository merges by rebase, it fast-forwards the base one layer at a time, which
+  keeps every commit's signature and lets each layer close its issues. Otherwise,
+  `gh stack merge <pr-number>` with the repository's merge method merges every pull
+  request up to and including that one.
 
 ## Additional Guidelines
 

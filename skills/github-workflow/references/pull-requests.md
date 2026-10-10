@@ -78,19 +78,28 @@ use `--admin` to bypass branch protection.
 
 GitHub's **Rebase and merge** rewrites the commits on its servers and cannot sign them,
 so each merged commit loses its signature (squash and merge commits are signed by
-GitHub's own key). When the repository requires signed commits, or rebases to keep a
-linear history, merge with a local fast-forward instead, which lands the pull request's
-own signed commits unchanged:
+GitHub's own key). A ruleset that requires signed commits therefore rejects it. When
+the repository requires signed commits, or rebases to keep a linear history, merge
+with a local fast-forward instead, which lands the pull request's own signed commits
+unchanged:
 
 1. Run `git fetch origin` and check that the branch contains the base:
    `git merge-base --is-ancestor origin/<base> origin/<branch>`. If it does not,
    rebase the branch onto `origin/<base>`, which signs the rewritten commits with your
    key, force push it with `--force-with-lease` after asking, and wait for the checks.
 2. Push the branch's head to the base: `git push origin origin/<branch>:<base>`.
-   GitHub marks the pull request merged once its head is on the base branch. For a
-   stack, pushing the top branch merges every layer below it.
-3. Delete each merged remote branch (`git push origin --delete <branch>`) if the
-   repository deletes merged branches.
+   GitHub marks the pull request merged once its head is on the base branch.
+3. Delete the merged remote branch (`git push origin --delete <branch>`) if the
+   repository deletes merged branches and GitHub has not already.
+
+Merge a stack one layer at a time, bottom first. Pushing the top branch would merge
+every layer at once, but only the bottom pull request closes its issues: GitHub reads
+closing keywords only from pull requests that target the default branch, and a higher
+layer targets the branch below it. After each layer merges, GitHub re-targets the next
+one to the base without re-reading its body, so save the body again unchanged
+(`gh pr view <n> --json body --jq .body > <file>`, then
+`gh pr edit <n> --body-file <file>`), confirm that
+`gh pr view <n> --json closingIssuesReferences` lists its issues, and merge it.
 
 After the merge, confirm that the linked issues closed. If the merge closed the last
 open sub-issue of a slice, the next step is the slice review, not closing the parent.

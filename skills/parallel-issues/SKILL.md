@@ -93,7 +93,10 @@ A group that fails a check is reported and skipped; the others still launch.
 1. **Review.** Each pull request gets the review the `github-workflow` skill describes.
    Changes to a lower layer happen in an interactive session: fix it, then
    `gh stack rebase --upstack`, and force push only with the user's agreement.
-2. **Merge.** Merge as the `github-workflow` skill describes, bottom-up.
+2. **Merge.** Merge as the `github-workflow` skill describes: one layer at a time,
+   bottom first, saving each next layer's body again so its `Closes #N` takes effect.
+   GitHub's **Rebase and merge** button fails on a repository that requires signed
+   commits; that is expected.
 3. **Clean.** Run `clean --dry-run`, then `clean`. A group's worktree, workspace, and
    branches are removed only when every branch still points at the commit `record`
    stored, each of those pull requests is merged, the worktree has no uncommitted

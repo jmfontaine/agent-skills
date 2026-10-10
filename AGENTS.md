@@ -18,6 +18,7 @@ skills/
 ├── github-workflow/             # GitHub issues, pull requests, and reviews
 ├── product-development-system/  # Product development lifecycle and focused resources
 ├── project-review/              # Project file review
+├── python-codebase-review/      # Whole-codebase Python review
 └── uv/                          # Python package management with uv
 ```
 

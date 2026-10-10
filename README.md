@@ -18,6 +18,9 @@ but they might help you, either to use directly or as inspiration for your own s
   briefs, and review through focused references and templates.
 - [project-review](skills/project-review/SKILL.md): Review project files for
   consistency, completeness, correctness, and simplicity.
+- [python-codebase-review](skills/python-codebase-review/SKILL.md): Review a whole
+  Python codebase with parallel reviewers on a ruff, type checker, and pytest baseline,
+  and write a verified, prioritized list of fixes and improvements to `REVIEW.md`.
 - [uv](skills/uv/SKILL.md): Python package management with uv.
 
 ## Installation

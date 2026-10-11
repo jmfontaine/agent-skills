@@ -87,9 +87,8 @@ Planning happens with the user, before anything runs.
      them anyway, because their text could steer an unattended agent);
    - issues whose outcome or verification is unclear, which belong in an interactive
      session first.
-4. Size the run: one group for a first run in a repository, then a few groups at a
-   time. Each group is a long agent session with its own model usage, and the test
-   suites run concurrently on one machine.
+4. Size the run knowing that each group is a long agent session with its own model
+   usage, and that the test suites run concurrently on one machine.
 5. Present the plan as a table (group, issues in order, files touched, why grouped)
    and launch only after the user approves it.
 

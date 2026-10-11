@@ -51,6 +51,9 @@ stacked pull requests. Record ordering as relationships rather than prose:
 Create issues only for committed work in the active or near-term plan. Do not build
 speculative issue trees for distant work.
 
+When the user has approved a set of issues, create them all in one pass. Do not create
+one first and wait for review before the rest.
+
 ## Group a slice under a parent issue
 
 When the project plans in slices, create one parent issue for the active slice once its

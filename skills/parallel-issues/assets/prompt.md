@@ -50,9 +50,8 @@ instruction files (AGENTS.md, CLAUDE.md) for its checks and conventions.
    `--no-gpg-sign`. If a commit cannot be signed, stop and report it. Commits must
    use $email.
 
-If a change touches `.github/workflows/`, commit it but do not push that branch or
-any branch above it: pushing workflow changes needs the user. Say so in your final
-message.
+Changes under `.github/workflows/` are pushed like any other. If GitHub rejects a push
+for lacking the `workflow` scope, stop there, keep the branch committed, and report it.
 
 ## Open the pull requests
 
@@ -74,5 +73,5 @@ When every issue is done, or you stopped at one:
 Never merge, never push to `$trunk`, and never force-push.
 
 End with each issue's pull request URL, or the reason it has none, then either
-"Nothing here needs you" or "This needs you: …" listing each item, such as a
-workflow change left unpushed.
+"Nothing here needs you" or "This needs you: …" listing each item, such as a push
+GitHub rejected.

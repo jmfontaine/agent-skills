@@ -55,6 +55,10 @@ otherwise.
 - This session runs in a Herdr pane (`HERDR_ENV=1`). For agent status to be accurate,
   Herdr's integration for the agent must be installed (`herdr integration status`).
 - `gh extension list` shows `github/gh-stack`.
+- `gh auth status` lists the `workflow` scope: agents push changes under
+  `.github/workflows/` like any other, and GitHub rejects such a push without it
+  (`gh auth refresh -h github.com -s workflow` adds it). The launcher does not check
+  this one.
 - Agents sign every commit with their own key, never the user's:
   - `git config commit.gpgsign` is `true` in the repository.
   - `git config agent.signingKey` holds a 1Password reference to the agent's SSH
@@ -81,7 +85,6 @@ Planning happens with the user, before anything runs.
 3. Leave out, and say why:
    - issues the user did not open, or that someone else edited (the launcher refuses
      them anyway, because their text could steer an unattended agent);
-   - issues likely to change `.github/workflows/`, since pushing those needs the user;
    - issues whose outcome or verification is unclear, which belong in an interactive
      session first.
 4. Size the run: one group for a first run in a repository, then a few groups at a
@@ -180,8 +183,9 @@ A group that fails a check is reported and skipped; the others still launch.
 
 ## What the safeguards do not cover
 
-The agents act as the user on GitHub. The launcher's issue checks, the prompt's
-instructions not to read comments or follow linked pages, and the rule against pushing
-workflow changes reduce what can steer an agent, but an agent that ignores its prompt
-can still do anything the user's `gh` login allows. The signing key cannot push or log
-in; it can only make commits that verify, until it expires or is removed from GitHub.
+The agents act as the user on GitHub. The launcher's issue checks and the prompt's
+instructions not to read comments or follow linked pages reduce what can steer an
+agent, but an agent that ignores its prompt can still do anything the user's `gh` login
+allows, including pushing a workflow that runs with the repository's Actions secrets.
+The signing key cannot push or log in; it can only make commits that verify, until it
+expires or is removed from GitHub.

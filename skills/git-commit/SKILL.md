@@ -104,8 +104,8 @@ same branch as its dependencies or above them.
    NOT use `gh stack add -m`: it can commit on the current branch instead of the new
    one, and it does not sign the commit.
 
-Name each branch following the `git-branch` skill if installed; otherwise mirror the
-repository's existing branch names (`git branch -a`).
+Name each branch following the `git-branch` skill: `<type>/issue-<N>-<slug>` for an
+issue, `<type>/<slug>` otherwise.
 
 ### Rebase Only
 

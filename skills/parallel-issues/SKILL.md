@@ -42,6 +42,8 @@ otherwise.
 Planning happens with the user, before anything runs.
 
 1. List the candidate issues (`gh issue list --milestone <name>`) and read each one.
+   Check its labels as well: they are the launcher's only signal for the branch type
+   (see Launch). Add the commit-type label when the generic ones would mislead.
 2. Group issues that will change the same files or behavior, using the code paths
    the issues cite and a search of the code. Order each group bottom-up: what others
    depend on first, then smaller changes. Stack only issues that really overlap;
@@ -74,6 +76,17 @@ a Herdr-managed worktree and workspace, starts the agent there (`omp --advisor`;
 it with `--kind <herdr-kind> -- <agent args>`), and submits the prompt. It also loads
 the agent signing key into a private ssh-agent for 12 hours, routes the agents' pushes
 over HTTPS through `gh`, and keeps the Mac awake for the same period.
+
+Branch names follow the `git-branch` skill in every repository, whatever its
+instruction files or earlier branches say: `<type>/issue-<N>-<slug>`. The type comes
+from the issue's labels, the most specific one winning whatever their order: a label
+named after a commit type (`feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `build`,
+`ci`, `chore`), then `tests` → `test`, `performance` → `perf`, `documentation` →
+`docs`, then `bug` → `fix` and `enhancement`/`feature` → `feat`. With none of these it
+is `fix`. Between two labels of the same tier, the first in that list wins (`feat` +
+`fix` gives `feat`, `bug` + `enhancement` gives `fix`). So a test-only issue labelled
+`enhancement` gets `test/` once it also carries a `test` label; the dry run shows the
+branch each issue will get.
 
 A group that fails a check is reported and skipped; the others still launch.
 

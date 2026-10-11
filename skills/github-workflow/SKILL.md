@@ -16,8 +16,9 @@ it, so one edit never leaves a stale duplicate behind.
 
 Read agent instruction files (AGENTS.md, CLAUDE.md) and the repository's existing GitHub
 conventions before acting: templates under `.github/`, labels, issue types, Projects in
-use, branch names, and the allowed merge method. Mirror them; the templates and rules in
-this skill are fallbacks.
+use, and the allowed merge method. Mirror them; the templates and rules in this skill
+are fallbacks. Branch names are the exception: `<type>/issue-<N>-<slug>` for an issue,
+`<type>/<slug>` otherwise (the `git-branch` skill), in every repository.
 
 When the project plans work with Slice Briefs (the `product-development-system` skill),
 that skill decides whether work deserves an issue and owns the slice review. This skill

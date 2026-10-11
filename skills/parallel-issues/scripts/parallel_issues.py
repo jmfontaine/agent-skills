@@ -69,12 +69,21 @@ STATE_FILE = "parallel-issues.json"
 REQUIRED_TOOLS = ("git", "gh", "herdr")
 # Herdr agent kinds take the agent's own CLI flags after `--`.
 DEFAULT_AGENT_ARGS = {"omp": ["--advisor"]}
-LABEL_PREFIXES = {
-    "bug": "fix",
-    "enhancement": "feat",
-    "feature": "feat",
-    "documentation": "docs",
-}
+# Branches follow the git-branch skill: <type>/issue-<N>-<slug>, where <type> is the
+# Conventional Commits type of the change. An issue's labels are the only type signal
+# the launcher has. They are matched most specific first, so the result never depends
+# on the order GitHub lists them in: a label named after a commit type, then a label
+# that stands for one type, then GitHub's generic defaults.
+COMMIT_TYPES = ("feat", "fix", "docs", "test", "refactor", "perf", "build", "ci", "chore")
+LABEL_PREFIXES = (
+    *((commit_type, commit_type) for commit_type in COMMIT_TYPES),
+    ("tests", "test"),
+    ("performance", "perf"),
+    ("documentation", "docs"),
+    ("bug", "fix"),
+    ("enhancement", "feat"),
+    ("feature", "feat"),
+)
 DEFAULT_PREFIX = "fix"
 SLUG_WORDS = 4
 STOPWORDS = frozenset(
@@ -184,10 +193,10 @@ def agent_name(repo: str, number: int) -> str:
 
 
 def branch_prefix(labels: list[str]) -> str:
-    for label in labels:
-        if prefix := LABEL_PREFIXES.get(label.lower()):
-            return prefix
-    return DEFAULT_PREFIX
+    names = {label.lower() for label in labels}
+    return next(
+        (prefix for label, prefix in LABEL_PREFIXES if label in names), DEFAULT_PREFIX
+    )
 
 
 def parse_groups(values: list[str]) -> list[list[int]]:

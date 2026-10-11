@@ -80,8 +80,8 @@ it as not planned with a reason.
 Read the issue, its comments, its parent, and linked context such as the brief. Check
 that nobody else holds it: no other assignee and no open pull request
 (`gh issue view <n> --json assignees,closedByPullRequestsReferences`). When the user
-asks you to take it, assign it (`gh issue edit <n> --add-assignee @me`) and create a
-branch that includes the issue number.
+asks you to take it, assign it (`gh issue edit <n> --add-assignee @me`) and create its
+branch, `<type>/issue-<N>-<slug>` as the `git-branch` skill describes.
 
 If the outcome or verification is missing or ambiguous, fix the issue with the user
 before coding rather than guessing. When the work reveals something outside the issue,

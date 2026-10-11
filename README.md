@@ -6,8 +6,9 @@ but they might help you, either to use directly or as inspiration for your own s
 
 ## Available Skills
 
-- [git-branch](skills/git-branch/SKILL.md): Git branch naming guidelines that match the
-  repository's style, falling back to Conventional Branch.
+- [git-branch](skills/git-branch/SKILL.md): Git branch naming guidelines:
+  `<type>/issue-<N>-<slug>` for issue work and `<type>/<slug>` otherwise, with the
+  Conventional Commits type of the change, in every repository.
 - [git-commit](skills/git-commit/SKILL.md): Git commit guidelines that match the
   repository's message style, falling back to Conventional Commits, and organize
   dependent changes into GitHub stacked pull requests.

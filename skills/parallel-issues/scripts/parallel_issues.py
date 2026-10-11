@@ -30,17 +30,27 @@ Agents run unattended, so ``launch`` prepares everything that would prompt:
 - Pushing. Agents reach GitHub over HTTPS through ``gh auth git-credential``.
 - Sleep. On macOS, ``caffeinate -i`` keeps the machine awake for ``KEY_HOURS``.
 
+Each launch records its caffeinate process and ssh-agent socket in
+``STATE_DIR/RUNS_FILE`` so that ``clean`` can stop them.
+
 Every check fails hard: an issue that fails one is not launched.
 
 ``record`` stores, for each branch of the agent's group, the PR number and the
 commit that PR was opened with, but only when the PR's head on GitHub equals the
 local branch and GitHub shows every commit of the PR as verified; otherwise it exits
 nonzero. The default branch's ruleset does not cover PR branches, so this is the
-check that catches an unverified commit before review. ``clean`` removes a group's
-worktree, workspace and branches only
-when every branch is at its recorded commit and its PR is merged, the worktree has
-no uncommitted changes, and no other Herdr workspace uses it. Anything else is kept
-and reported.
+check that catches an unverified commit before review.
+
+``clean`` removes a merged group's worktree, closes its Herdr workspace (stopping
+its agent) even when the worktree is already gone, deletes its local and ``origin``
+branches, and drops it from the state. A branch is deleted only at the commit
+``record`` stored or the head its pull request was merged with; any other commit,
+an unmerged pull request, uncommitted changes, a working agent, or a workspace in
+use keeps the group. Once no group of the repository is left, it stops the
+recorded caffeinate processes and the signing ssh-agent unless another
+repository's run records it. It then reports, as leftovers, launch workspaces,
+issue worktrees and merged issue branches that no group accounts for, and exits
+nonzero while anything is kept or left over.
 
 Python 3.10+, standard library only.
 """
@@ -55,8 +65,10 @@ import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
+import time
 from collections.abc import Generator
 from pathlib import Path
 from string import Template
@@ -66,6 +78,9 @@ USAGE = "Run one coding agent per group of GitHub issues, each group as a stack.
 SCRIPT = Path(__file__).resolve()
 PROMPT_TEMPLATE = SCRIPT.parent.parent / "assets" / "prompt.md"
 STATE_FILE = "parallel-issues.json"
+RUNS_FILE = "parallel-issues-runs.json"
+# Branch names the launcher creates (see branch_prefix and slugify).
+ISSUE_BRANCH = re.compile(r"[a-z]+/issue-\d+-[a-z0-9-]*")
 REQUIRED_TOOLS = ("git", "gh", "herdr")
 # Herdr agent kinds take the agent's own CLI flags after `--`.
 DEFAULT_AGENT_ARGS = {"omp": ["--advisor"]}
@@ -163,20 +178,40 @@ class Herdr:
         return run_json([*self._prefix, *args])["result"]
 
 
+def common_dir() -> str:
+    return run(
+        ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"]
+    ).strip()
+
+
 @contextlib.contextmanager
-def state() -> Generator[dict[str, dict[str, Any]], None, None]:
-    """Yield the recorded groups, keyed by agent name, under an exclusive lock.
+def locked_json(path: Path) -> Generator[dict[str, Any], None, None]:
+    """Yield the JSON object in ``path`` under an exclusive lock, then save it.
 
     Several agents may run ``record`` at once, so every change is a locked
     read-modify-write of the whole file.
     """
-    common = run(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"])
-    path = Path(common.strip()) / STATE_FILE
     with open(path.with_suffix(".lock"), "w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         entries = json.loads(path.read_text()) if path.exists() else {}
         yield entries
         path.write_text(json.dumps(entries, indent=2, sort_keys=True) + "\n")
+
+
+def state() -> contextlib.AbstractContextManager[dict[str, dict[str, Any]]]:
+    """The recorded groups of this repository, keyed by agent name."""
+    return locked_json(Path(common_dir()) / STATE_FILE)
+
+
+def runs() -> contextlib.AbstractContextManager[dict[str, dict[str, Any]]]:
+    """What each repository's launches left running, keyed by git common dir.
+
+    ``caffeinate`` holds the process ids that keep the Mac awake and ``sockets`` the
+    ssh-agent sockets holding the signing key. Agents of every repository share one
+    ssh-agent per key, so this lives outside any one repository.
+    """
+    STATE_DIR.mkdir(parents=True, exist_ok=True, mode=0o700)
+    return locked_json(STATE_DIR / RUNS_FILE)
 
 
 def slugify(title: str) -> str:
@@ -339,14 +374,16 @@ def agent_env(public: str, socket: Path) -> dict[str, str]:
     return env
 
 
-def keep_awake() -> None:
-    if shutil.which("caffeinate"):
-        subprocess.Popen(
-            ["caffeinate", "-i", "-t", str(KEY_HOURS * 3600)],
-            start_new_session=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+def keep_awake() -> int | None:
+    """Keep the Mac awake for ``KEY_HOURS``; return the process to stop afterwards."""
+    if not shutil.which("caffeinate"):
+        return None
+    return subprocess.Popen(
+        ["caffeinate", "-i", "-t", str(KEY_HOURS * 3600)],
+        start_new_session=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    ).pid
 
 
 def submit(herdr: Herdr, agent: str) -> None:
@@ -404,7 +441,15 @@ def launch(
             for flag in ("--env", f"{key}={value}")
         ]
         live_agents = {a.get("name") for a in herdr.call("agent", "list")["agents"]}
-        keep_awake()
+        awake = keep_awake()
+        # Recorded so that `clean` can stop both once this repository's groups are
+        # gone, instead of leaving them to their timeouts.
+        with runs() as recorded:
+            mine = recorded.setdefault(common_dir(), {"caffeinate": [], "sockets": []})
+            if awake:
+                mine["caffeinate"].append(awake)
+            if str(socket) not in mine["sockets"]:
+                mine["sockets"].append(str(socket))
 
     failures = 0
     for group in groups:
@@ -505,14 +550,18 @@ def launch(
     return 1 if failures else 0
 
 
-def branch_head(branch: str) -> str | None:
+def ref_head(ref: str) -> str | None:
     result = subprocess.run(
-        ["git", "rev-parse", "--verify", "--quiet", f"refs/heads/{branch}"],
+        ["git", "rev-parse", "--verify", "--quiet", ref],
         capture_output=True,
         text=True,
         check=False,
     )
     return result.stdout.strip() or None
+
+
+def branch_head(branch: str) -> str | None:
+    return ref_head(f"refs/heads/{branch}")
 
 
 def unverified_commits(repo: str, number: int) -> list[str]:
@@ -615,105 +664,326 @@ def worktree_branches() -> dict[str, str]:
 
 
 def blockers(
+    agent: str,
     entry: dict[str, Any],
     herdr: Herdr,
     worktrees: dict[str, str],
     panes: list[dict[str, Any]],
     workspaces: dict[str, dict[str, Any]],
-) -> tuple[list[str], str | None]:
-    """Return (reasons to keep the group, owned workspace id)."""
+    agents: dict[str | None, dict[str, Any]],
+) -> tuple[list[str], str | None, dict[str, set[str]]]:
+    """Return (reasons to keep the group, owned workspace id, removable heads).
+
+    A branch, local or on origin, may be deleted only at a commit its merged pull
+    request accounts for: the one ``record`` stored, or the head the pull request
+    was merged with. Anything else is work that would be lost.
+    """
     if entry.get("herdr_session") != herdr.session:
-        return [f"launched in Herdr session {entry.get('herdr_session')}"], None
-    reasons = []
+        return [f"launched in Herdr session {entry.get('herdr_session')}"], None, {}
+    reasons, removable = [], {}
     for branch in entry["branches"]:
-        head = branch_head(branch)
-        if head is None:
+        heads = {branch: branch_head(branch), f"origin/{branch}": remote_head(branch)}
+        if not any(heads.values()):
             continue
         submitted = entry["submitted"].get(branch)
         if not submitted:
             reasons.append(f"{branch}: not recorded as submitted")
             continue
-        if head != submitted["oid"]:
-            reasons.append(f"{branch}: moved since it was submitted")
-            continue
-        pr = run_json(["gh", "pr", "view", str(submitted["pr"]), "--json", "state"])
+        pr = run_json(
+            ["gh", "pr", "view", str(submitted["pr"]), "--json", "state,headRefOid"]
+        )
         if pr["state"] != "MERGED":
             reasons.append(f"{branch}: PR #{submitted['pr']} is {pr['state'].lower()}")
+            continue
+        removable[branch] = {submitted["oid"], pr["headRefOid"]}
+        for name, head in heads.items():
+            if head and head not in removable[branch]:
+                reasons.append(
+                    f"{name} is at {head[:7]}, a commit PR #{submitted['pr']} did not"
+                    " merge"
+                )
 
     path = entry["path"]
-    owned = None
     if path in worktrees:
         if worktrees[path] not in entry["branches"]:
             reasons.append(f"worktree has {worktrees[path]} checked out")
-        elif run(["git", "status", "--porcelain"], cwd=path).strip():
+        elif os.path.isdir(path) and run(["git", "status", "--porcelain"], cwd=path):
             reasons.append("worktree has uncommitted changes")
-        workspace = workspaces.get(entry["workspace_id"])
-        checkout = (workspace or {}).get("worktree", {}).get("checkout_path")
-        if (
-            workspace
-            and workspace.get("label") == entry["label"]
-            and inside(checkout, path)
-        ):
-            owned = entry["workspace_id"]
-        others = sorted(
-            {
-                p["workspace_id"]
-                for p in panes
-                if p["workspace_id"] != owned
-                and (
-                    inside(p.get("cwd"), path) or inside(p.get("foreground_cwd"), path)
-                )
-            }
+    # The workspace is owned whether or not its worktree still exists: removing a
+    # worktree by hand leaves the workspace, and the agent in it, behind.
+    workspace = workspaces.get(entry["workspace_id"])
+    checkout = ((workspace or {}).get("worktree") or {}).get("checkout_path")
+    owned = None
+    if (
+        workspace
+        and workspace.get("label") == entry["label"]
+        and inside(checkout, path)
+    ):
+        owned = entry["workspace_id"]
+    if owned and owned == os.environ.get("HERDR_WORKSPACE_ID"):
+        reasons.append(
+            f"clean runs inside its Herdr workspace {owned}; run it from the main"
+            " checkout's workspace"
         )
-        if others:
-            reasons.append(f"worktree is in use by Herdr workspace {', '.join(others)}")
-    return reasons, owned
+    live = agents.get(agent)
+    if live and live.get("agent_status") == "working":
+        reasons.append(f"agent {agent} is still working")
+    others = sorted(
+        {
+            p["workspace_id"]
+            for p in panes
+            if p["workspace_id"] != owned
+            and (inside(p.get("cwd"), path) or inside(p.get("foreground_cwd"), path))
+        }
+    )
+    if others:
+        reasons.append(f"worktree is in use by Herdr workspace {', '.join(others)}")
+    return reasons, owned, removable
+
+
+def remote_head(branch: str) -> str | None:
+    return ref_head(f"refs/remotes/origin/{branch}")
+
+
+def open_workspaces(herdr: Herdr) -> dict[str, dict[str, Any]]:
+    return {w["workspace_id"]: w for w in herdr.call("workspace", "list")["workspaces"]}
+
+
+def remove_group(
+    entry: dict[str, Any],
+    herdr: Herdr,
+    worktrees: dict[str, str],
+    owned: str | None,
+    removable: dict[str, set[str]],
+) -> None:
+    """Remove the worktree, close the workspace and its agent, delete the branches."""
+    path = entry["path"]
+    if path in worktrees:
+        if owned:
+            # Refuses a dirty worktree, and then leaves the workspace open.
+            herdr.call("worktree", "remove", "--workspace", owned)
+        else:
+            run(["git", "worktree", "remove", path])
+    if owned and owned in open_workspaces(herdr):
+        herdr.call("workspace", "close", owned)
+    for branch, allowed in removable.items():
+        # The agent may have committed or pushed before its workspace closed.
+        if (head := branch_head(branch)) is not None:
+            if head not in allowed:
+                raise StepError(f"{branch} moved during removal; kept")
+            run(["git", "branch", "-D", branch])
+        if (head := remote_head(branch)) is not None:
+            if head not in allowed:
+                raise StepError(f"origin/{branch} moved during removal; kept")
+            run(["git", "push", "--quiet", "origin", "--delete", branch])
+
+
+def running(pid: int, command: str) -> bool:
+    """Whether process ``pid`` is still the ``command`` that was started."""
+    result = subprocess.run(
+        ["ps", "-p", str(pid), "-o", "command="],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return result.stdout.strip().startswith(command)
+
+
+def terminate(pid: int) -> None:
+    """Stop ``pid`` and wait briefly for it to exit, so later checks do not see it."""
+    with contextlib.suppress(ProcessLookupError):
+        os.kill(pid, signal.SIGTERM)
+        for _ in range(40):
+            time.sleep(0.05)
+            os.kill(pid, 0)
+
+
+def stop_signing_agent(socket: str) -> None:
+    env = {**os.environ, "SSH_AUTH_SOCK": socket}
+    subprocess.run(["ssh-add", "-D"], env=env, capture_output=True, check=False)
+    command = f"ssh-agent -a {socket}"
+    for line in run(["ps", "-axo", "pid=,command="]).splitlines():
+        pid, _, args = line.strip().partition(" ")
+        if args.strip() == command:
+            terminate(int(pid))
+    Path(socket).unlink(missing_ok=True)
+
+
+def release_run(dry_run: bool) -> None:
+    """Stop what this repository's launches left running: caffeinate, signing key.
+
+    An ssh-agent another repository's run still records is left alone, since its
+    agents may still be signing with it.
+    """
+    common = common_dir()
+    with runs() as recorded:
+        mine = recorded.get(common)
+        if not mine:
+            return
+        shared = {
+            s for key, e in recorded.items() if key != common for s in e["sockets"]
+        }
+        awake = [pid for pid in mine["caffeinate"] if running(pid, "caffeinate ")]
+        sockets = [s for s in mine["sockets"] if s not in shared]
+        summary = f"caffeinate {awake or 'none running'}, signing agent {sockets}"
+        if dry_run:
+            print(f"stop    {summary}")
+            return
+        for pid in awake:
+            terminate(pid)
+        for socket in sockets:
+            stop_signing_agent(socket)
+        del recorded[common]
+    print(f"stopped {summary}")
+
+
+def leftovers(herdr: Herdr, repo_name: str, entries: dict[str, Any]) -> list[str]:
+    """What a launch created that no recorded group accounts for any more.
+
+    These are typically the remains of a cleanup done by hand: a workspace whose
+    worktree was deleted, a branch that was never removed or that gained commits
+    after its pull request merged, or a launch's caffeinate or signing agent that
+    nothing recorded.
+    """
+    found = []
+    workspace_ids = {e["workspace_id"] for e in entries.values()}
+    for workspace in open_workspaces(herdr).values():
+        label = workspace.get("label", "")
+        if (
+            label.startswith(f"{repo_name} #")
+            and workspace["workspace_id"] not in workspace_ids
+        ):
+            found.append(
+                f"Herdr workspace {workspace['workspace_id']} ({label}) belongs to no"
+                " recorded group; close it once nothing in it is needed"
+            )
+    paths = {e["path"] for e in entries.values()}
+    branches = {b for e in entries.values() for b in e["branches"]}
+    for path, branch in worktree_branches().items():
+        if ISSUE_BRANCH.fullmatch(branch) and path not in paths:
+            found.append(f"worktree {path} on {branch} belongs to no recorded group")
+    refs = run(
+        ["git", "for-each-ref", "--format=%(refname)"]
+        + ["refs/heads/*/issue-*", "refs/remotes/origin/*/issue-*"]
+    ).split()
+    for ref in refs:
+        branch = ref.removeprefix("refs/heads/").removeprefix("refs/remotes/origin/")
+        name = branch if ref.startswith("refs/heads/") else f"origin/{branch}"
+        if branch in branches or not ISSUE_BRANCH.fullmatch(branch):
+            continue
+        # An unmerged branch may be work in progress; only merged ones are judged.
+        prs = run_json(
+            ["gh", "pr", "list", "--head", branch, "--state", "merged"]
+            + ["--json", "number,headRefOid"]
+        )
+        if not prs:
+            continue
+        number, head = prs[0]["number"], ref_head(ref) or ""
+        if head == prs[0]["headRefOid"]:
+            found.append(f"{name} is merged (PR #{number}) but was not deleted")
+        else:
+            found.append(
+                f"{name} is at {head[:7]}, a commit PR #{number} did not merge; keep"
+                " or drop it with the user"
+            )
+    if not entries:
+        found += unrecorded_processes()
+    return found
+
+
+def unrecorded_processes() -> list[str]:
+    """Caffeinate and signing agents a launch started that no run records.
+
+    Launches made before the launcher recorded them, or whose record was lost, are
+    otherwise never stopped.
+    """
+    with runs() as recorded:
+        pids = {p for e in recorded.values() for p in e["caffeinate"]}
+        sockets = {s for e in recorded.values() for s in e["sockets"]}
+    awake = f"caffeinate -i -t {KEY_HOURS * 3600}"
+    agent = f"ssh-agent -a {STATE_DIR / 'ssh-agent-'}"
+    found = []
+    for line in run(["ps", "-axo", "pid=,command="]).splitlines():
+        pid, _, args = line.strip().partition(" ")
+        args = args.strip()
+        if args == awake and int(pid) not in pids:
+            found.append(
+                f"caffeinate {pid} looks like a launch's and no run records it; stop"
+                f" it with `kill {pid}` unless another run needs it"
+            )
+        elif args.startswith(agent):
+            socket = args.removeprefix("ssh-agent -a ")
+            if socket in sockets:
+                continue
+            found.append(
+                f"ssh-agent {pid} ({socket}) holds a launch's signing key and no run"
+                f" records it; stop it with `kill {pid}` unless another run's agents"
+                " still sign with it"
+            )
+    return found
 
 
 def clean(herdr: Herdr, dry_run: bool) -> int:
+    """Remove every merged group, then whatever its launch left running.
+
+    Exits nonzero while anything is kept or left over, so a clean run is one that
+    prints no ``keep``, ``FAILED`` or ``leftover`` line.
+    """
+    repo_name = run_json(["gh", "repo", "view", "--json", "name"])["name"]
+    run(["git", "fetch", "--quiet", "--prune", "origin"])
+    if not dry_run:
+        # Forget worktrees whose directory was deleted by hand before judging them.
+        run(["git", "worktree", "prune"])
     with state() as entries:
         groups = dict(entries)
-    if not groups:
-        print("No recorded groups.")
-        return 0
     worktrees = worktree_branches()
     panes = herdr.call("pane", "list")["panes"]
-    workspaces = {
-        w["workspace_id"]: w for w in herdr.call("workspace", "list")["workspaces"]
-    }
+    workspaces = open_workspaces(herdr)
+    agents = {a.get("name"): a for a in herdr.call("agent", "list")["agents"]}
 
-    failures = 0
+    problems = 0
+    remaining = dict(groups)
+    parents = set()
     for agent, entry in sorted(groups.items(), key=lambda item: item[1]["issues"]):
         try:
-            reasons, owned = blockers(entry, herdr, worktrees, panes, workspaces)
+            reasons, owned, removable = blockers(
+                agent, entry, herdr, worktrees, panes, workspaces, agents
+            )
             if reasons:
+                problems += 1
                 print(f"keep    {agent}")
                 for reason in reasons:
                     print(f"          {reason}")
                 continue
             if dry_run:
                 print(f"remove  {agent} (workspace {owned or 'already closed'})")
+                del remaining[agent]
                 continue
-            if owned:
-                # Refuses a dirty worktree, and then leaves the workspace open.
-                herdr.call("worktree", "remove", "--workspace", owned)
-            elif entry["path"] in worktrees:
-                run(["git", "worktree", "remove", entry["path"]])
-            for branch in entry["branches"]:
-                head = branch_head(branch)
-                if head is None:
-                    continue
-                # The agent may have committed before its workspace closed.
-                if head != entry["submitted"][branch]["oid"]:
-                    raise StepError(f"{branch} moved during removal; kept")
-                run(["git", "branch", "-D", branch])
+            remove_group(entry, herdr, worktrees, owned, removable)
             with state() as entries:
                 del entries[agent]
+            del remaining[agent]
+            parents.add(os.path.dirname(entry["path"]))
             print(f"removed {agent}")
         except StepError as exc:
-            failures += 1
+            problems += 1
             print(f"{agent}: FAILED: {exc}", file=sys.stderr)
-    return 1 if failures else 0
+
+    if not dry_run:
+        run(["git", "worktree", "prune"])
+        # Herdr keeps each repository's worktrees in one directory; drop it when the
+        # last of them is gone.
+        for parent in parents:
+            with contextlib.suppress(OSError):
+                os.rmdir(parent)
+    if not remaining:
+        release_run(dry_run)
+    for leftover in leftovers(herdr, repo_name, remaining if not dry_run else groups):
+        problems += 1
+        print(f"leftover  {leftover}")
+    if not groups and not problems:
+        print("Nothing to clean.")
+    return 1 if problems else 0
 
 
 def main() -> None:

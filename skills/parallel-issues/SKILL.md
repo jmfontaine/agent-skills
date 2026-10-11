@@ -12,11 +12,40 @@ delivers its group as a stack of pull requests, one per issue, each signed, chec
 and reviewed before it is committed. The user reviews and merges the pull requests when
 they are back.
 
+The point of a batch is that the user starts it and goes off to do something else. So
+ask for everything the run will need while the user is still there, and always tell
+them plainly whether they can leave now and what will call them back.
+
 The launcher is `scripts/parallel_issues.py` (path relative to this skill directory).
 Run it from the repository's main checkout. The agents follow `assets/prompt.md`, the
 `github-workflow` and `git-commit` skills, and the repository's agent instruction files
 (AGENTS.md, CLAUDE.md). Keep repository-specific rules, such as tests that must not
 run concurrently, in those instruction files rather than in the prompt.
+
+## When the user is needed
+
+Gather every question before the first unattended step, ask them together, and start
+only once all are answered. A question that surfaces after the user has left blocks
+the work until they return, which defeats the batch.
+
+- **Planning and launch: needed.** Approving the plan, labels or exclusions to fix,
+  and the 1Password prompt that reads the signing key at launch.
+- **While the agents run: not needed.** Agents never ask; they take the conservative
+  option and note it in the pull request.
+- **After the run: needed only for decisions.** Merging, a force push after a rebase,
+  pushing a change only the user may push, and anything a `keep` or `leftover` line
+  from `clean` asks them to resolve. Ask these together as well, before a long merge,
+  release, or cleanup sequence.
+
+End every turn with one of these, stated in so many words:
+
+- "I need you for: …", listing each item and why; or
+- "You can go AFK now. Nothing needs you until …", naming what will need them next
+  (the agents finishing, a merge decision, the next 1Password prompt), or "until I
+  report back" when nothing will.
+
+Say it right after the launch prints every group as started, and again whenever a
+step that needed the user is done.
 
 ## Before the first run
 
@@ -110,11 +139,44 @@ A group that fails a check is reported and skipped; the others still launch.
    bottom first, saving each next layer's body again so its `Closes #N` takes effect.
    GitHub's **Rebase and merge** button fails on a repository that requires signed
    commits; that is expected.
-3. **Clean.** Run `clean --dry-run`, then `clean`. A group's worktree, workspace, and
-   branches are removed only when every branch still points at the commit `record`
-   stored, each of those pull requests is merged, the worktree has no uncommitted
-   changes, and no other Herdr workspace uses it. Anything else is kept with the
-   reason, for the user to resolve.
+3. **Clean.** Run it from the main checkout's Herdr workspace, never from an agent's
+   workspace, once no agent is working: `clean --dry-run`, then `clean`. Never remove a
+   worktree, branch, or workspace by hand: that leaves the Herdr workspace and its idle
+   agent behind, and neither caffeinate nor the signing agent is stopped. First,
+   `clean` fetches with `--prune` and prunes worktrees whose directory is gone. Then,
+   for every group whose pull requests are all merged, it:
+   1. removes the worktree through Herdr and closes its workspace, which stops the
+      agent, even when the worktree is already gone;
+   2. deletes the local branches and their `origin` branches, if GitHub has not
+      already deleted them;
+   3. drops the group from the launcher's state.
+
+   It then removes Herdr's empty worktree directory for the repository. Once no group
+   of the repository is left, it stops the caffeinate processes its launches started
+   and the ssh-agent holding the signing key, unless another repository's run still
+   records that agent. Agents keep their scratch files in their worktree's git
+   directory, so nothing outside the worktree needs removing.
+
+   A group is kept, with the reason printed, when:
+   - a pull request is not merged or the group was never recorded;
+   - a branch, local or on `origin`, is at a commit its merged pull request did not
+     merge, such as a follow-up pushed after the merge;
+   - the worktree has uncommitted changes or another branch checked out;
+   - its agent is still working;
+   - another Herdr workspace uses it, or `clean` runs inside its workspace;
+   - it was launched in another Herdr session.
+
+   A `leftover` is something a launch created that no recorded group accounts for,
+   usually the trace of a cleanup done by hand:
+   - a workspace labelled like a launch;
+   - an issue worktree;
+   - an issue branch, local or on `origin`, whose pull request merged, either still
+     at the merged commit or carrying commits the merge did not include;
+   - once no group is left, a caffeinate or signing ssh-agent a launch started that no
+     run records, which includes launches made before the launcher recorded them.
+
+   `clean` exits nonzero while it prints any `keep`, `FAILED`, or `leftover` line.
+   Resolve each line with the user, then run `clean` again until it exits 0.
 
 ## What the safeguards do not cover
 

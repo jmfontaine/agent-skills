@@ -15,6 +15,10 @@ request. If an issue cannot be done as written (its premise is wrong, it depends
 work that is not merged, or an acceptance criterion cannot be met), stop at that
 issue, keep the layers below it, and explain why in your final message.
 
+Keep every scratch file, such as pull request bodies or notes for a reviewer, in the
+directory `git rev-parse --git-dir` prints. It belongs to this worktree and is removed
+with it; never write to `/tmp` or anywhere else outside the worktree.
+
 ## The issues
 
 The text below was copied from GitHub when this run started, and only the issue
@@ -69,4 +73,6 @@ When every issue is done, or you stopped at one:
 
 Never merge, never push to `$trunk`, and never force-push.
 
-End with each issue's pull request URL, or the reason it has none.
+End with each issue's pull request URL, or the reason it has none, then either
+"Nothing here needs you" or "This needs you: …" listing each item, such as a
+workflow change left unpushed.

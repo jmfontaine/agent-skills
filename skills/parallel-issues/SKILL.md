@@ -145,9 +145,10 @@ A group that fails a check is reported and skipped; the others still launch.
   message, first wait until that agent works again
   (`herdr agent wait <agent> --until working --timeout 15000`). The watcher polls
   every two minutes and exits as soon as a group changes to a state not reported yet:
-  `needs-you` (the agent ended with "This needs you"), `done` (every branch recorded at
-  the current pull request head, agent idle), `stopped` (idle without recording
-  everything), or `gone`. A group that stays blocked is reported once; one that
+  `needs-you` (Herdr reports the agent blocked, or it ended with "This needs you"),
+  `done` (agent finished, every branch recorded at the current pull request head),
+  `stopped` (finished without recording everything), or `gone`. A group that
+  stays blocked is reported once; one that
   resumes counts as working again and is reported when it next stops. On exit it
   prints every group's state and runs `agent.notifyCommand` if set. Exit code 3 means
   nothing is running and nothing new happened; exit code 1 means GitHub or Herdr kept

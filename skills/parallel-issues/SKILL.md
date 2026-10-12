@@ -153,7 +153,7 @@ A group that fails a check is reported and skipped; the others still launch.
   `parallel_issues.py status --wait --no-notify` as a background job with no time
   limit. After a message, first wait until that agent works again
   (`herdr agent wait <agent> --until working --timeout 15000`). The watcher polls
-  every two minutes and exits as soon as a group changes to a state not reported yet:
+  every 30 seconds and exits as soon as a group changes to a state not reported yet:
   `needs-you` (Herdr reports the agent blocked, or it ended with "This needs you"),
   `done` (agent finished, every branch recorded at the current pull request head),
   `stopped` (finished without recording everything), or `gone`. A group that stays

@@ -145,7 +145,11 @@ AGENT_START_TIMEOUT_MS = "60000"
 MAX_ITEMS = 100  # issue comments and edits fetched in one query
 SIGNING_KEY_SETTING = "agent.signingKey"
 KEY_HOURS = 12
-WAIT_INTERVAL = 120.0  # seconds between polls of `status --wait`
+# Seconds between polls of `status --wait`. A poll is one `gh pr list` per recorded
+# branch, one Herdr agent list, and one output read per agent that is not working,
+# so the supervising session learns that an agent finished within this many seconds.
+# At 30 branches that is 3,600 GitHub API calls an hour, within the 5,000 allowed.
+WAIT_INTERVAL = 30.0
 WAIT_TIMEOUT_HOURS = 13.0
 EXIT_TIMEOUT = 2
 EXIT_NOTHING_TO_WAIT = 3

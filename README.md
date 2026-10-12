@@ -25,6 +25,9 @@ but they might help you, either to use directly or as inspiration for your own s
 - [python-codebase-review](skills/python-codebase-review/SKILL.md): Review a whole
   Python codebase with parallel reviewers on a ruff, type checker, and pytest baseline,
   and write a verified, prioritized list of fixes and improvements to `REVIEW.md`.
+- [review-verification](skills/review-verification/SKILL.md): Check every finding in
+  an existing review file against the code or a dependency version, mark each with a
+  verdict and evidence, and add what the review missed.
 - [uv](skills/uv/SKILL.md): Python package management with uv.
 
 ## Installation

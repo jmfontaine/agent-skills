@@ -1,6 +1,6 @@
 ---
 name: project-review
-description: Review project files for consistency, completeness, correctness, and simplicity. Use when asked to review, audit, check, validate, or simplify project configuration files (justfile, Makefile, CI workflows, pre-commit config, pyproject.toml, Dockerfile, docker-compose, etc.) or documentation files (README, AGENTS.md, CLAUDE.md, CONTRIBUTING, etc.). Flags accidental complexity such as duplication, indirection, and dead or redundant settings. Supports both single-file review and cross-file checks.
+description: Review project files for consistency, completeness, correctness, and simplicity. Use when asked to review, audit, check, validate, or simplify project configuration files (justfile, Makefile, CI workflows, pre-commit config, pyproject.toml, Dockerfile, docker-compose, etc.) or documentation files (README, AGENTS.md, CLAUDE.md, CONTRIBUTING, etc.). Flags accidental complexity such as duplication, indirection, and dead or redundant settings. Supports both single-file review and cross-file checks. Not for source code, and not for checking the findings listed in a review report such as REVIEW.md.
 ---
 
 # Project File Review

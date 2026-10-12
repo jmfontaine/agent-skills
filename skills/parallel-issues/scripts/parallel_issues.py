@@ -142,6 +142,10 @@ STOPWORDS = frozenset(
 )
 AGENT_NAME_MAX = 32  # Herdr: [a-z][a-z0-9_-]{0,31}
 AGENT_START_TIMEOUT_MS = "60000"
+# A new pane's shell may still be starting (direnv, a slow rc file) when the agent is
+# started; Herdr then answers `agent_pane_busy`. Retry for this long.
+PANE_READY_SECONDS = 30.0
+PANE_READY_PAUSE = 1.0
 MAX_ITEMS = 100  # issue comments and edits fetched in one query
 SIGNING_KEY_SETTING = "agent.signingKey"
 KEY_HOURS = 12
@@ -478,6 +482,33 @@ def submit(herdr: Herdr, agent: str) -> None:
     raise StepError(f"{agent} did not start working after the prompt; check its pane")
 
 
+def start_agent(
+    herdr: Herdr, agent: str, kind: str, pane: str, agent_args: list[str]
+) -> None:
+    """Start ``agent`` in ``pane``, waiting while the pane's shell is still starting."""
+    deadline = time.monotonic() + PANE_READY_SECONDS
+    while True:
+        try:
+            herdr.call(
+                "agent",
+                "start",
+                agent,
+                "--kind",
+                kind,
+                "--pane",
+                pane,
+                "--timeout",
+                AGENT_START_TIMEOUT_MS,
+                "--",
+                *agent_args,
+            )
+            return
+        except StepError as exc:
+            if "agent_pane_busy" not in str(exc) or time.monotonic() >= deadline:
+                raise
+            time.sleep(PANE_READY_PAUSE)
+
+
 def with_omp_config(kind: str, agent_args: list[str]) -> list[str]:
     """Add the omp config overlay named by ``agent.ompConfig`` to ``agent_args``."""
     setting = git_config(OMP_CONFIG_SETTING) if kind == "omp" else None
@@ -616,19 +647,7 @@ def launch(
                 "--no-focus",
             )["pane"]["pane_id"]
             herdr.call("pane", "close", root_pane)
-            herdr.call(
-                "agent",
-                "start",
-                agent,
-                "--kind",
-                kind,
-                "--pane",
-                pane,
-                "--timeout",
-                AGENT_START_TIMEOUT_MS,
-                "--",
-                *agent_args,
-            )
+            start_agent(herdr, agent, kind, pane, agent_args)
             herdr.call("agent", "prompt", agent, prompt)
             submit(herdr, agent)
             live_agents.add(agent)

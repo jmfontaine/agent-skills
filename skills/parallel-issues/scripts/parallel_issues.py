@@ -53,9 +53,10 @@ issue worktrees and merged issue branches that no group accounts for, and exits
 nonzero while anything is kept or left over.
 
 ``status`` classifies each group launched in this Herdr session as ``working``,
-``needs-you`` (idle, and its recent output says "This needs you", even when
-everything is recorded), ``done`` (idle, every branch recorded, and its PR merged or
-still at the recorded commit), ``stopped`` (idle with work unrecorded) or ``gone``
+``needs-you`` (Herdr reports the agent blocked, or its recent output says "This
+needs you", even when everything is recorded), ``done`` (Herdr reports it idle or
+done, every branch recorded, and its PR merged or still at the recorded commit),
+``stopped`` (any other agent state, or work unrecorded) or ``gone``
 (no Herdr agent of that name). ``status --wait`` polls until a group that is not
 working has a state its last report did not cover, prints the report, marks it
 acknowledged and exits 0. A group seen working loses its acknowledgement, so its next
@@ -150,6 +151,10 @@ IDLE_RECHECK = 30.0  # seconds before exit 3 is confirmed
 NOTIFY_TIMEOUT = 30  # seconds the notify command may run
 READ_LINES = "120"  # recent agent output searched for NEEDS_YOU
 NEEDS_YOU = "This needs you"
+# Herdr agent states after a turn ends. `blocked` means the agent waits for input
+# or hit a provider failure; any other unknown state is never treated as finished.
+FINISHED_STATUSES = {"idle", "done"}
+BLOCKED_STATUS = "blocked"
 HEAD_MOVED = "PR head moved since record"
 # Report order and wording of the notification title.
 STATE_LABELS = {
@@ -745,16 +750,20 @@ def inspect_group(
 ) -> dict[str, Any]:
     """Classify one group; ``signature`` identifies its state for acknowledging.
 
-    A working agent is never ``done``, whatever was recorded before it resumed.
+    A working agent is never ``done``, whatever was recorded before it resumed, and
+    neither is a blocked one: Herdr reports ``blocked`` when the agent waits for the
+    user or a provider failed, so it needs the user even if its old records are
+    complete. Only an agent Herdr reports as finished can be ``done``.
     """
     branches = [branch_report(branch, entry) for branch in entry["branches"]]
+    agent_status = live.get("agent_status") if live else None
     if live is None:
         state_name = "gone"
-    elif live.get("agent_status") == "working":
+    elif agent_status == "working":
         state_name = "working"
-    elif NEEDS_YOU in herdr.read(agent):
+    elif agent_status == BLOCKED_STATUS or NEEDS_YOU in herdr.read(agent):
         state_name = "needs-you"
-    elif all(b["submitted"] for b in branches):
+    elif agent_status in FINISHED_STATUSES and all(b["submitted"] for b in branches):
         state_name = "done"
     else:
         state_name = "stopped"
@@ -1026,8 +1035,8 @@ def blockers(
             " checkout's workspace"
         )
     live = agents.get(agent)
-    if live and live.get("agent_status") == "working":
-        reasons.append(f"agent {agent} is still working")
+    if live and live.get("agent_status") in {"working", BLOCKED_STATUS}:
+        reasons.append(f"agent {agent} is still {live['agent_status']}")
     others = sorted(
         {
             p["workspace_id"]

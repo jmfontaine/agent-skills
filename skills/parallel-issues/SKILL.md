@@ -47,6 +47,10 @@ End every turn with one of these, stated in so many words:
 Say it right after the launch prints every group as started, and again whenever a
 step that needed the user is done.
 
+Ask the user to send decisions for an agent through this session, not by typing in
+the agent's Herdr pane: this session cannot see those messages, and an agent's pane is
+removed by `clean`.
+
 ## Before the first run
 
 Check each item and fix what is missing with the user; the launcher refuses to start
@@ -69,6 +73,13 @@ otherwise.
   - The user is present at launch: reading the key asks 1Password once.
 - The default branch should require signed commits (a ruleset), so an unverified
   commit fails the push instead of landing.
+- Optional, through git config:
+  - `agent.ompConfig`: an omp config overlay that the launcher passes to every omp
+    agent with `--config`, for settings only unattended agents should get, such as a
+    cheaper model for their pre-commit reviewer.
+  - `agent.notifyCommand`: a command that `status --wait` runs when it reports, with
+    a title as its argument and the report on standard input, for example a script
+    that sends a phone notification.
 
 ## Plan the batch
 
@@ -103,10 +114,16 @@ python3 <skill-dir>/scripts/parallel_issues.py launch 14,27 13
 
 The dry run checks every issue and prints each group's branches and prompt without
 creating anything. The launch creates, per group, a branch from the default branch in
-a Herdr-managed worktree and workspace, starts the agent there (`omp --advisor`; change
-it with `--kind <herdr-kind> -- <agent args>`), and submits the prompt. It also loads
+a Herdr-managed worktree and workspace, starts the agent there (`omp --advisor`, plus
+`--config` when `agent.ompConfig` is set; change it with
+`--kind <herdr-kind> -- <agent args>`), and submits the prompt. It also loads
 the agent signing key into a private ssh-agent for 12 hours, routes the agents' pushes
 over HTTPS through `gh`, and keeps the Mac awake for the same period.
+
+Worktrees contain only tracked files. When the repository's instruction files point
+agents at gitignored reference material (for example `docs/discogs/api/`), send each
+agent its absolute path in the main checkout right after the launch
+(`herdr agent prompt <agent> "<message>"`), or the agents will not find it.
 
 Branch names follow the `git-branch` skill in every repository, whatever its
 instruction files or earlier branches say: `<type>/issue-<N>-<slug>`. The type comes
@@ -123,9 +140,23 @@ A group that fails a check is reported and skipped; the others still launch.
 
 ## While it runs
 
-- `parallel_issues.py status` lists each group's agent state and its pull requests.
-- `herdr agent read <agent> --source recent-unwrapped --lines 120` shows an agent's
-  recent output. The user can also open the workspace in Herdr and talk to the agent.
+- Right after the launch, and after every relaunch or message to an agent, start
+  `parallel_issues.py status --wait` as a background job with no time limit. After a
+  message, first wait until that agent works again
+  (`herdr agent wait <agent> --until working --timeout 15000`). The watcher polls
+  every two minutes and exits as soon as a group changes to a state not reported yet:
+  `needs-you` (the agent ended with "This needs you"), `done` (every branch recorded at
+  the current pull request head, agent idle), `stopped` (idle without recording
+  everything), or `gone`. A group that stays blocked is reported once; one that
+  resumes counts as working again and is reported when it next stops. On exit it
+  prints every group's state and runs `agent.notifyCommand` if set. Exit code 3 means
+  nothing is running and nothing new happened; exit code 1 means GitHub or Herdr kept
+  failing, so start it again.
+- When the watcher exits with a report, check the reported pull requests (checks,
+  review state), report to the user without waiting to be asked, and start the watcher
+  again while any group is still working.
+- `parallel_issues.py status` prints the same states once. `herdr agent read <agent>
+  --source recent-unwrapped --lines 120` shows an agent's recent output.
 - Each agent ends by running `parallel_issues.py record`. It fails unless GitHub shows
   every commit of each pull request as verified, since the default branch's ruleset
   does not cover pull request branches. Otherwise it stores the commit each pull
@@ -137,10 +168,15 @@ A group that fails a check is reported and skipped; the others still launch.
 1. **Review.** Each pull request gets the review the `github-workflow` skill describes.
    Changes to a lower layer happen in an interactive session: fix it, then
    `gh stack rebase --upstack`, and force push only with the user's agreement.
-2. **Merge.** Merge as the `github-workflow` skill describes: one layer at a time,
-   bottom first, saving each next layer's body again so its `Closes #N` takes effect.
-   GitHub's **Rebase and merge** button fails on a repository that requires signed
-   commits; that is expected.
+2. **Merge.** Merge as the `github-workflow` skill describes. When several pull requests
+   are ready, suggest merging them in one request; never require it. On a repository
+   that squash-merges, merge a single pull request with `gh pr merge <n> --squash`,
+   and a whole stack by running `gh stack merge --yes --squash` with no number from the
+   group's worktree, where the stack is checked out. GitHub signs the squash commits
+   and rebases what is left of a partly merged stack, so the agents need no rebase
+   instructions. Hand a pull request back to its agent only for a conflict that needs
+   its context. GitHub's **Rebase and merge** button fails on a repository that
+   requires signed commits; that is expected.
 3. **Clean.** Run it from the main checkout's Herdr workspace, never from an agent's
    workspace, once no agent is working: `clean --dry-run`, then `clean`. Never remove a
    worktree, branch, or workspace by hand: that leaves the Herdr workspace and its idle

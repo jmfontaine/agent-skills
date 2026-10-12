@@ -47,6 +47,12 @@ End every turn with one of these, stated in so many words:
 Say it right after the launch prints every group as started, and again whenever a
 step that needed the user is done.
 
+Notifications come from this session only, and only when the user is needed. Whenever
+a turn ends with "I need you for: …" while the user may be away, also send that list:
+`parallel_issues.py notify "<short title>"` with the list on standard input. Never let
+the watcher or the agents ping the user: the watcher runs with `--no-notify` (see
+While it runs), and the agents' own notifications are off through `agent.ompConfig`.
+
 Ask the user to send decisions for an agent through this session, not by typing in
 the agent's Herdr pane: this session cannot see those messages, and an agent's pane is
 removed by `clean`.
@@ -76,10 +82,13 @@ otherwise.
 - Optional, through git config:
   - `agent.ompConfig`: an omp config overlay that the launcher passes to every omp
     agent with `--config`, for settings only unattended agents should get, such as a
-    cheaper model for their pre-commit reviewer.
-  - `agent.notifyCommand`: a command that `status --wait` runs when it reports, with
-    a title as its argument and the report on standard input, for example a script
-    that sends a phone notification.
+    cheaper model for their pre-commit reviewer. It should also set
+    `completion.notify`, `ask.notify` and `error.notify` to `"off"` (quoted), or every
+    agent notifies the user at the end of each turn.
+  - `agent.notifyCommand`: a command that sends the user a notification, with a title
+    as its argument and the message on standard input, for example a script that
+    sends a phone notification. `parallel_issues.py notify` runs it, and so does
+    `status --wait` when no session supervises the run.
 
 ## Plan the batch
 
@@ -141,18 +150,18 @@ A group that fails a check is reported and skipped; the others still launch.
 ## While it runs
 
 - Right after the launch, and after every relaunch or message to an agent, start
-  `parallel_issues.py status --wait` as a background job with no time limit. After a
-  message, first wait until that agent works again
+  `parallel_issues.py status --wait --no-notify` as a background job with no time
+  limit. After a message, first wait until that agent works again
   (`herdr agent wait <agent> --until working --timeout 15000`). The watcher polls
   every two minutes and exits as soon as a group changes to a state not reported yet:
   `needs-you` (Herdr reports the agent blocked, or it ended with "This needs you"),
   `done` (agent finished, every branch recorded at the current pull request head),
-  `stopped` (finished without recording everything), or `gone`. A group that
-  stays blocked is reported once; one that
-  resumes counts as working again and is reported when it next stops. On exit it
-  prints every group's state and runs `agent.notifyCommand` if set. Exit code 3 means
-  nothing is running and nothing new happened; exit code 1 means GitHub or Herdr kept
-  failing, so start it again.
+  `stopped` (finished without recording everything), or `gone`. A group that stays
+  blocked is reported once; one that resumes counts as working again and is reported
+  when it next stops. On exit it prints every group's state, and runs
+  `agent.notifyCommand` unless `--no-notify` is given. Exit code 3 means nothing is
+  running and nothing new happened; exit code 1 means GitHub or Herdr kept failing, so
+  start it again.
 - When the watcher exits with a report, check the reported pull requests (checks,
   review state), report to the user without waiting to be asked, and start the watcher
   again while any group is still working.

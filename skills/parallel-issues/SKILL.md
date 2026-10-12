@@ -156,6 +156,13 @@ A group that fails a check is reported and skipped; the others still launch.
 - When the watcher exits with a report, check the reported pull requests (checks,
   review state), report to the user without waiting to be asked, and start the watcher
   again while any group is still working.
+- Detect that agents finished only with this watcher, never with `herdr agent wait`
+  or a status loop of your own. Herdr reports a finished agent as `idle`, not `done`,
+  and `herdr agent wait` matches the state it observes, so it can return at once on
+  an agent that has not started yet or never return for one already finished. The
+  watcher checks before it sleeps and uses the launcher's states. Use
+  `herdr agent wait --until working` only for the step above: confirming that a
+  messaged agent resumed.
 - `parallel_issues.py status` prints the same states once. `herdr agent read <agent>
   --source recent-unwrapped --lines 120` shows an agent's recent output.
 - Each agent ends by running `parallel_issues.py record`. It fails unless GitHub shows

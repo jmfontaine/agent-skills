@@ -31,7 +31,9 @@ the repository's template
 
 - Open it as a draft (`gh pr create --draft`) while work or verification is incomplete,
   or when early feedback is wanted. Mark it ready with `gh pr ready <n>`.
-- Title it with the outcome, following the repository's title conventions.
+- Title it with the outcome, following the repository's title conventions. When the
+  repository squash-merges, the title becomes the commit subject on the default branch:
+  write it in the repository's commit message style, such as Conventional Commits.
 - Link each issue the PR completes with a closing keyword on its own line:
   `Closes #42`. Use `Refs #42` for partial work, such as a lower layer of a stack.
   Closing keywords take effect only when the PR merges into the default branch.
@@ -74,32 +76,67 @@ After pushing fixes, request a re-review only where the reviewer expects it, suc
 Merge only when the user asks. Before merging, confirm that checks pass
 (`gh pr checks <n>`), blocking findings are resolved, and the user has reviewed the PR.
 Use the repository's merge method and delete the branch if the repository does. Never
-use `--admin` to bypass branch protection.
+use `--admin` to bypass branch protection. Find the allowed methods with
+`gh repo view --json squashMergeAllowed,rebaseMergeAllowed,mergeCommitAllowed`.
+
+### Squash merge
+
+GitHub creates the squash commit and signs it with its own key, and the branch does not
+need to contain the base first. A ruleset that requires signed commits still checks
+every commit on the pull request branch, so each one must be signed and verified: an
+unsigned commit blocks the merge until it is rebased, signed, and force pushed.
+
+- **Single pull request:** `gh pr merge <n> --squash`. Rebase the branch first only when
+  GitHub reports a conflict (`gh pr view <n> --json mergeable` is `CONFLICTING`).
+- **Stack:** from a worktree that has the stack checked out, run
+  `gh stack merge --yes --squash` with no number. It merges every pull request of the
+  stack in one all-or-nothing operation, one squashed commit each, through GitHub's
+  asynchronous merge API. Do not pass a pull request number with `--yes`:
+  `gh stack merge` reads a bare number as a stack number first, so it can merge a
+  different stack without asking. To merge only the lower part of a stack, use its
+  interactive picker or ask the user. After a partial merge, GitHub re-targets the
+  lowest unmerged layer at the base and rebases the layers above it. Do not use
+  `gh pr merge` on a stacked pull request.
+
+### Fast-forward merge
 
 GitHub's **Rebase and merge** rewrites the commits on its servers and cannot sign them,
-so each merged commit loses its signature (squash and merge commits are signed by
-GitHub's own key). A ruleset that requires signed commits therefore rejects it. When
-the repository requires signed commits, or rebases to keep a linear history, merge
-with a local fast-forward instead, which lands the pull request's own signed commits
-unchanged:
+so a ruleset that requires signed commits rejects it. When the repository requires
+signed commits and does not allow squash merges, merge with a local fast-forward,
+which lands the pull request's own signed commits unchanged:
 
 1. Run `git fetch origin` and check that the branch contains the base:
    `git merge-base --is-ancestor origin/<base> origin/<branch>`. If it does not,
    rebase the branch onto `origin/<base>`, which signs the rewritten commits with your
-   key, force push it with `--force-with-lease` after asking, and wait for the checks.
+   key, force push it with `--force-with-lease` (a request to merge this pull request
+   authorizes it; see the `git-commit` skill), and wait for the checks.
 2. Push the branch's head to the base: `git push origin origin/<branch>:<base>`.
    GitHub marks the pull request merged once its head is on the base branch.
 3. Delete the merged remote branch (`git push origin --delete <branch>`) if the
    repository deletes merged branches and GitHub has not already.
 
-Merge a stack one layer at a time, bottom first. Pushing the top branch would merge
-every layer at once, but only the bottom pull request closes its issues: GitHub reads
-closing keywords only from pull requests that target the default branch, and a higher
-layer targets the branch below it. After each layer merges, GitHub re-targets the next
-one to the base without re-reading its body, so save the body again unchanged
+Fast-forward a stack one layer at a time, bottom first. Pushing the top branch would
+merge every layer at once, but only the bottom pull request closes its issues: GitHub
+reads closing keywords only from pull requests that target the default branch, and a
+higher layer targets the branch below it. After each layer merges, GitHub re-targets
+the next one to the base without re-reading its body, so save the body again unchanged
 (`gh pr view <n> --json body --jq .body > <file>`, then
 `gh pr edit <n> --body-file <file>`), confirm that
 `gh pr view <n> --json closingIssuesReferences` lists its issues, and merge it.
+
+### Several at once
+
+When the user asks to merge several pull requests or stacks (a list, a range, or "the
+ready ones"), merge them in one pass without asking about each one. When several are
+ready, suggest this; never require it.
+
+1. Skip any pull request with failing checks or an unresolved blocking finding, and
+   report it.
+2. Merge one stack or pull request at a time. Rebase only when the merge method or a
+   conflict requires it, and only the one about to merge: every merge moves the base
+   again, so rebasing the others would be repeated.
+3. Stop only for a conflict whose resolution changes behavior, or for a failing check.
+   Resolve import-only and formatting conflicts yourself.
 
 After the merge, confirm that the linked issues closed. If the merge closed the last
 open sub-issue of a slice, the next step is the slice review, not closing the parent.

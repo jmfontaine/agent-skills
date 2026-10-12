@@ -1,19 +1,20 @@
 ---
 name: python-codebase-review
-description: Deep, whole-codebase review of a Python project that produces REVIEW.md, a verified and prioritized list of fixes and improvements. Splits the code into slices and fans out parallel reviewer subagents, plus cross-cutting and security passes, on top of a ruff/type-checker/pytest baseline. Use this whenever the user wants to review, audit, assess, or find bugs and improvements across a Python repository, package, or service as a whole, even if they just say "review this codebase", "what should we fix in this project", or "audit the code quality". Do not use it for reviewing a diff, branch, commit, or PR (use /review), or for a single file.
+description: Deep, whole-codebase review of a Python project that writes a new REVIEW.md, a verified and prioritized list of fixes and improvements. Splits the code into slices and fans out parallel reviewer subagents, plus cross-cutting and security passes, on top of a ruff/type-checker/pytest baseline. Use this whenever the user wants to review, audit, assess, or find bugs and improvements across a Python repository, package, or service as a whole, even if they just say "review this codebase", "what should we fix in this project", or "audit the code quality". Do not use it for reviewing a diff, branch, commit, or PR (use /review), for a single file, or for checking the findings of an existing REVIEW.md (use review-verification).
 ---
 
 # Python Codebase Review
 
-Review an entire Python codebase and write `REVIEW.md` at the repository root: bugs to
-fix and improvements to make, each with location, impact, and a concrete fix. The value
-of this review is that every reported item is real and actionable, so verification
-matters more than volume.
+Review an entire Python codebase and write `REVIEW.md`: bugs to fix and improvements to
+make, each with location, impact, and a concrete fix. Put it in the scratch directory
+the agent instruction files name (such as `.scratch/`), otherwise at the repository
+root. The value of this review is that every reported item is real and actionable, so
+verification matters more than volume.
 
 The review is read-only. Do not edit, format, or commit source files; the only file you
-write in the repository is `REVIEW.md`. Running tools and throwaway scripts under `/tmp`
-is fine. If the user passed arguments (a path to limit scope, or a focus such as
-"performance"), apply them to every phase.
+write in the repository is `REVIEW.md`, which stays uncommitted. Running tools and
+throwaway scripts under `/tmp` is fine. If the user passed arguments (a path to limit
+scope, or a focus such as "performance"), apply them to every phase.
 
 ## 1. Baseline
 
@@ -51,6 +52,11 @@ Split the code into review slices of roughly 3-8k lines each, along package or m
 boundaries so each reviewer sees code that belongs together. Size the plan to the
 codebase: a 2k-line project needs one or two reviewers, not ten. Keep generated code,
 vendored code, and migrations out of slices unless the user asks for them.
+
+Under about 15k lines, keep the total to six reviewers or fewer: merge Architecture
+with Dead code, and Errors with Concurrency. Overlapping lenses mostly re-find the same
+defect. That overlap is a useful confidence signal, but each extra reviewer costs as
+much as a slice.
 
 Add cross-cutting reviewers, each covering the whole codebase through its own lens:
 
@@ -150,6 +156,11 @@ Omit empty sections. Then reply in chat with the path to `REVIEW.md`, the count 
 findings by priority, and the top five items.
 
 ## After the review
+
+Recommend a verification pass in a fresh session before acting on REVIEW.md (the
+`review-verification` skill). Then file the confirmed items as issues, as the
+`github-workflow` skill describes: self-contained, with no references to REVIEW.md or
+its finding IDs.
 
 Suggest fixing in batches by priority in a new session ("fix the P0 items in REVIEW.md,
 one commit each, with a regression test for each"), then running `/review` on the

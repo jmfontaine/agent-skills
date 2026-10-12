@@ -39,8 +39,16 @@ Use the repository's issue template if one exists, otherwise
   when the brief changes.
 - **Outcome:** what is true when the work is done.
 - **Verification:** how anyone confirms the outcome, including important failure
-  behavior. An issue without verification cannot be reviewed.
+  behavior. An issue without verification cannot be reviewed. Every step must be
+  possible on the branch the work lands on: CI that runs only on pull requests to the
+  default branch does not run on a stacked layer.
 - **Out of scope:** only the exclusions a contributor might otherwise assume.
+- **Self-contained:** a reader who sees only the issue understands it. Cite code at a
+  commit SHA, never the review, plan, or research file the issue came from, its
+  finding IDs (F1, I27, N4), or "the review".
+- **Decisions:** when the work needs a choice from the user, add a "Decision needed"
+  section with each option, its tradeoff, and your recommendation. When you report
+  back, list every open decision by issue number.
 
 Size each task for one pull request. Split work that needs several independent reviews
 into separate issues; dependent layers of one change can stay in one issue and ship as
@@ -52,7 +60,18 @@ Create issues only for committed work in the active or near-term plan. Do not bu
 speculative issue trees for distant work.
 
 When the user has approved a set of issues, create them all in one pass. Do not create
-one first and wait for review before the rest.
+one first and wait for review before the rest, even if an earlier session or a memory
+note says otherwise.
+
+### File a batch from a review or plan
+
+1. List what you would file (title, labels, blocked-by) and wait for approval.
+2. Before creating anything, have a reviewer that did not draft the bodies check each
+   Outcome and Verification against the code. Look especially for counted guarantees
+   ("exactly one request"), cache and retry paths, and contracts that two issues both
+   define. Fix every valid finding.
+3. Create them all in one pass, then search the created bodies for the source file's
+   name and finding IDs.
 
 ## Group a slice under a parent issue
 

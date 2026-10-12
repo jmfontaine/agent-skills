@@ -4,7 +4,7 @@
     parallel_issues.py launch --dry-run 14,27 13
     parallel_issues.py launch 14,27 13 [--kind omp] [-- AGENT_ARGS...]
     parallel_issues.py record          # run by the agent, inside its worktree
-    parallel_issues.py status
+    parallel_issues.py status [--wait [--interval SECONDS] [--timeout HOURS] | --ack]
     parallel_issues.py clean [--dry-run]
 
 Each ``launch`` argument is a group: comma-separated issue numbers, bottom of the
@@ -52,6 +52,25 @@ repository's run records it. It then reports, as leftovers, launch workspaces,
 issue worktrees and merged issue branches that no group accounts for, and exits
 nonzero while anything is kept or left over.
 
+``status`` classifies each group launched in this Herdr session as ``working``,
+``needs-you`` (idle, and its recent output says "This needs you", even when
+everything is recorded), ``done`` (idle, every branch recorded, and its PR merged or
+still at the recorded commit), ``stopped`` (idle with work unrecorded) or ``gone``
+(no Herdr agent of that name). ``status --wait`` polls until a group that is not
+working has a state its last report did not cover, prints the report, marks it
+acknowledged and exits 0. A group seen working loses its acknowledgement, so its next
+idle state is always reported. It exits 2 on timeout, and 3 when two polls, the
+second ``IDLE_RECHECK`` seconds after the first, find nothing working and nothing
+new (the pause covers a watcher started just after messaging an agent). A poll that
+fails (``gh`` or Herdr erroring) is reported on stderr and retried at the next
+interval; after ``MAX_FAILED_POLLS`` in a row it exits 1 with the last error.
+``status --ack`` acknowledges the current state without waiting. After a ``--wait``
+report, git config ``agent.notifyCommand`` is run (``NOTIFY_TIMEOUT`` seconds at
+most) with the title as its last argument and the report on stdin.
+
+``launch`` of an ``omp`` agent adds ``--config <file>`` for git config
+``agent.ompConfig`` (an omp config overlay) unless the agent arguments have one.
+
 Python 3.10+, standard library only.
 """
 
@@ -64,6 +83,7 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import shutil
 import signal
 import subprocess
@@ -89,7 +109,17 @@ DEFAULT_AGENT_ARGS = {"omp": ["--advisor"]}
 # the launcher has. They are matched most specific first, so the result never depends
 # on the order GitHub lists them in: a label named after a commit type, then a label
 # that stands for one type, then GitHub's generic defaults.
-COMMIT_TYPES = ("feat", "fix", "docs", "test", "refactor", "perf", "build", "ci", "chore")
+COMMIT_TYPES = (
+    "feat",
+    "fix",
+    "docs",
+    "test",
+    "refactor",
+    "perf",
+    "build",
+    "ci",
+    "chore",
+)
 LABEL_PREFIXES = (
     *((commit_type, commit_type) for commit_type in COMMIT_TYPES),
     ("tests", "test"),
@@ -110,6 +140,26 @@ AGENT_START_TIMEOUT_MS = "60000"
 MAX_ITEMS = 100  # issue comments and edits fetched in one query
 SIGNING_KEY_SETTING = "agent.signingKey"
 KEY_HOURS = 12
+WAIT_INTERVAL = 120.0  # seconds between polls of `status --wait`
+WAIT_TIMEOUT_HOURS = 13.0
+EXIT_TIMEOUT = 2
+EXIT_NOTHING_TO_WAIT = 3
+EXIT_POLL_FAILED = 1
+MAX_FAILED_POLLS = 5
+IDLE_RECHECK = 30.0  # seconds before exit 3 is confirmed
+NOTIFY_TIMEOUT = 30  # seconds the notify command may run
+READ_LINES = "120"  # recent agent output searched for NEEDS_YOU
+NEEDS_YOU = "This needs you"
+HEAD_MOVED = "PR head moved since record"
+# Report order and wording of the notification title.
+STATE_LABELS = {
+    "done": "done",
+    "needs-you": "needs you",
+    "stopped": "stopped",
+    "gone": "gone",
+}
+NOTIFY_SETTING = "agent.notifyCommand"
+OMP_CONFIG_SETTING = "agent.ompConfig"
 STATE_DIR = (
     Path(os.environ.get("XDG_STATE_HOME") or Path.home() / ".local" / "state") / "agent"
 )
@@ -176,6 +226,16 @@ class Herdr:
 
     def call(self, *args: str) -> dict[str, Any]:
         return run_json([*self._prefix, *args])["result"]
+
+    def read(self, agent: str) -> str:
+        """The agent's recent terminal output; unlike ``call``, plain text."""
+        return run(
+            [
+                *self._prefix,
+                *("agent", "read", agent, "--source", "recent-unwrapped"),
+                *("--lines", READ_LINES),
+            ]
+        )
 
 
 def common_dir() -> str:
@@ -405,10 +465,26 @@ def submit(herdr: Herdr, agent: str) -> None:
     raise StepError(f"{agent} did not start working after the prompt; check its pane")
 
 
+def with_omp_config(kind: str, agent_args: list[str]) -> list[str]:
+    """Add the omp config overlay named by ``agent.ompConfig`` to ``agent_args``."""
+    setting = git_config(OMP_CONFIG_SETTING) if kind == "omp" else None
+    if not setting or any(
+        arg == "--config" or arg.startswith("--config=") for arg in agent_args
+    ):
+        return agent_args
+    path = Path(setting).expanduser().resolve()
+    if not path.is_file():
+        raise StepError(f"{OMP_CONFIG_SETTING} is {setting}, which is not a file")
+    return [*agent_args, "--config", str(path)]
+
+
 def launch(
     values: list[str], kind: str, agent_args: list[str], herdr: Herdr, dry_run: bool
 ) -> int:
     groups = parse_groups(values)
+    agent_args = with_omp_config(kind, agent_args)
+    if dry_run:
+        print(f"agent command: {kind} {shlex.join(agent_args)}")
     template = Template(PROMPT_TEMPLATE.read_text())
     repo = run_json(
         ["gh", "repo", "view", "--json", "owner,name,nameWithOwner,defaultBranchRef"]
@@ -624,24 +700,248 @@ def record() -> int:
     return 1 if problems else 0
 
 
-def status(herdr: Herdr) -> int:
+def branch_report(branch: str, entry: dict[str, Any]) -> dict[str, Any]:
+    """What GitHub shows for ``branch``, against what ``record`` stored for it.
+
+    ``submitted`` means the recorded PR is merged, or open at the recorded commit.
+    An open PR that has moved on counts too when the local branch is still at the
+    recorded commit: GitHub rebased the layer after a partial stack merge, and the
+    agent did not push.
+    """
+    recorded = entry["submitted"].get(branch)
+    prs = run_json(
+        ["gh", "pr", "list", "--head", branch, "--state", "all"]
+        + ["--json", "number,state,url,headRefOid"]
+    )
+    wanted = recorded["pr"] if recorded else None
+    pr = (
+        next((p for p in prs if p["number"] == wanted), None)
+        or next((p for p in prs if p["state"] == "OPEN"), None)
+        or next(iter(prs), None)
+    )
+    submitted, note = False, None
+    if recorded and pr and pr["number"] == recorded["pr"]:
+        if pr["state"] == "MERGED":
+            submitted = True
+        elif pr["state"] == "OPEN":
+            moved = pr["headRefOid"] != recorded["oid"]
+            note = HEAD_MOVED if moved else None
+            submitted = not moved or branch_head(branch) == recorded["oid"]
+    return {
+        "branch": branch,
+        "recorded": bool(recorded),
+        "oid": recorded["oid"] if recorded else None,
+        "pr": pr["number"] if pr else None,
+        "pr_state": pr["state"] if pr else None,
+        "pr_head": pr["headRefOid"] if pr else None,
+        "url": pr["url"] if pr else None,
+        "submitted": submitted,
+        "note": note,
+    }
+
+
+def inspect_group(
+    agent: str, entry: dict[str, Any], live: dict[str, Any] | None, herdr: Herdr
+) -> dict[str, Any]:
+    """Classify one group; ``signature`` identifies its state for acknowledging.
+
+    A working agent is never ``done``, whatever was recorded before it resumed.
+    """
+    branches = [branch_report(branch, entry) for branch in entry["branches"]]
+    if live is None:
+        state_name = "gone"
+    elif live.get("agent_status") == "working":
+        state_name = "working"
+    elif NEEDS_YOU in herdr.read(agent):
+        state_name = "needs-you"
+    elif all(b["submitted"] for b in branches):
+        state_name = "done"
+    else:
+        state_name = "stopped"
+    signature = {
+        "state": state_name,
+        "branches": [
+            [b["branch"], b["oid"], b["pr"], b["pr_state"], b["pr_head"]]
+            for b in branches
+        ],
+    }
+    return {"state": state_name, "branches": branches, "signature": signature}
+
+
+def recorded_groups() -> dict[str, dict[str, Any]]:
     with state() as entries:
-        groups = dict(entries)
+        return dict(entries)
+
+
+def inspect_groups(
+    herdr: Herdr, groups: dict[str, dict[str, Any]]
+) -> dict[str, dict[str, Any]]:
+    """Report on the groups launched in this Herdr session, by issue order."""
+    agents = {a.get("name"): a for a in herdr.call("agent", "list")["agents"]}
+    return {
+        agent: inspect_group(agent, entry, agents.get(agent), herdr)
+        for agent, entry in sorted(groups.items(), key=lambda item: item[1]["issues"])
+        if entry.get("herdr_session") == herdr.session
+    }
+
+
+def render(reports: dict[str, dict[str, Any]], changed: set[str]) -> str:
+    lines = []
+    for agent, report in reports.items():
+        lines.append(
+            f"{agent}: {report['state']}{' (changed)' if agent in changed else ''}"
+        )
+        for b in report["branches"]:
+            pr = f"{b['pr_state'].lower()} {b['url']}" if b["pr"] else "no PR"
+            recorded = "recorded" if b["recorded"] else "not recorded"
+            note = f"; {b['note']}" if b["note"] else ""
+            lines.append(f"  {b['branch']}: {pr} ({recorded}{note})")
+    return "\n".join(lines)
+
+
+def acknowledge(reports: dict[str, dict[str, Any]]) -> None:
+    """Store each group's current signature as the one the reader has seen."""
+    with state() as entries:
+        for agent, report in reports.items():
+            if agent in entries:
+                entries[agent]["acknowledged"] = report["signature"]
+
+
+def notify(reports: dict[str, dict[str, Any]], changed: set[str], text: str) -> None:
+    """Run ``agent.notifyCommand`` with a title argument and the report on stdin."""
+    setting = git_config(NOTIFY_SETTING)
+    if not setting:
+        return
+    counts = [reports[agent]["state"] for agent in changed]
+    summary = ", ".join(
+        f"{counts.count(name)} {label}"
+        for name, label in STATE_LABELS.items()
+        if name in counts
+    )
+    title = f"{Path(common_dir()).parent.name}: {summary}"
+    try:
+        command = shlex.split(setting)
+        command[0] = os.path.expanduser(command[0])
+        result = subprocess.run(
+            [*command, title],
+            input=text,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=NOTIFY_TIMEOUT,
+        )
+    except subprocess.TimeoutExpired:
+        print(
+            f"warning: {NOTIFY_SETTING} timed out after {NOTIFY_TIMEOUT} s",
+            file=sys.stderr,
+        )
+        return
+    except (OSError, ValueError, IndexError) as exc:
+        print(f"warning: {NOTIFY_SETTING} could not run: {exc}", file=sys.stderr)
+        return
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout).strip()
+        print(
+            f"warning: {NOTIFY_SETTING} exited {result.returncode}: {detail}",
+            file=sys.stderr,
+        )
+
+
+def poll(
+    herdr: Herdr,
+) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
+    """Return (recorded groups, their reports); forget acknowledgements of workers.
+
+    A group seen working has moved on, so the state it ends in is news even when it
+    equals the one that was acknowledged.
+    """
+    groups = recorded_groups()
+    reports = inspect_groups(herdr, groups)
+    resumed = [
+        agent
+        for agent, report in reports.items()
+        if report["state"] == "working" and "acknowledged" in groups[agent]
+    ]
+    if resumed:
+        with state() as entries:
+            for agent in resumed:
+                if agent in entries:
+                    entries[agent].pop("acknowledged", None)
+        for agent in resumed:
+            groups[agent].pop("acknowledged", None)
+    return groups, reports
+
+
+def wait_for_change(herdr: Herdr, interval: float, hours: float) -> int:
+    """Poll until a group that is not working has a state nobody was told about.
+
+    Exits ``EXIT_NOTHING_TO_WAIT`` once two polls in a row, the second
+    ``IDLE_RECHECK`` seconds after the first, find nothing working and nothing new:
+    an agent just messaged may not show as working yet, and a watcher started again
+    after a finished run must not spin. Polls that fail are retried; after
+    ``MAX_FAILED_POLLS`` in a row the last error ends the wait.
+    """
+    deadline = time.monotonic() + hours * 3600
+    idle_polls = failed_polls = 0
+    while True:
+        pause = interval
+        try:
+            groups, reports = poll(herdr)
+        except StepError as exc:
+            failed_polls += 1
+            idle_polls = 0
+            print(
+                f"warning: poll {failed_polls}/{MAX_FAILED_POLLS} failed: {exc}",
+                file=sys.stderr,
+            )
+            if failed_polls >= MAX_FAILED_POLLS:
+                print(f"FAILED: {exc}", file=sys.stderr)
+                return EXIT_POLL_FAILED
+        else:
+            failed_polls = 0
+            changed = {
+                agent
+                for agent, report in reports.items()
+                if report["state"] != "working"
+                and report["signature"] != groups[agent].get("acknowledged")
+            }
+            if changed:
+                text = render(reports, changed)
+                print(text)
+                acknowledge(reports)
+                notify(reports, changed, text)
+                return 0
+            if any(report["state"] == "working" for report in reports.values()):
+                idle_polls = 0
+            else:
+                idle_polls += 1
+                if idle_polls >= 2:
+                    print(
+                        "Nothing to wait for: no agent is working and nothing is new."
+                    )
+                    return EXIT_NOTHING_TO_WAIT
+                pause = min(interval, IDLE_RECHECK)
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            print(f"Timed out after {hours:g} h; nothing new.")
+            return EXIT_TIMEOUT
+        time.sleep(min(pause, remaining))
+
+
+def status(herdr: Herdr, ack: bool) -> int:
+    groups = recorded_groups()
     if not groups:
         print("No recorded groups.")
         return 0
-    agents = {a.get("name"): a for a in herdr.call("agent", "list")["agents"]}
+    reports = inspect_groups(herdr, groups)
     for agent, entry in sorted(groups.items(), key=lambda item: item[1]["issues"]):
-        live = agents.get(agent)
-        print(f"{agent}: {live['agent_status'] if live else 'gone'}")
-        for branch in entry["branches"]:
-            prs = run_json(
-                ["gh", "pr", "list", "--head", branch, "--state", "all"]
-                + ["--json", "state,url"]
-            )
-            pr = " ".join(f"{p['state'].lower()} {p['url']}" for p in prs) or "no PR"
-            recorded = "recorded" if branch in entry["submitted"] else "not recorded"
-            print(f"  {branch}: {pr} ({recorded})")
+        if agent not in reports:
+            print(f"{agent}: launched in Herdr session {entry.get('herdr_session')}")
+    if reports:
+        print(render(reports, set()))
+    if ack:
+        acknowledge(reports)
+        print(f"Acknowledged {len(reports)} group(s).")
     return 0
 
 
@@ -1011,7 +1311,35 @@ def main() -> None:
         "--dry-run", action="store_true", help="check issues and print prompts only"
     )
     commands.add_parser("record", help="record submitted PRs (run by the agent)")
-    commands.add_parser("status", help="show agent and PR state per group")
+    status_parser = commands.add_parser(
+        "status", help="show agent and PR state per group"
+    )
+    mode = status_parser.add_mutually_exclusive_group()
+    mode.add_argument(
+        "--wait",
+        action="store_true",
+        help="wait until a group is done, needs you, stopped or gone (exit 0), "
+        f"timed out ({EXIT_TIMEOUT}), nothing is left to wait for "
+        f"({EXIT_NOTHING_TO_WAIT}) or {MAX_FAILED_POLLS} polls failed "
+        f"({EXIT_POLL_FAILED})",
+    )
+    mode.add_argument(
+        "--ack", action="store_true", help="mark the current state as seen"
+    )
+    status_parser.add_argument(
+        "--interval",
+        type=float,
+        default=WAIT_INTERVAL,
+        metavar="SECONDS",
+        help=f"seconds between polls (default: {WAIT_INTERVAL:g})",
+    )
+    status_parser.add_argument(
+        "--timeout",
+        type=float,
+        default=WAIT_TIMEOUT_HOURS,
+        metavar="HOURS",
+        help=f"give up after this long (default: {WAIT_TIMEOUT_HOURS:g})",
+    )
     clean_parser = commands.add_parser("clean", help="remove merged groups")
     clean_parser.add_argument(
         "--dry-run", action="store_true", help="print what would be removed"
@@ -1019,6 +1347,8 @@ def main() -> None:
     args = parser.parse_args(argv)
     if agent_args is not None and args.command != "launch":
         parser.error("agent arguments after `--` apply to launch only")
+    if args.command == "status" and (args.interval <= 0 or args.timeout <= 0):
+        parser.error("--interval and --timeout must be positive")
 
     if missing := [tool for tool in REQUIRED_TOOLS if shutil.which(tool) is None]:
         sys.exit(f"Missing tools: {', '.join(missing)}")
@@ -1037,7 +1367,10 @@ def main() -> None:
         elif args.command == "record":
             code = record()
         elif args.command == "status":
-            code = status(herdr)
+            if args.wait:
+                code = wait_for_change(herdr, args.interval, args.timeout)
+            else:
+                code = status(herdr, args.ack)
         else:
             code = clean(herdr, args.dry_run)
     except StepError as exc:

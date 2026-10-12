@@ -67,7 +67,11 @@ fails (``gh`` or Herdr erroring) is reported on stderr and retried at the next
 interval; after ``MAX_FAILED_POLLS`` in a row it exits 1 with the last error.
 ``status --ack`` acknowledges the current state without waiting. After a ``--wait``
 report, git config ``agent.notifyCommand`` is run (``NOTIFY_TIMEOUT`` seconds at
-most) with the title as its last argument and the report on stdin.
+most) with the title as its last argument and the report on stdin, unless
+``--no-notify`` is given: a session supervising the run reports to the user itself.
+``notify TITLE`` runs the same command with ``TITLE`` (prefixed with the repository
+name) and standard input as the message, so that session can tell the user when it
+needs them; it exits 1 when the command is not set or fails.
 
 ``launch`` of an ``omp`` agent adds ``--config <file>`` for git config
 ``agent.ompConfig`` (an omp config overlay) unless the agent arguments have one.
@@ -816,18 +820,11 @@ def acknowledge(reports: dict[str, dict[str, Any]]) -> None:
                 entries[agent]["acknowledged"] = report["signature"]
 
 
-def notify(reports: dict[str, dict[str, Any]], changed: set[str], text: str) -> None:
-    """Run ``agent.notifyCommand`` with a title argument and the report on stdin."""
+def run_notify_command(title: str, text: str) -> str | None:
+    """Run ``agent.notifyCommand`` with ``title`` and ``text``; return the problem."""
     setting = git_config(NOTIFY_SETTING)
     if not setting:
-        return
-    counts = [reports[agent]["state"] for agent in changed]
-    summary = ", ".join(
-        f"{counts.count(name)} {label}"
-        for name, label in STATE_LABELS.items()
-        if name in counts
-    )
-    title = f"{Path(common_dir()).parent.name}: {summary}"
+        return f"{NOTIFY_SETTING} is not set"
     try:
         command = shlex.split(setting)
         command[0] = os.path.expanduser(command[0])
@@ -840,20 +837,39 @@ def notify(reports: dict[str, dict[str, Any]], changed: set[str], text: str) -> 
             timeout=NOTIFY_TIMEOUT,
         )
     except subprocess.TimeoutExpired:
-        print(
-            f"warning: {NOTIFY_SETTING} timed out after {NOTIFY_TIMEOUT} s",
-            file=sys.stderr,
-        )
-        return
+        return f"{NOTIFY_SETTING} timed out after {NOTIFY_TIMEOUT} s"
     except (OSError, ValueError, IndexError) as exc:
-        print(f"warning: {NOTIFY_SETTING} could not run: {exc}", file=sys.stderr)
-        return
+        return f"{NOTIFY_SETTING} could not run: {exc}"
     if result.returncode != 0:
         detail = (result.stderr or result.stdout).strip()
-        print(
-            f"warning: {NOTIFY_SETTING} exited {result.returncode}: {detail}",
-            file=sys.stderr,
-        )
+        return f"{NOTIFY_SETTING} exited {result.returncode}: {detail}"
+    return None
+
+
+def notify(reports: dict[str, dict[str, Any]], changed: set[str], text: str) -> None:
+    """Send a ``status --wait`` report, titled with a count of the changed states."""
+    if not git_config(NOTIFY_SETTING):
+        return
+    counts = [reports[agent]["state"] for agent in changed]
+    summary = ", ".join(
+        f"{counts.count(name)} {label}"
+        for name, label in STATE_LABELS.items()
+        if name in counts
+    )
+    if problem := run_notify_command(
+        f"{Path(common_dir()).parent.name}: {summary}", text
+    ):
+        print(f"warning: {problem}", file=sys.stderr)
+
+
+def notify_user(title: str) -> int:
+    """Send ``title`` and standard input through ``agent.notifyCommand``."""
+    text = sys.stdin.read() if not sys.stdin.isatty() else ""
+    problem = run_notify_command(f"{Path(common_dir()).parent.name}: {title}", text)
+    if problem:
+        print(f"FAILED: {problem}", file=sys.stderr)
+        return 1
+    return 0
 
 
 def poll(
@@ -881,7 +897,9 @@ def poll(
     return groups, reports
 
 
-def wait_for_change(herdr: Herdr, interval: float, hours: float) -> int:
+def wait_for_change(
+    herdr: Herdr, interval: float, hours: float, send_notification: bool
+) -> int:
     """Poll until a group that is not working has a state nobody was told about.
 
     Exits ``EXIT_NOTHING_TO_WAIT`` once two polls in a row, the second
@@ -918,7 +936,8 @@ def wait_for_change(herdr: Herdr, interval: float, hours: float) -> int:
                 text = render(reports, changed)
                 print(text)
                 acknowledge(reports)
-                notify(reports, changed, text)
+                if send_notification:
+                    notify(reports, changed, text)
                 return 0
             if any(report["state"] == "working" for report in reports.values()):
                 idle_polls = 0
@@ -1349,6 +1368,17 @@ def main() -> None:
         metavar="HOURS",
         help=f"give up after this long (default: {WAIT_TIMEOUT_HOURS:g})",
     )
+    status_parser.add_argument(
+        "--no-notify",
+        action="store_true",
+        help=f"with --wait, do not run {NOTIFY_SETTING} (a supervising session "
+        "reports to the user itself)",
+    )
+    notify_parser = commands.add_parser(
+        "notify",
+        help=f"send TITLE and standard input to the user through {NOTIFY_SETTING}",
+    )
+    notify_parser.add_argument("title", metavar="TITLE")
     clean_parser = commands.add_parser("clean", help="remove merged groups")
     clean_parser.add_argument(
         "--dry-run", action="store_true", help="print what would be removed"
@@ -1358,6 +1388,8 @@ def main() -> None:
         parser.error("agent arguments after `--` apply to launch only")
     if args.command == "status" and (args.interval <= 0 or args.timeout <= 0):
         parser.error("--interval and --timeout must be positive")
+    if args.command == "status" and args.no_notify and not args.wait:
+        parser.error("--no-notify applies to --wait only")
 
     if missing := [tool for tool in REQUIRED_TOOLS if shutil.which(tool) is None]:
         sys.exit(f"Missing tools: {', '.join(missing)}")
@@ -1375,9 +1407,13 @@ def main() -> None:
             code = launch(args.groups, args.kind, agent_args, herdr, args.dry_run)
         elif args.command == "record":
             code = record()
+        elif args.command == "notify":
+            code = notify_user(args.title)
         elif args.command == "status":
             if args.wait:
-                code = wait_for_change(herdr, args.interval, args.timeout)
+                code = wait_for_change(
+                    herdr, args.interval, args.timeout, not args.no_notify
+                )
             else:
                 code = status(herdr, args.ack)
         else:

@@ -1,10 +1,18 @@
 ---
 name: git-commit
-description: Git commit guidelines, including GitHub stacked pull requests. Use when creating, amending, squashing, or rewording git commits, staging files, writing commit messages, or splitting dependent changes into stacked branches and pull requests.
-allowed-tools: Bash(git add:*) Bash(git branch:*) Bash(git commit:*) Bash(git diff:*) Bash(git log:*) Bash(git rebase:*) Bash(git status:*) Bash(gh extension list:*) Bash(gh stack add:*) Bash(gh stack bottom:*) Bash(gh stack checkout:*) Bash(gh stack down:*) Bash(gh stack init:*) Bash(gh stack rebase:*) Bash(gh stack top:*) Bash(gh stack up:*) Bash(gh stack view:*)
+description: Git commit guidelines, including which branch a commit goes on and GitHub stacked pull requests. Use before every git commit, including a bare "commit" or "commit and push" request, and when amending, squashing, rewording, staging files, writing commit messages, or splitting dependent changes into stacked branches and pull requests.
+allowed-tools: Bash(git add:*) Bash(git branch:*) Bash(git commit:*) Bash(git diff:*) Bash(git log:*) Bash(git rebase:*) Bash(git status:*) Bash(gh extension list:*) Bash(gh repo view:*) Bash(gh stack add:*) Bash(gh stack bottom:*) Bash(gh stack checkout:*) Bash(gh stack down:*) Bash(gh stack init:*) Bash(gh stack rebase:*) Bash(gh stack top:*) Bash(gh stack up:*) Bash(gh stack view:*)
 ---
 
 # Git Commit Guidelines
+
+## Where to Commit
+
+Never commit on the repository's default branch. Before the first commit of a change,
+run `git branch --show-current`. If it prints the default branch, create a branch named
+as the `git-branch` skill describes and commit there. The only exception is a
+repository whose agent instruction files (AGENTS.md, CLAUDE.md) explicitly allow direct
+commits to the default branch.
 
 ## Message Style
 
@@ -46,12 +54,21 @@ That's one small step for mankind, one giant leap for a man
 
 ## Clean History
 
-The user typically rebase-merges pull requests, so every commit lands on the main branch
-as-is. Keep the commit history clean at all times: each commit should be a complete,
-logical change with no "fix typo" or "address review" follow-ups.
+How much the commits on a branch matter depends on how the repository merges pull
+requests. Check the allowed methods with
+`gh repo view --json squashMergeAllowed,rebaseMergeAllowed,mergeCommitAllowed`.
 
-When changes correct or complete a previous commit (e.g., a quick fix or forgotten
-file), fold them into that commit instead of creating a new one:
+- **Squash merge:** each pull request lands as one commit whose subject is the pull
+  request title. The branch's own commits never reach the default branch, so fix
+  review findings with new commits on top instead of rewriting pushed ones; no force
+  push is needed. Before the first push, still fold quick fixes into the commit they
+  correct.
+- **Rebase or fast-forward merge:** every commit lands on the default branch as-is.
+  Keep the history clean at all times: each commit is a complete, logical change with
+  no "fix typo" or "address review" follow-ups.
+
+When commits land as-is and changes correct or complete a previous commit (e.g., a
+quick fix or forgotten file), fold them into that commit instead of creating a new one:
 
 - **Not pushed:** amend it without asking. Use `git commit --amend` for the last commit,
   or `git commit --fixup=<commit>` followed by `git rebase --autosquash <commit>~1` for
@@ -130,7 +147,10 @@ cherry-pick between branches.
   `gh stack rebase --upstack` if a lower layer changed.
 
 Rewriting a pushed layer, including the layers above it that a cascading rebase replays,
-follows the pushed-commit rule in Clean History: ask before force pushing.
+follows the pushed-commit rule in Clean History: ask before force pushing. A user's
+request to merge a pull request or stack that is behind its base already covers
+rebasing that stack's branches and pushing them with `--force-with-lease`; it covers no
+other branch.
 
 ### Pushing and Merging
 
@@ -141,11 +161,12 @@ Push, open pull requests, or merge only when the user asks.
   an editor that needs an interactive terminal. New pull requests are drafts unless you
   pass `--open`.
 - **Push after rewriting layers:** run `gh stack push`, which uses `--force-with-lease`.
-- **Merge:** follow the `github-workflow` skill's merge section, bottom-up. When the
-  repository merges by rebase, it fast-forwards the base one layer at a time, which
-  keeps every commit's signature and lets each layer close its issues. Otherwise,
-  `gh stack merge <pr-number>` with the repository's merge method merges every pull
-  request up to and including that one.
+- **Merge:** follow the `github-workflow` skill's merge section. On a repository that
+  squash-merges, merge a whole stack with `gh stack merge --yes --squash`, run with no
+  number from a worktree that has the stack checked out: a bare number is read as a
+  stack number before a pull request number. When the repository only rebase-merges
+  and requires signed commits, fast-forward layer by layer instead, as that skill
+  describes.
 
 ## Additional Guidelines
 

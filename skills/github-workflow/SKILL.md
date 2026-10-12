@@ -1,7 +1,7 @@
 ---
 name: github-workflow
-description: Track work in GitHub issues and deliver it through pull requests and reviews. Use when creating, triaging, picking up, or closing an issue; grouping a slice's tasks under a parent issue; opening, describing, updating, or merging a pull request; reviewing a pull request against its issue and acceptance criteria; responding to review findings; or configuring an AI review bot. Use it even for short requests such as "work on #17", "open a PR", or "review PR 42".
-allowed-tools: Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh pr checks:*) Bash(gh pr diff:*) Bash(gh pr list:*) Bash(gh pr view:*)
+description: Track work in GitHub issues and deliver it through pull requests and reviews. Load it before changing code for a GitHub issue, however the user names it ("#24", "issue 24", "let's work on issue 24", or an issue URL), and before any push, pull request, or merge, including "merge PR 116" or "merge PRs 140-143". Also use it to create, triage, or close issues, including filing issues from a review or plan file; to group tasks under a parent issue; to review a pull request against its issue; to respond to review findings; or to configure a review bot. Not for checking the findings of a review file when nothing will be filed or committed.
+allowed-tools: Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh pr checks:*) Bash(gh pr diff:*) Bash(gh pr list:*) Bash(gh pr view:*) Bash(gh repo view:*)
 ---
 
 # GitHub Workflow
@@ -38,10 +38,16 @@ Load only the reference the task needs. Paths are relative to this skill directo
   pull requests, posting comments or reviews, and merging are seen by others. Do them
   when the user asks or has already authorized them, without adding routine
   confirmation. Reading is always fine.
-- **Link, don't copy.** Issues link the brief or report they come from. Pull requests
-  link their issues. Restate only what a reader needs to act. When `gh` can record a
-  link as an issue relationship (parent, blocked by, blocking, duplicate of), set the
-  relationship instead of writing the link in the body, where it would go stale.
+- **Scratch files are not deliverables.** Review, plan, and research files the user
+  asked for (REVIEW.md, PLAN*.md, IMPROVEMENTS.md, exported research), often kept in a
+  scratch directory the agent instruction files name, stay uncommitted unless the user
+  asks to commit them. Nothing posted on GitHub refers to them: they are deleted once
+  their content is filed.
+- **Link, don't copy.** Issues link the committed brief they come from, never a scratch
+  file. Pull requests link their issues. Restate only what a reader needs to act. When
+  `gh` can record a link as an issue relationship (parent, blocked by, blocking,
+  duplicate of), set the relationship instead of writing the link in the body, where it
+  would go stale.
 - **Report real evidence.** Claim a verification step only after running it. Mark
   anything unverified as such; never tick a checkbox without evidence.
 - **Prefix agent comments.** Start agent-authored comments, replies, and review bodies

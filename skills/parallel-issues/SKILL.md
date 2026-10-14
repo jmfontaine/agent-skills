@@ -82,7 +82,8 @@ otherwise.
 - Optional, through git config:
   - `agent.ompConfig`: an omp config overlay that the launcher passes to every omp
     agent with `--config`, for settings only unattended agents should get, such as a
-    cheaper model for their pre-commit reviewer. It should also set
+    model from another family for their pre-commit reviewer, so that review does not
+    share the author's blind spots. It should also set
     `completion.notify`, `ask.notify` and `error.notify` to `"off"` (quoted), or every
     agent notifies the user at the end of each turn.
   - `agent.notifyCommand`: a command that sends the user a notification, with a title
@@ -182,18 +183,38 @@ A group that fails a check is reported and skipped; the others still launch.
 
 ## After the run
 
-1. **Review.** Each pull request gets the review the `github-workflow` skill describes.
-   Changes to a lower layer happen in an interactive session: fix it, then
+1. **Review.** Each pull request gets the spec check the `github-workflow` skill
+   describes. Run the checks from this session as `task` subagents, one per pull
+   request or stack, launched in one batch. The pre-commit reviewer already looked for
+   defects; the spec check asks whether the delivery matches the issue, and a batch of
+   `reviewer` subagents would spend the costly model that agent defaults to. Changes
+   to a lower layer happen in an interactive session: fix it, then
    `gh stack rebase --upstack`, and force push only with the user's agreement.
 2. **Merge.** Merge as the `github-workflow` skill describes. When several pull requests
    are ready, suggest merging them in one request; never require it. On a repository
    that squash-merges, merge a single pull request with `gh pr merge <n> --squash`,
    and a whole stack by running `gh stack merge --yes --squash` with no number from the
    group's worktree, where the stack is checked out. GitHub signs the squash commits
-   and rebases what is left of a partly merged stack, so the agents need no rebase
-   instructions. Hand a pull request back to its agent only for a conflict that needs
-   its context. GitHub's **Rebase and merge** button fails on a repository that
-   requires signed commits; that is expected.
+   and rebases what is left of a partly merged stack. GitHub's **Rebase and merge**
+   button fails on a repository that requires signed commits; that is expected.
+
+   A branch needs updating before its merge in three cases. Handle each without a
+   rebase where possible, since every merge moves `main` again:
+   - **Behind `main` with no conflict, on a repository whose ruleset requires
+     up-to-date branches:** run `gh pr update-branch <n>` for a single pull request.
+     GitHub adds a merge commit that it signs, and the squash drops it.
+   - **A conflict, or a behind stack on such a repository:** hand it back to its agent
+     to rebase, since only the agent's key may sign the rewritten commits.
+   - **A repository that fast-forwards** (rebase merges only, signed commits
+     required): every merge after the first needs the next branch rebased by its
+     agent. Suggest enabling squash merges to the user instead.
+
+   When you ask an agent to rebase, tell it to rerun the repository's checks, and to
+   have a fresh reviewer check only the conflict resolutions (`git range-diff`
+   against the old head) when there were conflicts. A rebase without conflicts gets
+   no review; the rerun checks cover it. Parallel groups that edit the same files
+   conflict at merge time, which is another reason step 2 of planning stacks
+   overlapping issues.
 3. **Clean.** Run it from the main checkout's Herdr workspace, never from an agent's
    workspace, once no agent is working: `clean --dry-run`, then `clean`. Never remove a
    worktree, branch, or workspace by hand: that leaves the Herdr workspace and its idle

@@ -63,8 +63,9 @@ acknowledged and exits 0. A group seen working loses its acknowledgement, so its
 idle state is always reported. It exits 2 on timeout, and 3 when two polls, the
 second ``IDLE_RECHECK`` seconds after the first, find nothing working and nothing
 new (the pause covers a watcher started just after messaging an agent). A poll that
-fails (``gh`` or Herdr erroring) is reported on stderr and retried at the next
-interval; after ``MAX_FAILED_POLLS`` in a row it exits 1 with the last error.
+fails (``gh`` or Herdr erroring) is reported on stderr and retried, each pause twice
+the last up to ``FAILED_POLL_MAX_PAUSE`` (never shorter than the interval); once polls
+have failed in a row for ``FAILED_POLL_LIMIT`` seconds it exits 1 with the last error.
 ``status --ack`` acknowledges the current state without waiting. After a ``--wait``
 report, git config ``agent.notifyCommand`` is run (``NOTIFY_TIMEOUT`` seconds at
 most) with the title as its last argument and the report on stdin, unless
@@ -158,7 +159,10 @@ WAIT_TIMEOUT_HOURS = 13.0
 EXIT_TIMEOUT = 2
 EXIT_NOTHING_TO_WAIT = 3
 EXIT_POLL_FAILED = 1
-MAX_FAILED_POLLS = 5
+# GitHub outages and rate limits (secondary limits included) usually clear within
+# minutes; a watcher that gives up sooner needs a restart by hand.
+FAILED_POLL_LIMIT = 30 * 60.0  # seconds of failing polls before exit 1
+FAILED_POLL_MAX_PAUSE = 300.0  # longest pause between failing polls
 IDLE_RECHECK = 30.0  # seconds before exit 3 is confirmed
 NOTIFY_TIMEOUT = 30  # seconds the notify command may run
 READ_LINES = "120"  # recent agent output searched for NEEDS_YOU
@@ -928,25 +932,36 @@ def wait_for_change(
     Exits ``EXIT_NOTHING_TO_WAIT`` once two polls in a row, the second
     ``IDLE_RECHECK`` seconds after the first, find nothing working and nothing new:
     an agent just messaged may not show as working yet, and a watcher started again
-    after a finished run must not spin. Polls that fail are retried; after
-    ``MAX_FAILED_POLLS`` in a row the last error ends the wait.
+    after a finished run must not spin. Polls that fail are retried with a growing
+    pause; once they have failed in a row for ``FAILED_POLL_LIMIT`` seconds, the last
+    error ends the wait.
     """
     deadline = time.monotonic() + hours * 3600
     idle_polls = failed_polls = 0
+    failing_since = 0.0
     while True:
         pause = interval
         try:
             groups, reports = poll(herdr)
         except StepError as exc:
+            if not failed_polls:
+                failing_since = time.monotonic()
             failed_polls += 1
             idle_polls = 0
+            failing_for = time.monotonic() - failing_since
             print(
-                f"warning: poll {failed_polls}/{MAX_FAILED_POLLS} failed: {exc}",
+                f"warning: poll failed ({failed_polls} in a row, "
+                f"{failing_for // 60:.0f} of {FAILED_POLL_LIMIT / 60:.0f} min): {exc}",
                 file=sys.stderr,
             )
-            if failed_polls >= MAX_FAILED_POLLS:
+            if failing_for >= FAILED_POLL_LIMIT:
                 print(f"FAILED: {exc}", file=sys.stderr)
                 return EXIT_POLL_FAILED
+            # Never retry sooner than a healthy poll would run.
+            pause = min(
+                interval * 2 ** (failed_polls - 1),
+                max(interval, FAILED_POLL_MAX_PAUSE),
+            )
         else:
             failed_polls = 0
             changed = {
@@ -1371,8 +1386,8 @@ def main() -> None:
         action="store_true",
         help="wait until a group is done, needs you, stopped or gone (exit 0), "
         f"timed out ({EXIT_TIMEOUT}), nothing is left to wait for "
-        f"({EXIT_NOTHING_TO_WAIT}) or {MAX_FAILED_POLLS} polls failed "
-        f"({EXIT_POLL_FAILED})",
+        f"({EXIT_NOTHING_TO_WAIT}) or polls kept failing for "
+        f"{FAILED_POLL_LIMIT / 60:.0f} minutes ({EXIT_POLL_FAILED})",
     )
     mode.add_argument(
         "--ack", action="store_true", help="mark the current state as seen"

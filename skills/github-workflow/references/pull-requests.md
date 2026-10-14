@@ -87,7 +87,10 @@ every commit on the pull request branch, so each one must be signed and verified
 unsigned commit blocks the merge until it is rebased, signed, and force pushed.
 
 - **Single pull request:** `gh pr merge <n> --squash`. Rebase the branch first only when
-  GitHub reports a conflict (`gh pr view <n> --json mergeable` is `CONFLICTING`).
+  GitHub reports a conflict (`gh pr view <n> --json mergeable` is `CONFLICTING`). When
+  a ruleset requires up-to-date branches and the branch is only behind, run
+  `gh pr update-branch <n>` instead: GitHub adds a merge commit it signs, and the
+  squash drops it.
 - **Stack:** from a worktree that has the stack checked out, run
   `gh stack merge --yes --squash` with no number. It merges every pull request of the
   stack in one all-or-nothing operation, one squashed commit each, through GitHub's

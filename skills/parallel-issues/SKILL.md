@@ -187,15 +187,21 @@ stays loaded for 24 hours, across waves and `clean`, and every launch reuses it.
   limit. After a message, first wait until that agent works again
   (`herdr agent wait <agent> --until working --timeout 15000`). The watcher polls
   every 30 seconds and exits as soon as a group changes to a state not reported yet:
-  `needs-you` (Herdr reports the agent blocked, or it ended with "This needs you"),
-  `done` (agent finished, every branch recorded at the current pull request head),
-  `stopped` (finished without recording everything), or `gone`. A group that stays
-  blocked is reported once; one that resumes counts as working again and is reported
-  when it next stops. On exit it prints every group's state, and runs
-  `agent.notifyCommand` unless `--no-notify` is given. Exit code 3 means nothing is
-  running and nothing new happened. A failed poll (a GitHub outage or rate limit, a
-  Herdr error) is retried with a growing pause; exit code 1 means polls kept failing
-  for 30 minutes, so check `gh` and Herdr before starting it again.
+  `needs-you` (Herdr reports the agent blocked, or it finished and its last closing
+  line starts with "This needs you"), `done` (agent finished, every branch recorded at
+  the current pull request head), `stopped` (finished without recording everything),
+  or `gone`. A closing line counts only at the start of a line, so a message to an
+  agent may quote the two closing sentences mid-line but must never start a line with
+  one. A group is reported `done` only once it has stayed done for two minutes: the
+  agent's final reviewer posts its concern up to about 100 seconds after the agent
+  finishes, and a concern starts one more turn. Until then a report lists it as
+  `settling`; start the watcher again to get its state. A group that stays blocked is
+  reported once; one that resumes counts as working again and is reported when it
+  next stops. On exit it prints every group's state, and runs `agent.notifyCommand`
+  unless `--no-notify` is given. Exit code 3 means nothing is running and nothing new
+  happened. A failed poll (a GitHub outage or rate limit, a Herdr error) is retried
+  with a growing pause; exit code 1 means polls kept failing for 30 minutes, so check
+  `gh` and Herdr before starting it again.
 - When the watcher exits with a report, check the reported pull requests (checks,
   review state), report to the user without waiting to be asked, and start the watcher
   again while any group is still working.
@@ -211,7 +217,9 @@ stays loaded for 24 hours, across waves and `clean`, and every launch reuses it.
 - Each agent ends by running `parallel_issues.py record`. It fails unless GitHub shows
   every commit of each pull request as verified, since the default branch's ruleset
   does not cover pull request branches. Otherwise it stores the commit each pull
-  request was opened with, which `clean` relies on. `status` shows a group whose
+  request was opened with, which `clean` relies on. A `gh` call that fails
+  transiently (a rate limit, an HTTP 5xx, a timeout) is retried like a failed poll,
+  for up to 30 minutes, so one `record` call is enough. `status` shows a group whose
   agent stopped without recording.
 
 ## After the run

@@ -29,7 +29,8 @@ only once all are answered. A question that surfaces after the user has left blo
 the work until they return, which defeats the batch.
 
 - **Planning and launch: needed.** Approving the plan, labels or exclusions to fix,
-  and the 1Password prompt that reads the signing key at launch.
+  and the 1Password prompt that reads the signing key, once per 24 hours (see Signing
+  key).
 - **While the agents run: not needed.** Agents never ask; they take the conservative
   option and note it in the pull request.
 - **After the run: needed only for decisions.** Merging, a force push after a rebase,
@@ -76,7 +77,7 @@ otherwise.
     directory tree through `includeIf`.
   - The agent's public key is in `gpg.ssh.allowedSignersFile` for the repository's
     `user.email`, and is added to the user's GitHub account as a **Signing** key.
-  - The user is present at launch: reading the key asks 1Password once.
+  - The user is present when the key is read from 1Password (see Signing key).
 - The default branch should require signed commits (a ruleset), so an unverified
   commit fails the push instead of landing.
 - Optional, through git config:
@@ -90,6 +91,9 @@ otherwise.
     as its argument and the message on standard input, for example a script that
     sends a phone notification. `parallel_issues.py notify` runs it, and so does
     `status --wait` when no session supervises the run.
+  - `agent.sshProgram`: the program agents sign with, in place of `ssh-keygen`. It
+    takes `ssh-keygen`'s arguments, so it can be a wrapper that runs an extra check
+    before signing. The agents and `env` get it as `gpg.ssh.program`.
 
 ## Plan the batch
 
@@ -126,9 +130,10 @@ The dry run checks every issue and prints each group's branches and prompt witho
 creating anything. The launch creates, per group, a branch from the default branch in
 a Herdr-managed worktree and workspace, starts the agent there (`omp --advisor`, plus
 `--config` when `agent.ompConfig` is set; change it with
-`--kind <herdr-kind> -- <agent args>`), and submits the prompt. It also loads
-the agent signing key into a private ssh-agent for 12 hours, routes the agents' pushes
-over HTTPS through `gh`, and keeps the Mac awake for the same period.
+`--kind <herdr-kind> -- <agent args>`), and submits the prompt. It also routes the
+agents' pushes over HTTPS through `gh`, and keeps the Mac awake for 24 hours. It
+reuses the agent signing key already loaded in its private ssh-agent, and reads the
+key from 1Password only when none is loaded or it has under 8 hours left.
 
 Worktrees contain only tracked files. When the repository's instruction files point
 agents at gitignored reference material (for example `docs/discogs/api/`), send each
@@ -147,6 +152,29 @@ is `fix`. Between two labels of the same tier, the first in that list wins (`fea
 branch each issue will get.
 
 A group that fails a check is reported and skipped; the others still launch.
+
+## Signing key
+
+Reading the agent key asks the user through 1Password, and the prompt fails after a
+minute when nobody approves it. So read it only while the user is there. It then
+stays loaded for 24 hours, across waves and `clean`, and every launch reuses it.
+
+- `python3 <skill-dir>/scripts/parallel_issues.py key` prints when the key expires
+  and until when launches reuse it (8 hours before it expires). A launch after that
+  reads the key again.
+- Before ending a turn with "You can go AFK", run `key`. When a launch the plan still
+  needs may come after that time, or no key is loaded, run `key --load` first, while
+  the user is there: it reads the key and restarts its 24 hours.
+- `key --unload` removes the key. Run it only when no agent is working.
+- This session's own git commands that sign or reach GitHub (commit, fetch, pull,
+  push, `gh stack` commands that push) also use the agent key and HTTPS, never the
+  user's SSH agent, which asks for an approval that cannot come while they are away.
+  Run them in a subshell with the launcher's environment, assigned first so that a
+  failed `env` stops the command. `env` never prompts; it fails when no key is loaded.
+
+  ```shell
+  ( e=$(python3 <skill-dir>/scripts/parallel_issues.py env) && eval "$e" && git push )
+  ```
 
 ## While it runs
 
@@ -229,10 +257,11 @@ A group that fails a check is reported and skipped; the others still launch.
    3. drops the group from the launcher's state.
 
    It then removes Herdr's empty worktree directory for the repository. Once no group
-   of the repository is left, it stops the caffeinate processes its launches started
-   and the ssh-agent holding the signing key, unless another repository's run still
-   records that agent. Agents keep their scratch files in their worktree's git
-   directory, so nothing outside the worktree needs removing.
+   of the repository is left, it stops the caffeinate processes its launches started.
+   It stops the ssh-agent holding the signing key only once the key has expired and
+   no other repository's run still records that agent: a loaded key stays for the
+   next wave, and `clean` prints until when. Agents keep their scratch files in their
+   worktree's git directory, so nothing outside the worktree needs removing.
 
    A group is kept, with the reason printed, when:
    - a pull request is not merged or the group was never recorded;

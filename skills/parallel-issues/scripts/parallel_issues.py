@@ -6,6 +6,8 @@
     parallel_issues.py record          # run by the agent, inside its worktree
     parallel_issues.py status [--wait [--interval SECONDS] [--timeout HOURS] | --ack]
     parallel_issues.py clean [--dry-run]
+    parallel_issues.py key [--load | --unload]
+    parallel_issues.py env             # export lines: sign and push as the agents do
 
 Each ``launch`` argument is a group: comma-separated issue numbers, bottom of the
 stack first. Run ``launch``, ``status`` and ``clean`` from a Herdr pane inside a
@@ -26,12 +28,21 @@ Agents run unattended, so ``launch`` prepares everything that would prompt:
   private key whose public key is in ``gpg.ssh.allowedSignersFile`` for the
   repository's ``user.email``. The key is loaded into a private ssh-agent for
   ``KEY_HOURS``; agents sign through ``ssh-keygen``, and the key is never written
-  to disk.
-- Pushing. Agents reach GitHub over HTTPS through ``gh auth git-credential``.
+  to disk. Reading it asks the user through 1Password, so a launch reuses the
+  loaded key while it has ``KEY_MIN_HOURS`` left, and reads it again only otherwise.
+- Pushing. Agents reach GitHub over HTTPS through ``gh auth git-credential``, and so
+  do the launcher's own fetches and pushes, so none reaches the user's SSH agent.
 - Sleep. On macOS, ``caffeinate -i`` keeps the machine awake for ``KEY_HOURS``.
 
 Each launch records its caffeinate process and ssh-agent socket in
 ``STATE_DIR/RUNS_FILE`` so that ``clean`` can stop them.
+
+``key`` prints when the loaded key expires and until when launches reuse it, and
+exits 1 when no key is loaded. ``key --load`` reads the key from 1Password and
+restarts its ``KEY_HOURS``; ``key --unload`` removes it. ``env`` prints shell
+``export`` lines that make git sign with the loaded key and reach GitHub over
+HTTPS, for the supervising session's own commits, fetches and pushes. ``env``
+never asks 1Password: it fails when no key is loaded.
 
 Every check fails hard: an issue that fails one is not launched.
 
@@ -47,10 +58,11 @@ branches, and drops it from the state. A branch is deleted only at the commit
 ``record`` stored or the head its pull request was merged with; any other commit,
 an unmerged pull request, uncommitted changes, a working agent, or a workspace in
 use keeps the group. Once no group of the repository is left, it stops the
-recorded caffeinate processes and the signing ssh-agent unless another
-repository's run records it. It then reports, as leftovers, launch workspaces,
-issue worktrees and merged issue branches that no group accounts for, and exits
-nonzero while anything is kept or left over.
+recorded caffeinate processes, and the signing ssh-agent once its key has expired
+and no other repository's run records it: until then, later launches reuse the
+key. It then reports, as leftovers, launch workspaces, issue worktrees and merged
+issue branches that no group accounts for, and exits nonzero while anything is kept
+or left over.
 
 ``status`` classifies each group launched in this Herdr session as ``working``,
 ``needs-you`` (Herdr reports the agent blocked, or its recent output says "This
@@ -76,6 +88,9 @@ needs them; it exits 1 when the command is not set or fails.
 
 ``launch`` of an ``omp`` agent adds ``--config <file>`` for git config
 ``agent.ompConfig`` (an omp config overlay) unless the agent arguments have one.
+Agents sign through git config ``agent.sshProgram`` when it is set, a program that
+takes ``ssh-keygen``'s arguments (such as a wrapper adding a policy), and through
+``ssh-keygen`` otherwise.
 
 Python 3.10+, standard library only.
 """
@@ -95,7 +110,7 @@ import signal
 import subprocess
 import sys
 import time
-from collections.abc import Generator
+from collections.abc import Generator, Sequence
 from pathlib import Path
 from string import Template
 from typing import Any
@@ -149,7 +164,19 @@ PANE_READY_SECONDS = 30.0
 PANE_READY_PAUSE = 1.0
 MAX_ITEMS = 100  # issue comments and edits fetched in one query
 SIGNING_KEY_SETTING = "agent.signingKey"
-KEY_HOURS = 12
+KEY_HOURS = 24
+# A launch reuses the loaded key only while it has this long left, so that the
+# agents it starts can still sign at the end of a long session.
+KEY_MIN_HOURS = 8
+# Git config that sends GitHub traffic over HTTPS through `gh`. The user's SSH agent
+# may ask for approval, which an unattended run cannot give.
+GITHUB_OVER_HTTPS = (
+    ("url.https://github.com/.insteadOf", "git@github.com:"),
+    ("url.https://github.com/.insteadOf", "ssh://git@github.com/"),
+    # The empty value drops inherited helpers before adding gh's.
+    ("credential.https://github.com.helper", ""),
+    ("credential.https://github.com.helper", "!gh auth git-credential"),
+)
 # Seconds between polls of `status --wait`. A poll is one `gh pr list` per recorded
 # branch, one Herdr agent list, and one output read per agent that is not working,
 # so the supervising session learns that an agent finished within this many seconds.
@@ -181,6 +208,7 @@ STATE_LABELS = {
 }
 NOTIFY_SETTING = "agent.notifyCommand"
 OMP_CONFIG_SETTING = "agent.ompConfig"
+SSH_PROGRAM_SETTING = "agent.sshProgram"
 STATE_DIR = (
     Path(os.environ.get("XDG_STATE_HOME") or Path.home() / ".local" / "state") / "agent"
 )
@@ -397,18 +425,85 @@ def allowed_blobs(path: str, email: str) -> set[str]:
     return blobs
 
 
+def signing_settings() -> tuple[str, str, str]:
+    """The repository's ``user.email``, agent key reference and allowed signers."""
+    email = git_config("user.email")
+    if not email:
+        raise StepError("no user.email for this repository; check your git config")
+    # Every agent commit must be signed and verify on GitHub, so there is no
+    # unsigned mode: a missing piece stops the launch.
+    reference = git_config(SIGNING_KEY_SETTING)
+    allowed_signers = git_config("gpg.ssh.allowedSignersFile")
+    if git_config("commit.gpgsign") != "true" or not reference or not allowed_signers:
+        raise StepError(
+            f"agents sign every commit: set commit.gpgsign=true, {SIGNING_KEY_SETTING}"
+            " and gpg.ssh.allowedSignersFile for this repository"
+        )
+    return email, reference, allowed_signers
+
+
+def key_socket(reference: str) -> Path:
+    """The ssh-agent socket for ``reference``: one agent per key, so loading one
+    scope's key never disturbs agents signing with another.
+    """
+    digest = hashlib.sha256(reference.encode()).hexdigest()[:12]
+    return STATE_DIR / f"ssh-agent-{digest}.sock"
+
+
+def expiry_file(socket: Path) -> Path:
+    """Where the time the key in ``socket``'s agent expires is kept (epoch seconds)."""
+    return socket.with_suffix(".expires")
+
+
+def key_expires(socket: Path) -> float | None:
+    """When the key in the ssh-agent at ``socket`` expires.
+
+    None when the agent holds no key, or its expiry time is past or was not recorded
+    (a launch made before the launcher recorded it).
+    """
+    env = {**os.environ, "SSH_AUTH_SOCK": str(socket)}
+    probe = subprocess.run(["ssh-add", "-l"], env=env, capture_output=True, check=False)
+    if probe.returncode != 0:  # 1: running but empty, 2: no agent
+        return None
+    try:
+        expires = float(expiry_file(socket).read_text())
+    except (OSError, ValueError):
+        return None
+    return expires if expires > time.time() else None
+
+
+def loaded_key(
+    reference: str, email: str, allowed_signers: str
+) -> tuple[str, Path, float] | None:
+    """The public key, socket and expiry time of ``reference``'s loaded key.
+
+    None when no live key is loaded, or the agent holds anything but one key that
+    ``allowed_signers`` allows for ``email``.
+    """
+    socket = key_socket(reference)
+    expires = key_expires(socket)
+    if expires is None:
+        return None
+    env = {**os.environ, "SSH_AUTH_SOCK": str(socket)}
+    loaded = run(["ssh-add", "-L"], env=env).splitlines()
+    if len(loaded) != 1:
+        return None
+    if loaded[0].split()[1] not in allowed_blobs(allowed_signers, email):
+        return None
+    return loaded[0], socket, expires
+
+
 def load_signing_key(
     reference: str, email: str, allowed_signers: str
-) -> tuple[str, Path]:
-    """Load the key behind ``reference`` into its own ssh-agent.
+) -> tuple[str, Path, float]:
+    """Read the key behind ``reference`` from 1Password into its own ssh-agent.
 
-    Return the public key and the agent socket. Each reference gets its own agent,
-    so loading one scope's key never disturbs agents signing with another.
+    Return the public key, the agent socket and the time the key expires. Reading
+    asks the user through 1Password, and fails once that prompt times out.
     """
     STATE_DIR.mkdir(parents=True, exist_ok=True, mode=0o700)
     STATE_DIR.chmod(0o700)
-    digest = hashlib.sha256(reference.encode()).hexdigest()[:12]
-    socket = STATE_DIR / f"ssh-agent-{digest}.sock"
+    socket = key_socket(reference)
     env = {**os.environ, "SSH_AUTH_SOCK": str(socket)}
     probe = subprocess.run(["ssh-add", "-l"], env=env, capture_output=True, check=False)
     if probe.returncode == 2:  # 0: keys loaded, 1: running but empty, 2: no agent
@@ -420,7 +515,9 @@ def load_signing_key(
     key = run(["op", "read", reference], env=app_env)
     if "PRIVATE KEY" not in key:
         raise StepError(f"{SIGNING_KEY_SETTING} does not point at an SSH private key")
-    # Re-adding a loaded key restarts its lifetime.
+    # Taken before loading, so the recorded time never outlasts the key. Re-adding a
+    # loaded key restarts its lifetime.
+    expires = time.time() + KEY_HOURS * 3600
     run(["ssh-add", "-q", "-t", f"{KEY_HOURS}h", "-"], env=env, stdin=key)
     loaded = run(["ssh-add", "-L"], env=env).splitlines()
     if len(loaded) != 1:
@@ -428,31 +525,73 @@ def load_signing_key(
     public = loaded[0]
     if public.split()[1] not in allowed_blobs(allowed_signers, email):
         run(["ssh-add", "-D"], env=env)  # this agent holds only this key
+        expiry_file(socket).unlink(missing_ok=True)
         raise StepError(
             f"the agent key is not in {allowed_signers} for {email}, so its"
             " signatures would not verify"
         )
+    expiry_file(socket).write_text(f"{expires:.0f}\n")
+    return public, socket, expires
+
+
+def key_lifetime(expires: float) -> str:
+    """When a key expiring at ``expires`` expires, and until when launches reuse it."""
+    left = (expires - time.time()) / 3600
+    when = time.strftime("%Y-%m-%d %H:%M", time.localtime(expires))
+    until = time.strftime(
+        "%Y-%m-%d %H:%M", time.localtime(expires - KEY_MIN_HOURS * 3600)
+    )
+    return f"expires {when} ({left:.1f} h left); launches reuse it until {until}"
+
+
+def launch_key(reference: str, email: str, allowed_signers: str) -> tuple[str, Path]:
+    """The key for a launch: the loaded one while it has ``KEY_MIN_HOURS`` left,
+    otherwise one read from 1Password, which asks the user.
+    """
+    current = loaded_key(reference, email, allowed_signers)
+    if current and current[2] - time.time() >= KEY_MIN_HOURS * 3600:
+        public, socket, expires = current
+        print(f"signing key: reused; it {key_lifetime(expires)}")
+    else:
+        public, socket, expires = load_signing_key(reference, email, allowed_signers)
+        print(f"signing key: read from 1Password; it {key_lifetime(expires)}")
     return public, socket
+
+
+def record_run(socket: Path, awake: int | None) -> None:
+    """Record what a launch or ``key --load`` left running, so ``clean`` stops it."""
+    with runs() as recorded:
+        mine = recorded.setdefault(common_dir(), {"caffeinate": [], "sockets": []})
+        if awake:
+            mine["caffeinate"].append(awake)
+        if str(socket) not in mine["sockets"]:
+            mine["sockets"].append(str(socket))
+
+
+def config_env(config: Sequence[tuple[str, str]]) -> dict[str, str]:
+    """Environment that adds ``config`` to every git command."""
+    env = {"GIT_CONFIG_COUNT": str(len(config))}
+    for index, (key, value) in enumerate(config):
+        env[f"GIT_CONFIG_KEY_{index}"] = key
+        env[f"GIT_CONFIG_VALUE_{index}"] = value
+    return env
+
+
+def github_git(args: list[str]) -> str:
+    """Run a git command that reaches GitHub, over HTTPS (``GITHUB_OVER_HTTPS``)."""
+    return run(args, env={**os.environ, **config_env(GITHUB_OVER_HTTPS)})
 
 
 def agent_env(public: str, socket: Path) -> dict[str, str]:
     """Environment that lets an agent sign and push without prompting."""
     config = [
-        ("url.https://github.com/.insteadOf", "git@github.com:"),
-        ("url.https://github.com/.insteadOf", "ssh://git@github.com/"),
-        # The empty value drops inherited helpers before adding gh's.
-        ("credential.https://github.com.helper", ""),
-        ("credential.https://github.com.helper", "!gh auth git-credential"),
+        *GITHUB_OVER_HTTPS,
         ("gpg.format", "ssh"),
-        ("gpg.ssh.program", "ssh-keygen"),
+        ("gpg.ssh.program", git_config(SSH_PROGRAM_SETTING) or "ssh-keygen"),
         ("user.signingkey", f"key::{public}"),
         ("commit.gpgsign", "true"),
     ]
-    env = {"SSH_AUTH_SOCK": str(socket), "GIT_CONFIG_COUNT": str(len(config))}
-    for index, (key, value) in enumerate(config):
-        env[f"GIT_CONFIG_KEY_{index}"] = key
-        env[f"GIT_CONFIG_VALUE_{index}"] = value
-    return env
+    return {"SSH_AUTH_SOCK": str(socket), **config_env(config)}
 
 
 def keep_awake() -> int | None:
@@ -541,39 +680,22 @@ def launch(
     base = f"origin/{repo['defaultBranchRef']['name']}"
     me = run(["gh", "api", "user", "--jq", ".login"]).strip()
     top = run(["git", "rev-parse", "--show-toplevel"]).strip()
-    run(["git", "fetch", "--quiet", "origin"])
+    github_git(["git", "fetch", "--quiet", "origin"])
 
-    email = git_config("user.email")
-    if not email:
-        raise StepError("no user.email for this repository; check your git config")
-    # Every agent commit must be signed and verify on GitHub, so there is no
-    # unsigned mode: a missing piece stops the launch.
-    reference = git_config(SIGNING_KEY_SETTING)
-    allowed_signers = git_config("gpg.ssh.allowedSignersFile")
-    if git_config("commit.gpgsign") != "true" or not reference or not allowed_signers:
-        raise StepError(
-            f"agents sign every commit: set commit.gpgsign=true, {SIGNING_KEY_SETTING}"
-            " and gpg.ssh.allowedSignersFile for this repository"
-        )
+    email, reference, allowed_signers = signing_settings()
     live_agents: set[str] = set()
     env_flags: list[str] = []
     if not dry_run:
-        public, socket = load_signing_key(reference, email, allowed_signers)
+        public, socket = launch_key(reference, email, allowed_signers)
         env_flags = [
             flag
             for key, value in agent_env(public, socket).items()
             for flag in ("--env", f"{key}={value}")
         ]
         live_agents = {a.get("name") for a in herdr.call("agent", "list")["agents"]}
-        awake = keep_awake()
         # Recorded so that `clean` can stop both once this repository's groups are
         # gone, instead of leaving them to their timeouts.
-        with runs() as recorded:
-            mine = recorded.setdefault(common_dir(), {"caffeinate": [], "sockets": []})
-            if awake:
-                mine["caffeinate"].append(awake)
-            if str(socket) not in mine["sockets"]:
-                mine["sockets"].append(str(socket))
+        record_run(socket, keep_awake())
 
     failures = 0
     for group in groups:
@@ -1141,7 +1263,7 @@ def remove_group(
         if (head := remote_head(branch)) is not None:
             if head not in allowed:
                 raise StepError(f"origin/{branch} moved during removal; kept")
-            run(["git", "push", "--quiet", "origin", "--delete", branch])
+            github_git(["git", "push", "--quiet", "origin", "--delete", branch])
 
 
 def running(pid: int, command: str) -> bool:
@@ -1173,13 +1295,15 @@ def stop_signing_agent(socket: str) -> None:
         if args.strip() == command:
             terminate(int(pid))
     Path(socket).unlink(missing_ok=True)
+    expiry_file(Path(socket)).unlink(missing_ok=True)
 
 
 def release_run(dry_run: bool) -> None:
     """Stop what this repository's launches left running: caffeinate, signing key.
 
     An ssh-agent another repository's run still records is left alone, since its
-    agents may still be signing with it.
+    agents may still be signing with it. So is one whose key has not expired: it
+    stays recorded, and the next launch reuses it instead of asking 1Password.
     """
     common = common_dir()
     with runs() as recorded:
@@ -1191,16 +1315,72 @@ def release_run(dry_run: bool) -> None:
         }
         awake = [pid for pid in mine["caffeinate"] if running(pid, "caffeinate ")]
         sockets = [s for s in mine["sockets"] if s not in shared]
-        summary = f"caffeinate {awake or 'none running'}, signing agent {sockets}"
+        live = {s: e for s in sockets if (e := key_expires(Path(s))) is not None}
+        expired = [s for s in sockets if s not in live]
+        summary = f"caffeinate {awake or 'none running'}, signing agent {expired}"
+        notes = [
+            f"signing key in {s} stays loaded; it {key_lifetime(e)}."
+            " `key --unload` removes it now"
+            for s, e in live.items()
+        ]
         if dry_run:
-            print(f"stop    {summary}")
+            print(f"stop    {summary}", *notes, sep="\n")
             return
         for pid in awake:
             terminate(pid)
-        for socket in sockets:
+        for socket in expired:
             stop_signing_agent(socket)
-        del recorded[common]
-    print(f"stopped {summary}")
+        if live:
+            recorded[common] = {"caffeinate": [], "sockets": list(live)}
+        else:
+            del recorded[common]
+    print(f"stopped {summary}", *notes, sep="\n")
+
+
+def key(action: str | None) -> int:
+    """Print the loaded key's lifetime, or ``load`` or ``unload`` it."""
+    email, reference, allowed_signers = signing_settings()
+    if action == "unload":
+        socket = str(key_socket(reference))
+        stop_signing_agent(socket)
+        with runs() as recorded:
+            for common, entry in list(recorded.items()):
+                if socket in entry["sockets"]:
+                    entry["sockets"].remove(socket)
+                if not entry["sockets"] and not entry["caffeinate"]:
+                    del recorded[common]
+        print("signing key: unloaded")
+        return 0
+    if action == "load":
+        _, socket, expires = load_signing_key(reference, email, allowed_signers)
+        record_run(socket, None)
+    elif current := loaded_key(reference, email, allowed_signers):
+        expires = current[2]
+    else:
+        print(
+            "signing key: not loaded; `key --load` reads it from 1Password, which"
+            " asks the user"
+        )
+        return 1
+    print(f"signing key: {key_lifetime(expires)}")
+    return 0
+
+
+def print_env() -> int:
+    """Print ``export`` lines that sign with the loaded key and reach GitHub over
+    HTTPS. Never asks 1Password: with no key loaded, it fails instead.
+    """
+    email, reference, allowed_signers = signing_settings()
+    current = loaded_key(reference, email, allowed_signers)
+    if not current:
+        raise StepError(
+            "the agent signing key is not loaded; `key --load` reads it from"
+            " 1Password, which asks the user"
+        )
+    public, socket, _ = current
+    for name, value in agent_env(public, socket).items():
+        print(f"export {name}={shlex.quote(value)}")
+    return 0
 
 
 def leftovers(herdr: Herdr, repo_name: str, entries: dict[str, Any]) -> list[str]:
@@ -1296,7 +1476,7 @@ def clean(herdr: Herdr, dry_run: bool) -> int:
     prints no ``keep``, ``FAILED`` or ``leftover`` line.
     """
     repo_name = run_json(["gh", "repo", "view", "--json", "name"])["name"]
-    run(["git", "fetch", "--quiet", "--prune", "origin"])
+    github_git(["git", "fetch", "--quiet", "--prune", "origin"])
     if not dry_run:
         # Forget worktrees whose directory was deleted by hand before judging them.
         run(["git", "worktree", "prune"])
@@ -1421,6 +1601,28 @@ def main() -> None:
     clean_parser.add_argument(
         "--dry-run", action="store_true", help="print what would be removed"
     )
+    key_parser = commands.add_parser(
+        "key", help="show when the agent signing key expires; load or unload it"
+    )
+    key_action = key_parser.add_mutually_exclusive_group()
+    key_action.add_argument(
+        "--load",
+        dest="action",
+        action="store_const",
+        const="load",
+        help=f"read it from 1Password (asks the user) for {KEY_HOURS} hours",
+    )
+    key_action.add_argument(
+        "--unload",
+        dest="action",
+        action="store_const",
+        const="unload",
+        help="remove it now",
+    )
+    commands.add_parser(
+        "env",
+        help="print export lines that sign with the loaded key and push over HTTPS",
+    )
     args = parser.parse_args(argv)
     if agent_args is not None and args.command != "launch":
         parser.error("agent arguments after `--` apply to launch only")
@@ -1454,6 +1656,10 @@ def main() -> None:
                 )
             else:
                 code = status(herdr, args.ack)
+        elif args.command == "key":
+            code = key(args.action)
+        elif args.command == "env":
+            code = print_env()
         else:
             code = clean(herdr, args.dry_run)
     except StepError as exc:

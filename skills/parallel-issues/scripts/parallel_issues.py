@@ -50,7 +50,13 @@ Every check fails hard: an issue that fails one is not launched.
 commit that PR was opened with, but only when the PR's head on GitHub equals the
 local branch and GitHub shows every commit of the PR as verified; otherwise it exits
 nonzero. The default branch's ruleset does not cover PR branches, so this is the
-check that catches an unverified commit before review.
+check that catches an unverified commit before review. A ``gh`` call that fails
+transiently (a rate limit, secondary ones included, an HTTP 5xx, a timeout or a
+dropped connection) is retried like a failed ``status --wait`` poll: a one-line
+warning on stderr per failure, each pause twice the last from ``WAIT_INTERVAL`` up to
+``FAILED_POLL_MAX_PAUSE``, and exit nonzero once calls have failed in a row for
+``FAILED_POLL_LIMIT`` seconds. Any other failure, such as an auth error, ends it at
+once. It holds no lock while it waits.
 
 ``clean`` removes a merged group's worktree, closes its Herdr workspace (stopping
 its agent) even when the worktree is already gone, deletes its local and ``origin``
@@ -65,19 +71,29 @@ issue branches that no group accounts for, and exits nonzero while anything is k
 or left over.
 
 ``status`` classifies each group launched in this Herdr session as ``working``,
-``needs-you`` (Herdr reports the agent blocked, or its recent output says "This
-needs you", even when everything is recorded), ``done`` (Herdr reports it idle or
-done, every branch recorded, and its PR merged or still at the recorded commit),
-``stopped`` (any other agent state, or work unrecorded) or ``gone``
-(no Herdr agent of that name). ``status --wait`` polls until a group that is not
-working has a state its last report did not cover, prints the report, marks it
-acknowledged and exits 0. A group seen working loses its acknowledgement, so its next
-idle state is always reported. It exits 2 on timeout, and 3 when two polls, the
-second ``IDLE_RECHECK`` seconds after the first, find nothing working and nothing
-new (the pause covers a watcher started just after messaging an agent). A poll that
-fails (``gh`` or Herdr erroring) is reported on stderr and retried, each pause twice
-the last up to ``FAILED_POLL_MAX_PAUSE`` (never shorter than the interval); once polls
-have failed in a row for ``FAILED_POLL_LIMIT`` seconds it exits 1 with the last error.
+``needs-you`` (Herdr reports the agent blocked, or reports it finished and its last
+closing line says "This needs you", even when everything is recorded), ``done``
+(Herdr reports it idle or done, every branch recorded, and its PR merged or still at
+the recorded commit), ``stopped`` (any other agent state, or work unrecorded) or
+``gone`` (no Herdr agent of that name). A closing line is a line of the agent's recent
+output that starts with "Nothing here needs you" or "This needs you" (indentation,
+bullets and markdown emphasis ignored); the last one decides. Prompts quote both
+sentences mid-line, and an earlier turn's closing line is outdated once a later one
+exists, so neither counts. ``status --wait`` polls until a group that is not working
+has a state its last report did not cover, prints the report, marks it acknowledged
+and exits 0. A group seen working loses its acknowledgement, so its next idle state is
+always reported. A group is reported ``done`` only after it has stayed done for
+``DONE_SETTLE`` seconds: omp's final reviewer posts its concern 20 to 100 s after an
+agent finishes and that starts one more turn, which must not find the group merged
+and cleaned. Until then a report lists it as ``settling``, and the next one reports
+it. A group that resumes working meanwhile is not reported at all; the other
+states are reported at once. ``--wait`` exits 2 on timeout, and 3 when two polls, the
+second ``IDLE_RECHECK`` seconds after the first, find nothing working, nothing
+settling and nothing new (the pause covers a watcher started just after messaging an
+agent). A poll that fails (``gh`` or Herdr erroring) is reported on stderr and
+retried, each pause twice the last up to ``FAILED_POLL_MAX_PAUSE`` (never shorter than
+the interval) and each failure restarting the settle period; once polls have failed in
+a row for ``FAILED_POLL_LIMIT`` seconds it exits 1 with the last error.
 ``status --ack`` acknowledges the current state without waiting. After a ``--wait``
 report, git config ``agent.notifyCommand`` is run (``NOTIFY_TIMEOUT`` seconds at
 most) with the title as its last argument and the report on stdin, unless
@@ -187,13 +203,32 @@ EXIT_TIMEOUT = 2
 EXIT_NOTHING_TO_WAIT = 3
 EXIT_POLL_FAILED = 1
 # GitHub outages and rate limits (secondary limits included) usually clear within
-# minutes; a watcher that gives up sooner needs a restart by hand.
-FAILED_POLL_LIMIT = 30 * 60.0  # seconds of failing polls before exit 1
-FAILED_POLL_MAX_PAUSE = 300.0  # longest pause between failing polls
+# minutes; a watcher or `record` that gives up sooner needs a restart by hand.
+FAILED_POLL_LIMIT = 30 * 60.0  # seconds of failing polls or gh calls before giving up
+FAILED_POLL_MAX_PAUSE = 300.0  # longest pause between failing polls or gh calls
+# omp's final reviewer (`--advisor`) posts its concern 20-100 s after an agent
+# finishes, and a concern starts one continuation turn. A group must stay done this
+# long before `status --wait` reports it, so that turn can start first.
+DONE_SETTLE = 120.0
 IDLE_RECHECK = 30.0  # seconds before exit 3 is confirmed
 NOTIFY_TIMEOUT = 30  # seconds the notify command may run
-READ_LINES = "120"  # recent agent output searched for NEEDS_YOU
+# What `gh` prints when GitHub, not the request, is at fault. Matched against the
+# failed command's own output only, never its command line.
+TRANSIENT_GH_ERROR = re.compile(
+    r"rate limit|abuse detection|HTTP 5\d\d|bad gateway|service unavailable"
+    r"|time-?out|timed out|\bTLS\b|connection (?:reset|refused)|\bEOF\b"
+    r"|server closed idle connection|broken pipe|network is unreachable"
+    r"|no such host|could not resolve host|error connecting|temporary failure",
+    re.IGNORECASE,
+)
+READ_LINES = "120"  # recent agent output searched for the closing line
 NEEDS_YOU = "This needs you"
+ALL_CLEAR = "Nothing here needs you"
+# The agent's closing line (assets/prompt.md): a line that starts with one of the two
+# sentences, whatever indentation, bullet or markdown emphasis the pane puts before
+# it. Prompts quote both mid-line ("End with 'Nothing here needs you' or 'This needs
+# you: ...'"), so a match anywhere in a line is not the agent's answer.
+CLOSING_LINE = re.compile(rf"^[\s>*_`#•-]*({NEEDS_YOU}|{ALL_CLEAR})\b")
 # Herdr agent states after a turn ends. `blocked` means the agent waits for input
 # or hit a provider failure; any other unknown state is never treated as finished.
 FINISHED_STATUSES = {"idle", "done"}
@@ -231,6 +266,14 @@ class StepError(Exception):
     """A check or command failed; for one group, the other groups still run."""
 
 
+class CommandError(StepError):
+    """A command exited nonzero; ``detail`` is what it printed."""
+
+    def __init__(self, message: str, detail: str) -> None:
+        super().__init__(message)
+        self.detail = detail
+
+
 def run(
     args: list[str],
     *,
@@ -249,12 +292,61 @@ def run(
     )
     if result.returncode != 0:
         detail = (result.stderr or result.stdout).strip()
-        raise StepError(f"`{' '.join(args[:4])}` exited {result.returncode}: {detail}")
+        raise CommandError(
+            f"`{' '.join(args[:4])}` exited {result.returncode}: {detail}", detail
+        )
     return result.stdout
 
 
 def run_json(args: list[str], *, cwd: str | None = None) -> Any:
     return json.loads(run(args, cwd=cwd))
+
+
+def retry_pause(interval: float, failures: int) -> float:
+    """Pause after ``failures`` failures in a row: doubling from ``interval`` up to
+    ``FAILED_POLL_MAX_PAUSE``, and never shorter than ``interval``, the pause of a
+    healthy poll.
+    """
+    return min(interval * 2 ** (failures - 1), max(interval, FAILED_POLL_MAX_PAUSE))
+
+
+def warn_failure(what: str, failures: int, failing_for: float, exc: Exception) -> None:
+    """One line on stderr for a failure that will be retried."""
+    print(
+        f"warning: {what} failed ({failures} in a row, "
+        f"{failing_for // 60:.0f} of {FAILED_POLL_LIMIT / 60:.0f} min): "
+        f"{' '.join(str(exc).split())}",
+        file=sys.stderr,
+    )
+
+
+def gh_run(args: list[str]) -> str:
+    """Run ``gh``, retrying transient failures as ``status --wait`` retries polls.
+
+    Other failures, and transient ones lasting ``FAILED_POLL_LIMIT`` seconds, raise.
+    """
+    failures = 0
+    failing_since = 0.0
+    while True:
+        try:
+            return run(["gh", *args])
+        except CommandError as exc:
+            if not TRANSIENT_GH_ERROR.search(exc.detail):
+                raise
+            if not failures:
+                failing_since = time.monotonic()
+            failures += 1
+            failing_for = time.monotonic() - failing_since
+            if failing_for >= FAILED_POLL_LIMIT:
+                raise StepError(
+                    f"{exc} (still failing after {failing_for / 60:.0f} min)"
+                ) from exc
+            warn_failure("gh call", failures, failing_for, exc)
+            time.sleep(retry_pause(WAIT_INTERVAL, failures))
+
+
+def gh_json(args: list[str]) -> Any:
+    return json.loads(gh_run(args))
 
 
 def git_config(key: str, *, cwd: str | None = None) -> str | None:
@@ -804,13 +896,15 @@ def unverified_commits(repo: str, number: int) -> list[str]:
     GitHub lists at most 250 commits of a pull request, so a longer one cannot be
     checked this way and counts as unverified.
     """
-    total = int(run(["gh", "api", f"repos/{repo}/pulls/{number}", "--jq", ".commits"]))
-    lines = run(
-        ["gh", "api", "--paginate", f"repos/{repo}/pulls/{number}/commits"]
+    total = int(gh_run(["api", f"repos/{repo}/pulls/{number}", "--jq", ".commits"]))
+    lines = gh_run(
+        ["api", "--paginate", f"repos/{repo}/pulls/{number}/commits"]
         + [
             "--jq",
-            '.[] | "\\(.sha[0:7]) \\(.commit.verification.verified)'
-            ' \\(.commit.verification.reason)"',
+            (
+                '.[] | "\\(.sha[0:7]) \\(.commit.verification.verified)'
+                ' \\(.commit.verification.reason)"'
+            ),
         ]
     ).splitlines()
     if len(lines) != total:
@@ -824,37 +918,41 @@ def unverified_commits(repo: str, number: int) -> list[str]:
 
 def record() -> int:
     top = os.path.realpath(run(["git", "rev-parse", "--show-toplevel"]).strip())
-    repo = run(
-        ["gh", "repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner"]
-    )
+    # Every GitHub call comes before the state lock: a rate limit can keep a call
+    # waiting for minutes, and the lock would stall every other agent's `record` and
+    # the watcher meanwhile.
+    repo = gh_run(["repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner"])
+    found = [(a, e) for a, e in recorded_groups().items() if e["path"] == top]
+    if not found:
+        raise StepError(f"{top} is not a recorded worktree")
+    agent, entry = found[0]
+    submitted: dict[str, dict[str, Any]] = {}
+    problems = 0
+    for branch in entry["branches"]:
+        head = branch_head(branch)
+        prs = gh_json(
+            ["pr", "list", "--head", branch, "--state", "open"]
+            + ["--json", "number,headRefOid,url"]
+        )
+        if head is None or not prs:
+            print(f"not submitted  {branch}")
+            continue
+        pr = prs[0]
+        if pr["headRefOid"] != head:
+            problems += 1
+            print(f"MISMATCH       {branch}: local {head[:7]}, PR {pr['url']}")
+            continue
+        # Only the default branch's ruleset rejects unsigned pushes, so a
+        # pull request branch has to be checked commit by commit.
+        if bad := unverified_commits(repo.strip(), pr["number"]):
+            problems += 1
+            print(f"UNVERIFIED     {branch} {pr['url']}: {'; '.join(bad)}")
+            continue
+        submitted[branch] = {"pr": pr["number"], "oid": head}
+        print(f"recorded       {branch} {head[:7]} {pr['url']}")
     with state() as entries:
-        found = [(a, e) for a, e in entries.items() if e["path"] == top]
-        if not found:
-            raise StepError(f"{top} is not a recorded worktree")
-        entry = found[0][1]
-        problems = 0
-        for branch in entry["branches"]:
-            head = branch_head(branch)
-            prs = run_json(
-                ["gh", "pr", "list", "--head", branch, "--state", "open"]
-                + ["--json", "number,headRefOid,url"]
-            )
-            if head is None or not prs:
-                print(f"not submitted  {branch}")
-                continue
-            pr = prs[0]
-            if pr["headRefOid"] != head:
-                problems += 1
-                print(f"MISMATCH       {branch}: local {head[:7]}, PR {pr['url']}")
-                continue
-            # Only the default branch's ruleset rejects unsigned pushes, so a
-            # pull request branch has to be checked commit by commit.
-            if bad := unverified_commits(repo.strip(), pr["number"]):
-                problems += 1
-                print(f"UNVERIFIED     {branch} {pr['url']}: {'; '.join(bad)}")
-                continue
-            entry["submitted"][branch] = {"pr": pr["number"], "oid": head}
-            print(f"recorded       {branch} {head[:7]} {pr['url']}")
+        if agent in entries:
+            entries[agent]["submitted"].update(submitted)
     return 1 if problems else 0
 
 
@@ -898,6 +996,20 @@ def branch_report(branch: str, entry: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def says_needs_you(output: str) -> bool:
+    """Whether the last closing line in ``output`` is ``NEEDS_YOU``.
+
+    Only lines that start with a closing sentence count (``CLOSING_LINE``), so a prompt
+    quoting them mid-line is ignored, and the last one decides, so an earlier turn's
+    closing line does not outlive a later one.
+    """
+    closing = None
+    for line in output.splitlines():
+        if match := CLOSING_LINE.match(line):
+            closing = match.group(1)
+    return closing == NEEDS_YOU
+
+
 def inspect_group(
     agent: str, entry: dict[str, Any], live: dict[str, Any] | None, herdr: Herdr
 ) -> dict[str, Any]:
@@ -906,7 +1018,8 @@ def inspect_group(
     A working agent is never ``done``, whatever was recorded before it resumed, and
     neither is a blocked one: Herdr reports ``blocked`` when the agent waits for the
     user or a provider failed, so it needs the user even if its old records are
-    complete. Only an agent Herdr reports as finished can be ``done``.
+    complete. Only an agent Herdr reports as finished can be ``done``, or ``needs-you``
+    by its closing line (``says_needs_you``).
     """
     branches = [branch_report(branch, entry) for branch in entry["branches"]]
     agent_status = live.get("agent_status") if live else None
@@ -914,7 +1027,9 @@ def inspect_group(
         state_name = "gone"
     elif agent_status == "working":
         state_name = "working"
-    elif agent_status == BLOCKED_STATUS or NEEDS_YOU in herdr.read(agent):
+    elif agent_status == BLOCKED_STATUS or (
+        agent_status in FINISHED_STATUSES and says_needs_you(herdr.read(agent))
+    ):
         state_name = "needs-you"
     elif agent_status in FINISHED_STATUSES and all(b["submitted"] for b in branches):
         state_name = "done"
@@ -1046,21 +1161,51 @@ def poll(
     return groups, reports
 
 
+def settling(
+    groups: dict[str, dict[str, Any]],
+    reports: dict[str, dict[str, Any]],
+    since: dict[str, tuple[dict[str, Any], float]],
+    now: float,
+) -> set[str]:
+    """The groups that are done, not yet acknowledged, and not for ``DONE_SETTLE`` s.
+
+    ``since`` maps each such group to its signature and when it was first seen so. It
+    is updated in place: a group that is anything else, or whose signature changed,
+    starts over.
+    """
+    news = {
+        agent: report["signature"]
+        for agent, report in reports.items()
+        if report["state"] == "done"
+        and report["signature"] != groups[agent].get("acknowledged")
+    }
+    for agent in since.keys() - news.keys():
+        del since[agent]
+    for agent, signature in news.items():
+        if agent not in since or since[agent][0] != signature:
+            since[agent] = (signature, now)
+    return {agent for agent, (_, first) in since.items() if now - first < DONE_SETTLE}
+
+
 def wait_for_change(
     herdr: Herdr, interval: float, hours: float, send_notification: bool
 ) -> int:
     """Poll until a group that is not working has a state nobody was told about.
 
-    Exits ``EXIT_NOTHING_TO_WAIT`` once two polls in a row, the second
-    ``IDLE_RECHECK`` seconds after the first, find nothing working and nothing new:
-    an agent just messaged may not show as working yet, and a watcher started again
-    after a finished run must not spin. Polls that fail are retried with a growing
-    pause; once they have failed in a row for ``FAILED_POLL_LIMIT`` seconds, the last
-    error ends the wait.
+    A done group counts only after ``DONE_SETTLE`` seconds of staying done, so omp's
+    final reviewer can start a continuation turn first; one that resumes working in
+    the meantime is never reported. Exits ``EXIT_NOTHING_TO_WAIT`` once two polls in a
+    row, the second ``IDLE_RECHECK`` seconds after the first, find nothing working,
+    nothing settling and nothing new: an agent just messaged may not show as working
+    yet, and a watcher started again after a finished run must not spin. Polls that
+    fail are retried with a growing pause and restart the settle period; once they
+    have failed in a row for ``FAILED_POLL_LIMIT`` seconds, the last error ends the
+    wait.
     """
     deadline = time.monotonic() + hours * 3600
     idle_polls = failed_polls = 0
     failing_since = 0.0
+    since: dict[str, tuple[dict[str, Any], float]] = {}
     while True:
         pause = interval
         try:
@@ -1070,36 +1215,37 @@ def wait_for_change(
                 failing_since = time.monotonic()
             failed_polls += 1
             idle_polls = 0
+            since.clear()  # the agent may have resumed and finished unseen
             failing_for = time.monotonic() - failing_since
-            print(
-                f"warning: poll failed ({failed_polls} in a row, "
-                f"{failing_for // 60:.0f} of {FAILED_POLL_LIMIT / 60:.0f} min): {exc}",
-                file=sys.stderr,
-            )
+            warn_failure("poll", failed_polls, failing_for, exc)
             if failing_for >= FAILED_POLL_LIMIT:
                 print(f"FAILED: {exc}", file=sys.stderr)
                 return EXIT_POLL_FAILED
-            # Never retry sooner than a healthy poll would run.
-            pause = min(
-                interval * 2 ** (failed_polls - 1),
-                max(interval, FAILED_POLL_MAX_PAUSE),
-            )
+            pause = retry_pause(interval, failed_polls)
         else:
             failed_polls = 0
+            pending = settling(groups, reports, since, time.monotonic())
+            # A group still settling is neither reported nor acknowledged; the
+            # report lists it as `settling` so that no group goes missing from it.
+            reported = {a: r for a, r in reports.items() if a not in pending}
             changed = {
                 agent
-                for agent, report in reports.items()
+                for agent, report in reported.items()
                 if report["state"] != "working"
                 and report["signature"] != groups[agent].get("acknowledged")
             }
             if changed:
-                text = render(reports, changed)
+                shown = {
+                    a: {**r, "state": "settling"} if a in pending else r
+                    for a, r in reports.items()
+                }
+                text = render(shown, changed)
                 print(text)
-                acknowledge(reports)
+                acknowledge(reported)
                 if send_notification:
-                    notify(reports, changed, text)
+                    notify(reported, changed, text)
                 return 0
-            if any(report["state"] == "working" for report in reports.values()):
+            if pending or any(r["state"] == "working" for r in reports.values()):
                 idle_polls = 0
             else:
                 idle_polls += 1
@@ -1564,7 +1710,8 @@ def main() -> None:
     mode.add_argument(
         "--wait",
         action="store_true",
-        help="wait until a group is done, needs you, stopped or gone (exit 0), "
+        help="wait until a group is done (and has stayed so for "
+        f"{DONE_SETTLE:g} s), needs you, stopped or gone (exit 0), "
         f"timed out ({EXIT_TIMEOUT}), nothing is left to wait for "
         f"({EXIT_NOTHING_TO_WAIT}) or polls kept failing for "
         f"{FAILED_POLL_LIMIT / 60:.0f} minutes ({EXIT_POLL_FAILED})",

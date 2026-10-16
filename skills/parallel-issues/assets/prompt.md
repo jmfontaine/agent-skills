@@ -43,8 +43,15 @@ instruction files (AGENTS.md, CLAUDE.md) for its checks and conventions.
    repository's instructions require until they pass.
 4. Before committing, have a fresh reviewer (a subagent) check the uncommitted
    change against the issue's outcome and acceptance criteria, as well as for
-   defects. Fix every valid finding, rerun the checks, and review again until no
-   blocking finding is left. Note any finding you rejected and why.
+   defects. A finding is blocking only when the change misses an acceptance
+   criterion, breaks a rule of the repository's instruction files, or has a defect:
+   wrong behavior, a failing or flaky test, or a false statement in code, docs or the
+   pull request. Everything else, such as polish or extra hardening, is not blocking:
+   fix it only when it is small and inside the issue's scope, and otherwise list it
+   under "Scope notes". Fix every blocking finding, rerun the checks, and review
+   again, three reviews at most. If a blocking finding is still open after the third,
+   commit, list it under "Scope notes", and list it under "This needs you" in your
+   final message. Note any finding you rejected and why.
 5. Commit. Signing and the author identity are already configured for this session:
    never change `user.*`, `gpg.*` or `commit.gpgsign`, and never pass
    `--no-gpg-sign`. If a commit cannot be signed, stop and report it. Commits must
@@ -66,11 +73,16 @@ When every issue is done, or you stopped at one:
    its results, and scope notes, including rejected review findings.
 3. With two or more pull requests, run `gh stack submit --auto` to link them into a
    stack. It keeps the pull requests you opened.
-4. Run `$record`. It must print `recorded` for every branch you pushed. On
+4. Wait for every pull request's checks: `gh pr checks <n> --watch --interval 60`.
+   Fix a failure caused by your change with a new commit on its branch, reviewed like
+   any other change, merge it into the layers above as the git-commit skill describes,
+   push, and wait again. Note a failure your change did not cause in the pull request.
+5. Run `$record`, allowing it up to 35 minutes: it retries GitHub rate limits and
+   outages for up to 30. It must print `recorded` for every branch you pushed. On
    `MISMATCH`, push that branch again and rerun it. On `UNVERIFIED`, GitHub does not
    show a commit as verified: do not work around it, stop and report it.
 
-Never merge, never push to `$trunk`, and never force-push.
+Never merge a pull request, never push to `$trunk`, and never force-push.
 
 End with each issue's pull request URL, or the reason it has none, then either
 "Nothing here needs you" or "This needs you: …" listing each item, such as a push

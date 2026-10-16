@@ -240,7 +240,9 @@ stays loaded for 24 hours, across waves and `clean`, and every launch reuses it.
    button fails on a repository that requires signed commits; that is expected.
 
    Every merge moves `main`, so check the next pull request with
-   `gh pr view <n> --json mergeStateStatus` before merging it:
+   `gh pr view <n> --json mergeStateStatus` before merging it. While it reads
+   `UNKNOWN`, GitHub is still computing it after the previous merge: query again a few
+   seconds later until it changes. Act on the value it settles on:
    - **`BEHIND`, on a repository whose ruleset requires up-to-date branches:** run
      `gh pr update-branch <n>` for a single pull request. GitHub adds a merge commit
      that it signs, and the squash drops it. A stacked pull request refuses it (HTTP

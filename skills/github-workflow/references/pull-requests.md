@@ -88,8 +88,10 @@ unsigned commit blocks the merge until it is rebased, signed, and force pushed.
 
 `gh pr view <n> --json mergeStateStatus` tells whether a branch needs updating first:
 `DIRTY` is a conflict, and `BEHIND` matters only when a ruleset requires up-to-date
-branches. Update by merging, never by rebasing, so nothing pushed is rewritten and no
-force push is needed; the squash drops the merge commits.
+branches. `UNKNOWN` means GitHub is still computing it, as it does for a few seconds
+after the base branch moves: query again until it changes, and never merge on it.
+Update by merging, never by rebasing, so nothing pushed is rewritten and no force
+push is needed; the squash drops the merge commits.
 
 - **Single pull request:** `gh pr merge <n> --squash`. When it is only `BEHIND`, run
   `gh pr update-branch <n>` first: GitHub adds a merge commit it signs. On a conflict,

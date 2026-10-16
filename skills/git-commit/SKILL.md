@@ -1,7 +1,7 @@
 ---
 name: git-commit
 description: Git commit guidelines, including which branch a commit goes on and GitHub stacked pull requests. Use before every git commit, including a bare "commit" or "commit and push" request, and when amending, squashing, rewording, staging files, writing commit messages, or splitting dependent changes into stacked branches and pull requests.
-allowed-tools: Bash(git add:*) Bash(git branch:*) Bash(git commit:*) Bash(git diff:*) Bash(git log:*) Bash(git rebase:*) Bash(git status:*) Bash(gh extension list:*) Bash(gh repo view:*) Bash(gh stack add:*) Bash(gh stack bottom:*) Bash(gh stack checkout:*) Bash(gh stack down:*) Bash(gh stack init:*) Bash(gh stack rebase:*) Bash(gh stack top:*) Bash(gh stack up:*) Bash(gh stack view:*)
+allowed-tools: Bash(git add:*) Bash(git branch:*) Bash(git commit:*) Bash(git diff:*) Bash(git fetch:*) Bash(git log:*) Bash(git merge:*) Bash(git rebase:*) Bash(git show:*) Bash(git status:*) Bash(gh extension list:*) Bash(gh repo view:*) Bash(gh stack add:*) Bash(gh stack bottom:*) Bash(gh stack checkout:*) Bash(gh stack down:*) Bash(gh stack init:*) Bash(gh stack rebase:*) Bash(gh stack top:*) Bash(gh stack up:*) Bash(gh stack view:*)
 ---
 
 # Git Commit Guidelines
@@ -124,10 +124,27 @@ same branch as its dependencies or above them.
 Name each branch following the `git-branch` skill: `<type>/issue-<N>-<slug>` for an
 issue, `<type>/<slug>` otherwise.
 
-### Rebase Only
+### Updating Layers
 
-Use rebase for every cross-branch operation. Never merge one branch into another or
-cherry-pick between branches.
+Never cherry-pick between branches. Whether to rebase or merge depends on whether the
+layers are pushed and on the repository's merge method (Clean History).
+
+**Merge pushed layers when the repository squash-merges.** A merge rewrites nothing
+that is pushed, so no force push and no user decision is needed, and the squash drops
+the merge commits. Sign each merge commit (`git merge -S`).
+
+- **Fix a lower layer:** check out its branch (`gh stack checkout <branch>`), commit the
+  fix on top, then check out each layer above it in order and `git merge -S` the branch
+  just below it.
+- **Catch up with the trunk:** `git fetch origin <trunk>`, merge `origin/<trunk>` into
+  the bottom branch, then each layer into the next one up.
+- **Conflicts:** resolve them, stage with `git add`, and run `git commit -S` to finish
+  the merge, or `git merge --abort` to undo it. `git show --remerge-diff <merge>` shows
+  how a merge commit resolved its conflicts, for a review of the resolutions alone.
+- Push each updated branch normally, bottom first.
+
+**Rebase in every other case:** layers not pushed yet, or a repository that rebases or
+fast-forwards, where merge commits would land on the trunk.
 
 - **Fix a lower layer:** check out its branch with `gh stack down` or
   `gh stack checkout <branch>`, fold the change into the right commit as described in
@@ -147,10 +164,10 @@ cherry-pick between branches.
   `gh stack rebase --upstack` if a lower layer changed.
 
 Rewriting a pushed layer, including the layers above it that a cascading rebase replays,
-follows the pushed-commit rule in Clean History: ask before force pushing. A user's
-request to merge a pull request or stack that is behind its base already covers
-rebasing that stack's branches and pushing them with `--force-with-lease`; it covers no
-other branch.
+follows the pushed-commit rule in Clean History: ask before force pushing. On a
+repository that rebases or fast-forwards, a user's request to merge a pull request or
+stack that is behind its base already covers rebasing that stack's branches and pushing
+them with `--force-with-lease`; it covers no other branch.
 
 ### Pushing and Merging
 

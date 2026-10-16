@@ -86,11 +86,15 @@ need to contain the base first. A ruleset that requires signed commits still che
 every commit on the pull request branch, so each one must be signed and verified: an
 unsigned commit blocks the merge until it is rebased, signed, and force pushed.
 
-- **Single pull request:** `gh pr merge <n> --squash`. Rebase the branch first only when
-  GitHub reports a conflict (`gh pr view <n> --json mergeable` is `CONFLICTING`). When
-  a ruleset requires up-to-date branches and the branch is only behind, run
-  `gh pr update-branch <n>` instead: GitHub adds a merge commit it signs, and the
-  squash drops it.
+`gh pr view <n> --json mergeStateStatus` tells whether a branch needs updating first:
+`DIRTY` is a conflict, and `BEHIND` matters only when a ruleset requires up-to-date
+branches. Update by merging, never by rebasing, so nothing pushed is rewritten and no
+force push is needed; the squash drops the merge commits.
+
+- **Single pull request:** `gh pr merge <n> --squash`. When it is only `BEHIND`, run
+  `gh pr update-branch <n>` first: GitHub adds a merge commit it signs. On a conflict,
+  merge the base into the branch locally as the `git-commit` skill describes (Updating
+  Layers), signed with your key, push, and wait for the checks.
 - **Stack:** from a worktree that has the stack checked out, run
   `gh stack merge --yes --squash` with no number. It merges every pull request of the
   stack in one all-or-nothing operation, one squashed commit each, through GitHub's
@@ -99,7 +103,9 @@ unsigned commit blocks the merge until it is rebased, signed, and force pushed.
   different stack without asking. To merge only the lower part of a stack, use its
   interactive picker or ask the user. After a partial merge, GitHub re-targets the
   lowest unmerged layer at the base and rebases the layers above it. Do not use
-  `gh pr merge` on a stacked pull request.
+  `gh pr merge` on a stacked pull request. `gh pr update-branch` refuses a stacked pull
+  request (HTTP 403), so update a stack that is behind or conflicts locally: merge the
+  base into the bottom branch, then each layer into the next one up.
 
 ### Fast-forward merge
 

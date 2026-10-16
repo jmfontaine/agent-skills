@@ -106,7 +106,11 @@ Planning happens with the user, before anything runs.
    the issues cite and a search of the code. Order each group bottom-up: what others
    depend on first, then smaller changes. Stack only issues that really overlap;
    independent issues get their own group, since a stack merges bottom-up and a
-   rejected lower layer holds back every layer above it.
+   rejected lower layer holds back every layer above it. Then compare the groups with
+   each other: two groups that edit the same files, including shared ones such as
+   test fixtures and configuration, command registries, help text, or the
+   documentation index, conflict when the first one merges, and every later one pays
+   a merge round. Stack them, or run them in separate waves.
 3. Leave out, and say why:
    - issues the user did not open, or that someone else edited (the launcher refuses
      them anyway, because their text could steer an unattended agent);
@@ -217,8 +221,8 @@ stays loaded for 24 hours, across waves and `clean`, and every launch reuses it.
    request or stack, launched in one batch. The pre-commit reviewer already looked for
    defects; the spec check asks whether the delivery matches the issue, and a batch of
    `reviewer` subagents would spend the costly model that agent defaults to. Changes
-   to a lower layer happen in an interactive session: fix it, then
-   `gh stack rebase --upstack`, and force push only with the user's agreement.
+   to a lower layer go back to the group's agent, or are made in an interactive
+   session, as the `git-commit` skill describes (Updating Layers).
 2. **Merge.** Merge as the `github-workflow` skill describes. When several pull requests
    are ready, suggest merging them in one request; never require it. On a repository
    that squash-merges, merge a single pull request with `gh pr merge <n> --squash`,
@@ -227,23 +231,28 @@ stays loaded for 24 hours, across waves and `clean`, and every launch reuses it.
    and rebases what is left of a partly merged stack. GitHub's **Rebase and merge**
    button fails on a repository that requires signed commits; that is expected.
 
-   A branch needs updating before its merge in three cases. Handle each without a
-   rebase where possible, since every merge moves `main` again:
-   - **Behind `main` with no conflict, on a repository whose ruleset requires
-     up-to-date branches:** run `gh pr update-branch <n>` for a single pull request.
-     GitHub adds a merge commit that it signs, and the squash drops it.
-   - **A conflict, or a behind stack on such a repository:** hand it back to its agent
-     to rebase, since only the agent's key may sign the rewritten commits.
+   Every merge moves `main`, so check the next pull request with
+   `gh pr view <n> --json mergeStateStatus` before merging it:
+   - **`BEHIND`, on a repository whose ruleset requires up-to-date branches:** run
+     `gh pr update-branch <n>` for a single pull request. GitHub adds a merge commit
+     that it signs, and the squash drops it. A stacked pull request refuses it (HTTP
+     403); treat it as the next case. Without that ruleset, `BEHIND` needs nothing.
+   - **`DIRTY` (a conflict), or a stack that must be updated, on a squash-merging
+     repository:** hand it back to its agent, since only the agent's key may sign its
+     commits. Tell it to fetch `main` over HTTPS, merge it into the bottom branch,
+     then merge each layer into the next one up, and push normally: no rebase, no
+     force push, so no decision from the user.
    - **A repository that fast-forwards** (rebase merges only, signed commits
      required): every merge after the first needs the next branch rebased by its
-     agent. Suggest enabling squash merges to the user instead.
+     agent and force pushed, which needs the user's agreement. Suggest enabling squash
+     merges to the user instead.
 
-   When you ask an agent to rebase, tell it to rerun the repository's checks, and to
-   have a fresh reviewer check only the conflict resolutions (`git range-diff`
-   against the old head) when there were conflicts. A rebase without conflicts gets
-   no review; the rerun checks cover it. Parallel groups that edit the same files
-   conflict at merge time, which is another reason step 2 of planning stacks
-   overlapping issues.
+   When you hand a branch back, tell the agent to rerun the repository's checks on
+   every layer it changed. When there were conflicts, it also has a fresh reviewer
+   check only the resolutions (`git show --remerge-diff <merge>`, or `git range-diff`
+   against the old head after a rebase); an update without conflicts gets no review.
+   Hand a group its update only after the merges already decided for other groups
+   have landed, so one round covers them all.
 3. **Clean.** Run it from the main checkout's Herdr workspace, never from an agent's
    workspace, once no agent is working: `clean --dry-run`, then `clean`. Never remove a
    worktree, branch, or workspace by hand: that leaves the Herdr workspace and its idle

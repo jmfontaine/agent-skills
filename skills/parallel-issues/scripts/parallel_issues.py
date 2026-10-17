@@ -90,10 +90,11 @@ it. A group that resumes working meanwhile is not reported at all; the other
 states are reported at once. ``--wait`` exits 2 on timeout, and 3 when two polls, the
 second ``IDLE_RECHECK`` seconds after the first, find nothing working, nothing
 settling and nothing new (the pause covers a watcher started just after messaging an
-agent). A poll that fails (``gh`` or Herdr erroring) is reported on stderr and
-retried, each pause twice the last up to ``FAILED_POLL_MAX_PAUSE`` (never shorter than
-the interval) and each failure restarting the settle period; once polls have failed in
-a row for ``FAILED_POLL_LIMIT`` seconds it exits 1 with the last error.
+agent). A poll that fails (``gh`` or Herdr erroring, or hanging for
+``COMMAND_TIMEOUT`` seconds) is reported on stderr and retried, each pause twice the
+last up to ``FAILED_POLL_MAX_PAUSE`` (never shorter than the interval) and each failure
+restarting the settle period; once polls have failed in a row for ``FAILED_POLL_LIMIT``
+seconds it exits 1 with the last error.
 ``status --ack`` acknowledges the current state without waiting. After a ``--wait``
 report, git config ``agent.notifyCommand`` is run (``NOTIFY_TIMEOUT`` seconds at
 most) with the title as its last argument and the report on stdin, unless
@@ -202,6 +203,11 @@ WAIT_TIMEOUT_HOURS = 13.0
 EXIT_TIMEOUT = 2
 EXIT_NOTHING_TO_WAIT = 3
 EXIT_POLL_FAILED = 1
+# A gh, git or Herdr call that hangs (a TLS handshake that never completes, say) fails
+# after this long, so a watcher retries it instead of blocking forever unseen. Commands
+# that wait for the user (1Password) or transfer an unknown amount (git over the
+# network) opt out.
+COMMAND_TIMEOUT = 120.0
 # GitHub outages and rate limits (secondary limits included) usually clear within
 # minutes; a watcher or `record` that gives up sooner needs a restart by hand.
 FAILED_POLL_LIMIT = 30 * 60.0  # seconds of failing polls or gh calls before giving up
@@ -280,16 +286,23 @@ def run(
     cwd: str | None = None,
     env: dict[str, str] | None = None,
     stdin: str | None = None,
+    timeout: float | None = COMMAND_TIMEOUT,
 ) -> str:
-    result = subprocess.run(
-        args,
-        cwd=cwd,
-        env=env,
-        input=stdin,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    try:
+        result = subprocess.run(
+            args,
+            cwd=cwd,
+            env=env,
+            input=stdin,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        # "timed out" matches TRANSIENT_GH_ERROR, so gh_run retries it like an outage.
+        detail = f"timed out after {timeout:g} s"
+        raise CommandError(f"`{' '.join(args[:4])}` {detail}", detail) from None
     if result.returncode != 0:
         detail = (result.stderr or result.stdout).strip()
         raise CommandError(
@@ -604,7 +617,7 @@ def load_signing_key(
     # Read through the 1Password app, which can reach personal vaults, rather than
     # a service account the shell may export for other tools.
     app_env = {k: v for k, v in os.environ.items() if k != "OP_SERVICE_ACCOUNT_TOKEN"}
-    key = run(["op", "read", reference], env=app_env)
+    key = run(["op", "read", reference], env=app_env, timeout=None)  # waits on the user
     if "PRIVATE KEY" not in key:
         raise StepError(f"{SIGNING_KEY_SETTING} does not point at an SSH private key")
     # Taken before loading, so the recorded time never outlasts the key. Re-adding a
@@ -671,7 +684,7 @@ def config_env(config: Sequence[tuple[str, str]]) -> dict[str, str]:
 
 def github_git(args: list[str]) -> str:
     """Run a git command that reaches GitHub, over HTTPS (``GITHUB_OVER_HTTPS``)."""
-    return run(args, env={**os.environ, **config_env(GITHUB_OVER_HTTPS)})
+    return run(args, env={**os.environ, **config_env(GITHUB_OVER_HTTPS)}, timeout=None)
 
 
 def agent_env(public: str, socket: Path) -> dict[str, str]:

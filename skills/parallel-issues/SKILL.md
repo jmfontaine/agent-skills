@@ -199,9 +199,9 @@ stays loaded for 24 hours, across waves and `clean`, and every launch reuses it.
   reported once; one that resumes counts as working again and is reported when it
   next stops. On exit it prints every group's state, and runs `agent.notifyCommand`
   unless `--no-notify` is given. Exit code 3 means nothing is running and nothing new
-  happened. A failed poll (a GitHub outage or rate limit, a Herdr error) is retried
-  with a growing pause; exit code 1 means polls kept failing for 30 minutes, so check
-  `gh` and Herdr before starting it again.
+  happened. A failed poll (a GitHub outage or rate limit, a Herdr error, or a call
+  hanging for two minutes) is retried with a growing pause; exit code 1 means polls
+  kept failing for 30 minutes, so check `gh` and Herdr before starting it again.
 - When the watcher exits with a report, check the reported pull requests (checks,
   review state), report to the user without waiting to be asked, and start the watcher
   again while any group is still working.

@@ -1,6 +1,6 @@
 # Product map development
 
-Map the whole intended product at low resolution. Preserve coherence across slices
+Map the whole intended product at low resolution. Preserve coherence across releases
 without designing the entire system or promising every possibility.
 
 Start from the Manifesto and known user workflows. For an existing product, compare
@@ -15,19 +15,41 @@ to match whatever was built.
 - Surface cross-cutting product concerns and external ownership or integration
   boundaries.
 - Keep important future capability areas visible when they are part of product intent.
-  Leave speculative ideas in the private Parking Lot.
+  Leave speculative ideas in the Parking Lot.
 - Connect capability areas to the Manifesto's capabilities, principles, or boundaries.
   Links or named sections are sufficient; do not invent an identifier system merely for
   traceability.
 
 A compact document can use capability groups, key journeys, cross-cutting concerns, and
 boundaries. Add a diagram only if it clarifies relationships. Distinguish intended
-capabilities from those already delivered when useful, but leave live sequencing and
-execution status to GitHub Projects.
+capabilities from those already delivered when useful, but leave issue-level status and
+execution detail to GitHub milestones and issues.
 
 Exclude database schemas, API details, exact file formats, algorithms, CLI flags,
 detailed acceptance criteria, and task breakdowns. A mechanism may expose a missing
 capability; translate it back into the outcome before adding it.
+
+## Keep Now / Next / Later
+
+The Product Map ends with the roadmap, a short Now / Next / Later section in the same
+file:
+
+| Column | Holds | Precision |
+| --- | --- | --- |
+| Now | The outcomes of the current milestone | Precise; matches the milestone description |
+| Next | Outcomes planned for the next one or two milestones | Coarse; provisional |
+| Later | Intended capabilities with no release yet | One line each, tied to a capability |
+
+Each entry names a user outcome and its capability, not a task. The roadmap has no
+dates and no status; a milestone's issues carry execution status. Only Now is
+committed, and only because a milestone exists for it.
+
+Move entries left as evidence supports it: Later → Next when a release is in sight,
+Next → Now when the user creates its milestone (see
+[release planning](release-planning.md)). Update the section during
+[release review](release-review.md), not whenever a thought arrives. An entry that stays
+in Later without a release is still part of product intent; an idea that is not yet
+intent belongs in the Parking Lot.
 
 ## Challenge and finish
 
@@ -38,5 +60,5 @@ Manifesto.
 
 The map is ready when it gives enough context to choose a coherent next outcome without
 designing distant work. Promote a clean version to Git when it begins guiding
-implementation, then use milestone planning to choose what happens next. Do not turn
-each map entry into an issue.
+implementation, then use release planning to choose what goes into the next milestone.
+Do not turn each map entry into an issue.

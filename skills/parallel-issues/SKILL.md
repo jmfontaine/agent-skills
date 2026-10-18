@@ -1,16 +1,16 @@
 ---
 name: parallel-issues
 description: Work several GitHub issues in parallel with unattended coding agents, one Herdr workspace and git worktree per group of issues, each group delivered as a stack of signed, reviewed pull requests. Use when the user wants to fix a batch, list, or milestone of issues at once, run agents overnight or while away, fan issues out to parallel agents, or check on, review, merge, or clean up such a run. Use it even for short requests such as "work on #12, #13 and #14 in parallel" or "launch the milestone before I go to bed".
-compatibility: Requires Herdr (run from a Herdr pane), gh with the github/gh-stack extension, the 1Password CLI (op), git with SSH commit signing, and Python 3.10+. Agents start as omp by default.
+compatibility: Requires Herdr (run from a Herdr pane), gh with the github/gh-stack extension, the 1Password CLI (op), git with SSH commit signing, Python 3.10+, and the github-workflow, git-branch and git-commit skills, which the agents follow. Agents start as omp by default.
 ---
 
 # Parallel Issues
 
 Plan a batch of GitHub issues with the user, then launch one coding agent per group of
-issues that touch the same code. Each agent works unattended in its own worktree and
-delivers its group as a stack of pull requests, one per issue, each signed, checked,
-and reviewed before it is committed. The user reviews and merges the pull requests when
-they are back.
+issues that depend on each other or touch the same files. Each agent works unattended
+in its own worktree and delivers its group as a stack of pull requests, one per issue,
+each signed, checked, and reviewed locally before it is committed. The maintainer
+review and the merge are the user's, once they are back.
 
 The point of a batch is that the user starts it and goes off to do something else. So
 ask for everything the run will need while the user is still there, and always tell
@@ -21,6 +21,16 @@ Run it from the repository's main checkout. The agents follow `assets/prompt.md`
 `github-workflow` and `git-commit` skills, and the repository's agent instruction files
 (AGENTS.md, CLAUDE.md). Keep repository-specific rules, such as tests that must not
 run concurrently, in those instruction files rather than in the prompt.
+
+## Terms
+
+A **batch** is the issues the user approves in one planning session, taken from a
+milestone or from a list the user gives. A **wave** is the groups launched together;
+the user merges between waves, so in practice one wave runs per night. Waves are
+numbered 1 to n. A **group** is the issues one agent delivers in one worktree as one
+stack, one pull request per issue, bottom first. A **layer** is one branch and pull
+request of a stack. A group is named after its issues, never with a letter: `#185`
+for one issue, `#185/#187/#180` for three.
 
 ## When the user is needed
 
@@ -33,10 +43,10 @@ the work until they return, which defeats the batch.
   key).
 - **While the agents run: not needed.** Agents never ask; they take the conservative
   option and note it in the pull request.
-- **After the run: needed only for decisions.** Merging, a force push after a rebase,
-  pushing a change only the user may push, and anything a `keep` or `leftover` line
-  from `clean` asks them to resolve. Ask these together as well, before a long merge,
-  release, or cleanup sequence.
+- **After the run: needed only for decisions.** Merging, approving the rejected-layer
+  procedure (the only force push the workflow allows), pushing a change only the user
+  may push, and anything a `keep` or `leftover` line from `clean` asks them to resolve.
+  Ask these together as well, before a long merge, release, or cleanup sequence.
 
 End every turn with one of these, stated in so many words:
 
@@ -63,6 +73,11 @@ removed by `clean`.
 Check each item and fix what is missing with the user; the launcher refuses to start
 otherwise.
 
+- The repository works through branches and pull requests. When its agent instruction
+  files allow or require committing straight to the default branch, do not launch:
+  the agents only open pull requests, and commits on the default branch land as they
+  are. Tell the user why and work those issues in an interactive session. The launcher
+  does not check this one.
 - This session runs in a Herdr pane (`HERDR_ENV=1`). For agent status to be accurate,
   Herdr's integration for the agent must be installed (`herdr integration status`).
 - `gh extension list` shows `github/gh-stack`.
@@ -83,10 +98,10 @@ otherwise.
 - Optional, through git config:
   - `agent.ompConfig`: an omp config overlay that the launcher passes to every omp
     agent with `--config`, for settings only unattended agents should get, such as a
-    model from another family for their pre-commit reviewer, so that review does not
-    share the author's blind spots. It should also set
-    `completion.notify`, `ask.notify` and `error.notify` to `"off"` (quoted), or every
-    agent notifies the user at the end of each turn.
+    model from another family for their local reviewer, so that review does not share
+    the author's blind spots. It should also set `completion.notify`, `ask.notify` and
+    `error.notify` to `"off"` (quoted), or every agent notifies the user at the end of
+    each turn.
   - `agent.notifyCommand`: a command that sends the user a notification, with a title
     as its argument and the message on standard input, for example a script that
     sends a phone notification. `parallel_issues.py notify` runs it, and so does
@@ -99,31 +114,44 @@ otherwise.
 
 Planning happens with the user, before anything runs.
 
-1. List the candidate issues (`gh issue list --milestone <name>`) and read each one.
-   Check its labels as well: they are the launcher's only signal for the branch type
-   (see Launch). Add the commit-type label when the generic ones would mislead.
-2. Group issues that will change the same files or behavior, using the code paths
-   the issues cite and a search of the code. Order each group bottom-up: what others
-   depend on first, then smaller changes. Stack only issues that really overlap;
-   independent issues get their own group, since a stack merges bottom-up and a
-   rejected lower layer holds back every layer above it. Then compare the groups with
-   each other: two groups that edit the same files, including shared ones such as
-   test fixtures and configuration, command registries, help text, or the
-   documentation index, conflict when the first one merges, and every later one pays
-   a merge round. Stack them, or run them in separate waves.
-3. Leave out, and say why:
+1. Collect the candidate issues: a milestone's open issues (`gh issue list --milestone
+   <name>`, a milestone being one release) or the list the user gives. Read each one.
+   Check its labels as well. Each issue needs exactly one change-type label from the
+   repository's baseline: the launcher takes the branch type from it, following the
+   `git-branch` skill's label table (see Launch), and falls back to `fix` when there
+   is none. Fix a missing or misleading label with the user. Never create a label
+   outside the repository's baseline; ask instead. The baseline, and the rule for
+   deviations, are in the `github-workflow` skill's `references/repository-setup.md`
+   (if installed).
+2. Group the issues. Stack issues that depend on each other, and issues that edit the
+   same files, so that the night's run keeps going instead of waiting for a merge.
+   Find the overlap in the code paths the issues cite and in a search of the code.
+   Order each group bottom-up: what others depend on first, then smaller changes.
+   Stacking issues only because they share files deliberately departs from GitHub's
+   rule that stacks follow dependencies. Its cost: a stack merges bottom-up, so a
+   rejected lower layer holds back every layer above it (see The rejected layer).
+   Independent issues get their own group.
+3. Compare the groups with each other: two groups that edit the same files, including
+   shared ones such as test fixtures and configuration, command registries, help text,
+   or the documentation index, conflict when the first one merges, and every later one
+   pays a merge round. Stack them, or put them in separate waves.
+4. Fill each wave with as many independent groups as the machine and the model quota
+   allow: width before depth. Number the waves 1 to n. The user merges between waves,
+   so depth costs a night each.
+5. Leave out, and say why:
    - issues the user did not open, or that someone else edited (the launcher refuses
      them anyway, because their text could steer an unattended agent);
-   - issues whose outcome or verification is unclear, which belong in an interactive
-     session first.
-4. Size the run knowing that each group is a long agent session with its own model
+   - issues whose acceptance criteria or verification are unclear, which belong in an
+     interactive session first.
+6. Size the run knowing that each group is a long agent session with its own model
    usage, and that the test suites run concurrently on one machine.
-5. Present the plan as a table (group, issues in order, files touched, why grouped)
-   and launch only after the user approves it.
+7. Present the plan as a table (wave, group named after its issues, issues in order,
+   files touched, why grouped) and launch only after the user approves it.
 
 ## Launch
 
-Each argument is a group, issues comma-separated, bottom of the stack first:
+Each argument is a group, issues comma-separated, bottom of the stack first. Launch the
+groups of one wave in one call:
 
 ```shell
 python3 <skill-dir>/scripts/parallel_issues.py launch --dry-run 14,27 13
@@ -146,14 +174,15 @@ agent its absolute path in the main checkout right after the launch
 
 Branch names follow the `git-branch` skill in every repository, whatever its
 instruction files or earlier branches say: `<type>/issue-<N>-<slug>`. The type comes
-from the issue's labels, the most specific one winning whatever their order: a label
-named after a commit type (`feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `build`,
-`ci`, `chore`), then `tests` → `test`, `performance` → `perf`, `documentation` →
-`docs`, then `bug` → `fix` and `enhancement`/`feature` → `feat`. With none of these it
-is `fix`. Between two labels of the same tier, the first in that list wins (`feat` +
-`fix` gives `feat`, `bug` + `enhancement` gives `fix`). So a test-only issue labelled
-`enhancement` gets `test/` once it also carries a `test` label; the dry run shows the
-branch each issue will get.
+from the issue's change-type label, as that skill's label table sets it: `bug` →
+`fix`, `enhancement` → `feat`, `documentation` → `docs`, and every other change-type
+label (`test`, `refactor`, `perf`, `build`, `ci`, `chore`) is its own name. The
+launcher also accepts the spellings `tests`, `performance` and `feature`. When an
+issue carries several of these, the most specific wins whatever their order: a label
+named after a commit type first, then `tests`, `performance` and `documentation`, then
+`bug`, `enhancement` and `feature`. With none it is `fix`, so label the issue during
+planning; the dry run shows the branch each issue will get. The branch type does not
+bind the pull request: the agent titles it with what the change actually is.
 
 A group that fails a check is reported and skipped; the others still launch.
 
@@ -224,20 +253,27 @@ stays loaded for 24 hours, across waves and `clean`, and every launch reuses it.
 
 ## After the run
 
-1. **Review.** Each pull request gets the spec check the `github-workflow` skill
-   describes. Run the checks from this session as `task` subagents, one per pull
-   request or stack, launched in one batch. The pre-commit reviewer already looked for
-   defects; the spec check asks whether the delivery matches the issue, and a batch of
-   `reviewer` subagents would spend the costly model that agent defaults to. Changes
-   to a lower layer go back to the group's agent, or are made in an interactive
-   session, as the `git-commit` skill describes (Updating Layers).
-2. **Merge.** Merge as the `github-workflow` skill describes. When several pull requests
-   are ready, suggest merging them in one request; never require it. On a repository
-   that squash-merges, merge a single pull request with `gh pr merge <n> --squash`,
-   and a whole stack by running `gh stack merge --yes --squash` with no number from the
-   group's worktree, where the stack is checked out. GitHub signs the squash commits
-   and rebases what is left of a partly merged stack. GitHub's **Rebase and merge**
-   button fails on a repository that requires signed commits; that is expected.
+1. **Agent review.** Each pull request, or each stack, gets the agent review the
+   `github-workflow` skill describes (if installed): a fresh session, preferably on a
+   different model from the author's, that checks the acceptance criteria and
+   verification, scope, correctness on the changed paths, and consistency (docs, agent
+   instructions, a stale brief). Findings are blocking or non-blocking. Run the reviews
+   from this session as `task` subagents, one per pull request or stack, launched in
+   one batch. The local review already looked for defects; the agent review asks
+   whether the delivery matches the issue, and a batch of `reviewer` subagents would
+   spend the costly model that agent defaults to. Changes to a lower layer go back to
+   the group's agent, or are made in an interactive session, as new commits on top, as
+   the `git-commit` skill describes for updating layers. Never rewrite pushed commits.
+2. **Merge.** Squash merges only: the pull request title becomes the one commit on the
+   default branch, and GitHub signs it. Merge as the `github-workflow` skill describes.
+   Before the first merge, check that the repository allows squash merges
+   (`gh repo view --json squashMergeAllowed`); if it does not, stop and ask the user.
+   Never bypass a rule: no `--admin`, no ruleset bypass, no unsigned commit let
+   through. When several pull requests are ready, suggest merging them in one request;
+   never require it. Merge a single pull request with `gh pr merge <n> --squash`, and a
+   whole stack by running `gh stack merge --yes --squash` with no number from the
+   group's worktree, where the stack is checked out. GitHub rebases what is left of a
+   partly merged stack.
 
    Every merge moves `main`, so check the next pull request with
    `gh pr view <n> --json mergeStateStatus` before merging it. While it reads
@@ -247,22 +283,27 @@ stays loaded for 24 hours, across waves and `clean`, and every launch reuses it.
      `gh pr update-branch <n>` for a single pull request. GitHub adds a merge commit
      that it signs, and the squash drops it. A stacked pull request refuses it (HTTP
      403); treat it as the next case. Without that ruleset, `BEHIND` needs nothing.
-   - **`DIRTY` (a conflict), or a stack that must be updated, on a squash-merging
-     repository:** hand it back to its agent, since only the agent's key may sign its
-     commits. Tell it to fetch `main` over HTTPS, merge it into the bottom branch,
-     then merge each layer into the next one up, and push normally: no rebase, no
-     force push, so no decision from the user.
-   - **A repository that fast-forwards** (rebase merges only, signed commits
-     required): every merge after the first needs the next branch rebased by its
-     agent and force pushed, which needs the user's agreement. Suggest enabling squash
-     merges to the user instead.
+   - **`DIRTY` (a conflict), or a stack that must be updated:** hand it back to its
+     agent, since only the agent's key may sign its commits. Tell it to fetch `main`
+     over HTTPS, merge it into the bottom branch, then merge each layer into the next
+     one up, and push normally: no rebase, no force push, so no decision from the
+     user.
 
    When you hand a branch back, tell the agent to rerun the repository's checks on
    every layer it changed. When there were conflicts, it also has a fresh reviewer
-   check only the resolutions (`git show --remerge-diff <merge>`, or `git range-diff`
-   against the old head after a rebase); an update without conflicts gets no review.
-   Hand a group its update only after the merges already decided for other groups
-   have landed, so one round covers them all.
+   check only the resolutions (`git show --remerge-diff <merge>`); an update without
+   conflicts gets no review. Hand a group its update only after the merges already
+   decided for other groups have landed, so one round covers them all.
+
+   **The rejected layer.** The user may reject a layer of a stack, which holds back
+   every layer above it. Merge the layers below it first. Then the group's agent
+   rebuilds the layers above the rejected one on the default branch, which needs a
+   force push of those unmerged branches. This is the only force push the workflow
+   allows, and only with the user's approval, so ask it with the other decisions after
+   the run. Tell the agent to rerun the repository's checks on every layer it rebuilt
+   and to have a fresh reviewer compare each rebuilt layer with its old head
+   (`git range-diff`). A rejected layer that can be fixed is not this case: fix it with
+   new commits on top.
 3. **Clean.** Run it from the main checkout's Herdr workspace, never from an agent's
    workspace, once no agent is working: `clean --dry-run`, then `clean`. Never remove a
    worktree, branch, or workspace by hand: that leaves the Herdr workspace and its idle

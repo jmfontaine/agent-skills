@@ -6,10 +6,9 @@ purpose; a newer timestamp or a planning item does not silently override product
 | Home | Authoritative for | Boundaries |
 | --- | --- | --- |
 | Skill package | Reusable process guidance and templates | Project documents record adapted project choices |
-| Private Notion | Exploration, research, rough drafts, private discussion, project-specific context, Parking Lot | Never a dependency for contributors or the authority over promoted Git artifacts |
-| Git | Durable product intent, project baseline, Slice Briefs, consequential decisions, contributor and agent guidance | Change through Git and review as diffs after promotion |
-| GitHub Projects | Rolling milestone plan, current/next slices, execution status and sequencing | Planned work, not a collection of vague possibilities |
-| GitHub Issues | User-reported intake, actionable committed implementation work, and the active slice's parent issue | Intake may be untriaged; internally created issues represent deliberate planning decisions |
+| Git | Durable product intent (Manifesto, Product Map with Now / Next / Later), briefs, ADRs, the Architecture section, contributor and agent guidance | Change through pull requests and review as diffs after promotion |
+| GitHub milestones and issues | The release plan (one milestone per release), committed work and its execution status, user-reported issues | Planned work, not a collection of vague possibilities; user-reported issues stay untriaged until triaged |
+| Discussions or Notion | Parking Lot (uncommitted ideas), exploration, research, rough drafts, private discussion. Discussions “Ideas” category on a public repository; private Notion otherwise | Never a dependency for contributors or the authority over promoted Git artifacts |
 
 ## Promote cleanly
 
@@ -20,54 +19,60 @@ conventions; do not create a parallel structure.
 Read the latest source and any existing canonical version. Extract settled decisions
 into clean, self-contained Markdown. Remove private conversation, sensitive context,
 template instructions, and dependencies on private links. Preserve reasoning needed by
-contributors in the Git artifact or a linked Decision Record.
+contributors in the Git artifact or a linked ADR.
 
-The active Slice Brief must be canonical in Git before implementation. After promotion,
-future edits must happen in Git and be reviewable as diffs. Notion may retain
+A brief, when there is one, must be canonical in Git before implementation. After
+promotion, future edits must happen in Git and be reviewable as diffs. Notion may retain
 exploration history, but do not maintain two competing editable authorities or require
 contributors to know that history exists.
 
-When sources conflict, use Git for promoted intent and baseline, Projects for current
-planning state, and Issues for reported behavior or scoped work. Treat new reports and
-private discussion as evidence that may justify a deliberate update, not an automatic
-override. Explain a material conflict instead of silently resolving product judgment by
-recency.
+When sources conflict, use Git for promoted intent and baseline, GitHub milestones for
+the current release plan, and issues for reported behavior or scoped work. Treat new
+reports and private discussion as evidence that may justify a deliberate update, not an
+automatic override. Explain a material conflict instead of silently resolving product
+judgment by recency.
 
 ## Move possibilities into commitments deliberately
 
 The usual internal path is:
 
-`Private Parking Lot → Product Map / Milestone → Slice Brief → Actionable issue`
+`Parking Lot → Product Map → Milestone → Brief (when needed) → Issue`
 
 This is a promotion model, not a requirement to create an artifact at every step. An
 idea can be rejected, deferred, or absorbed into existing work. Important intended
-future capabilities belong on the coarse Product Map; uncommitted possibilities remain
-in the private Parking Lot. Do not put speculative ideas into Projects or Issues to
-avoid deciding where they belong.
+future capabilities belong on the coarse Product Map; uncommitted possibilities stay in
+the Parking Lot. Do not put speculative ideas into milestones or issues to avoid
+deciding where they belong.
 
 User-reported issues are an exception to the internal promotion path: bugs and requests
 may arrive before acceptance or scheduling. Triage them for relevance, evidence,
 duplication, and product boundaries. Do not interpret their existence as a commitment,
-erase valid intake for being unplanned, or automatically move every report onto the
-roadmap.
+erase a valid report for being unplanned, or automatically move every report onto the
+roadmap. A triaged issue without a milestone is accepted; giving it a milestone commits
+it.
 
 For an internal issue, ensure there is a concrete actionable outcome, a link to its
-committed active or near-term slice, and a way to verify completion. Group the active
-slice's issues as sub-issues of one parent issue that links the brief instead of
-restating it. Do not turn distant milestones into speculative issue trees. The
-`github-workflow` skill, if installed, covers issue format and mechanics.
+milestone (and to the brief, when there is one, citing the acceptance criteria it
+covers), and a way to verify completion. Do not turn Next or Later into speculative
+issue trees. The `github-workflow` skill, if installed, covers issue format and
+mechanics.
 
 ## Preserve consequential rationale
 
-Use a lightweight Decision Record when a future contributor could unknowingly reverse an
-important choice. Architecture, ownership, compatibility, lifecycle, interfaces, and
-invariants often qualify; ordinary coding choices usually do not.
+Use a lightweight ADR (Architecture Decision Record) when a future contributor could
+unknowingly reverse an important choice. Architecture, ownership, compatibility,
+lifecycle, interfaces, and invariants often qualify; ordinary coding choices usually do
+not.
 
-Use the existing decision log format, or `assets/decision-record-template.md` from the
-skill root. Record context, the choice, material alternatives and tradeoffs, and
-consequences. Link affected artifacts. When a decision changes, preserve its historical
-rationale and mark it superseded with a link to the replacement; keep the Foundation's
-current facts up to date.
+- ADRs live in `docs/decisions/`, one file per decision. Use the existing decision log
+  format, or `assets/adr-template.md` from the skill root.
+- Record context, the choice, material alternatives and tradeoffs, and consequences.
+  Link affected artifacts.
+- Never rewrite an accepted ADR. When a decision changes, add a new ADR that supersedes
+  it, mark the old one superseded with a link to the replacement, and keep the
+  Architecture section's current facts up to date.
+- The Architecture section states the current choice and links the ADR for its
+  rationale. Do not copy the rationale into both.
 
 ## Work within available tools and scope
 

@@ -50,8 +50,8 @@ Every check fails hard: an issue that fails one is not launched.
 commit that PR was opened with, but only when the PR's head on GitHub equals the
 local branch and GitHub shows every commit of the PR as verified; otherwise it exits
 nonzero. The default branch's ruleset does not cover PR branches, so this is the
-check that catches an unverified commit before review. A ``gh`` call that fails
-transiently (a rate limit, secondary ones included, an HTTP 5xx, a timeout or a
+check that catches an unverified commit before the agent review. A ``gh`` call that
+fails transiently (a rate limit, secondary ones included, an HTTP 5xx, a timeout or a
 dropped connection) is retried like a failed ``status --wait`` poll: a one-line
 warning on stderr per failure, each pause twice the last from ``WAIT_INTERVAL`` up to
 ``FAILED_POLL_MAX_PAUSE``, and exit nonzero once calls have failed in a row for

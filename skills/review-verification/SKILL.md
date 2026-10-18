@@ -14,7 +14,10 @@ an issue, then a pull request, before anyone notices.
 - The only file you change is the review file itself. Do not create branches, commits,
   issues, or pull requests, even when the repository's instructions say finished work
   is committed: the review file is a scratch input, not a deliverable.
-- Throwaway probes and environments go under `/tmp` and are removed at the end.
+- Throwaway probes and environments go in a `probes/` subdirectory of the scratch
+  directory the agent instruction files name, otherwise `.scratch/probes/` at the
+  repository root, added to `.git/info/exclude` when git does not already ignore it.
+  Remove them at the end.
 - Record what you verified against at the top of the file: the commit SHA, or the
   dependency version, installed in an isolated environment rather than the project's
   own one.

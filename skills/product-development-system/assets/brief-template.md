@@ -1,11 +1,11 @@
-# Slice: [Name]
+# Brief: [Name]
 
-<!-- Replace prompts and remove this comment. Use existing artifact links or names; do not invent a parallel tracking scheme. -->
+<!-- Replace prompts and remove this comment. Write a brief only for work spanning several issues or needing product decisions settled first. Use existing artifact links or names; do not invent a parallel tracking scheme. -->
 
 ## Goal and context
 
 [State the new user capability. Link the milestone, Product Map capability, and relevant
-Technical Foundation or Decision Records.]
+Architecture section entries or ADRs.]
 
 ## Primary scenario
 
@@ -14,7 +14,7 @@ verification.]
 
 ## In scope
 
-[List behavior necessary for this slice.]
+[List behavior necessary for this work.]
 
 ## Out of scope
 
@@ -27,8 +27,8 @@ milestone clear.]
 
 ## Design decisions
 
-[Record decisions constraining this slice. Link established durable choices; keep new
-slice-local choices here.]
+[Record decisions constraining this work. Link established durable choices; keep new
+local choices here.]
 
 ## Blocking questions
 
@@ -36,8 +36,11 @@ slice-local choices here.]
 
 ## Acceptance criteria
 
-[Describe observable outcomes, including important failure behavior, and how they will
-be verified.]
+[Number observable outcomes, including important failure behavior, so issues can cite
+them, and state how each will be verified.]
+
+- **AC1:** [Outcome and verification]
+- **AC2:** [Outcome and verification]
 
 ## Manifesto alignment
 
@@ -47,4 +50,4 @@ respect.]
 ## Appetite and scope cuts
 
 [State the agreed effort budget. Name what to cut first if work outgrows it while
-preserving a meaningful vertical outcome.]
+preserving a meaningful end-to-end outcome.]

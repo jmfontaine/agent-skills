@@ -1,4 +1,4 @@
-<!-- Replace prompts and remove this comment. Title the pull request with its outcome. -->
+<!-- Replace prompts and remove this comment. Title the pull request as a Conventional Commits message without a scope, such as "fix: report checksum mismatch". -->
 
 Closes #[issue]
 

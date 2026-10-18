@@ -2,8 +2,7 @@
 
 - **Date:** [Date]
 - **Status:** [Proposed, accepted, or superseded; link replacement when applicable]
-- **Related artifacts:** [Relevant slice, Technical Foundation section, or product
-  intent]
+- **Related artifacts:** [Relevant brief, Architecture section entry, or product intent]
 
 ## Context
 

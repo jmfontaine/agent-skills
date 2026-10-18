@@ -2,16 +2,17 @@
 
 ## Context
 
-[Link the Slice Brief and the requirement or acceptance criterion this issue covers, or
-the intake issue it resolves.]
+[Link the brief and the requirement or acceptance criterion this issue covers, when a
+brief exists, or the issue it resolves. Otherwise explain why the work is needed.]
 
-## Outcome
+## Acceptance criteria
 
-[State what is true when the work is done.]
+[State what is observably true when the work is done, including important failure
+behavior.]
 
 ## Verification
 
-[Describe how anyone confirms the outcome, including important failure behavior.]
+[Describe how anyone confirms the acceptance criteria.]
 
 ## Out of scope
 

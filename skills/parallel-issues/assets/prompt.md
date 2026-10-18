@@ -41,8 +41,8 @@ instruction files (AGENTS.md, CLAUDE.md) for its checks and conventions.
    the repository has tests for that code.
 3. Make the change, update the documentation it affects, and run the checks the
    repository's instructions require until they pass.
-4. Before committing, have a fresh reviewer (a subagent) check the uncommitted
-   change against the issue's outcome and acceptance criteria, as well as for
+4. Before committing, have a fresh reviewer (a subagent) do the local review: it checks
+   the uncommitted change against the issue's acceptance criteria, as well as for
    defects. A finding is blocking only when the change misses an acceptance
    criterion, breaks a rule of the repository's instruction files, or has a defect:
    wrong behavior, a failing or flaky test, or a false statement in code, docs or the
@@ -55,7 +55,8 @@ instruction files (AGENTS.md, CLAUDE.md) for its checks and conventions.
 5. Commit. Signing and the author identity are already configured for this session:
    never change `user.*`, `gpg.*` or `commit.gpgsign`, and never pass
    `--no-gpg-sign`. If a commit cannot be signed, stop and report it. Commits must
-   use $email.
+   use $email. Commit messages on the branch are free-form; add no `Co-authored-by`
+   or other attribution for yourself.
 
 Changes under `.github/workflows/` are pushed like any other. If GitHub rejects a push
 for lacking the `workflow` scope, stop there, keep the branch committed, and report it.
@@ -66,23 +67,32 @@ When every issue is done, or you stopped at one:
 
 1. Push each completed branch, bottom first: `git push -u origin <branch>`.
 2. Open one pull request per branch with `gh pr create --head <branch> --base <base>
-   --body-file <file>`. The base is `$trunk` for the first branch and the branch
-   below it for every other one. Write the body as the github-workflow skill
-   describes, mirroring a recent merged pull request (`gh pr list --state merged`):
-   a `Closes #<number>` line, the summary, the verification you actually ran with
-   its results, and scope notes, including rejected review findings.
+   --title "<title>" --body-file <file>`. The base is `$trunk` for the first branch and
+   the branch below it for every other one. The title is the only message that reaches
+   the default branch, so write it as Conventional Commits without a scope:
+   `<type>: <description>`, or `<type>!: <description>` for a breaking change. The
+   type states what the change actually is, whatever the branch prefix says. Write the
+   body as the github-workflow skill describes, mirroring a recent merged pull request
+   (`gh pr list --state merged`): a `Closes #<number>` line, the summary, the
+   verification you actually ran with its results, and scope notes, including rejected
+   review findings.
 3. With two or more pull requests, run `gh stack submit --auto` to link them into a
    stack. It keeps the pull requests you opened.
 4. Wait for every pull request's checks: `gh pr checks <n> --watch --interval 60`.
    Fix a failure caused by your change with a new commit on its branch, reviewed like
    any other change, merge it into the layers above as the git-commit skill describes,
    push, and wait again. Note a failure your change did not cause in the pull request.
+   When the default branch moves and a stack needs updating, merge `$trunk` into the
+   bottom branch and then each layer into the next one up; do not rebase.
 5. Run `$record`, allowing it up to 35 minutes: it retries GitHub rate limits and
    outages for up to 30. It must print `recorded` for every branch you pushed. On
    `MISMATCH`, push that branch again and rerun it. On `UNVERIFIED`, GitHub does not
    show a commit as verified: do not work around it, stop and report it.
 
-Never merge a pull request, never push to `$trunk`, and never force-push.
+Never merge a pull request, never push to `$trunk`, never rewrite a commit you have
+pushed (amend, rebase, squash or reset it), and never force-push, unless the
+supervising session tells you the user approved the rejected-layer procedure for named
+branches. Fix review findings and failing checks with new commits on top.
 
 End with each issue's pull request URL, or the reason it has none, then either
 "Nothing here needs you" or "This needs you: …" listing each item, such as a push

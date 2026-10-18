@@ -1,6 +1,6 @@
 ---
 name: git-branch
-description: Git branch naming guidelines. Use when creating, renaming, or checking out new branches, including branches for stacked pull requests.
+description: Git branch naming guidelines, including the label to branch-type table. Use when creating or checking out new branches, including branches for stacked pull requests, and when the user asks to rename a branch.
 allowed-tools: Bash(git branch:*) Bash(git checkout:*) Bash(git switch:*)
 ---
 
@@ -28,9 +28,35 @@ messages use that format, plus two branch-only types, `hotfix/` and `release/`:
 `<slug>` is a few lowercase words from the issue title, or from the change's one-line
 summary when there is no issue, joined by hyphens.
 
+## Label Table
+
+An issue's change-type label sets the branch type. The same type starts the pull
+request title (`<type>: <description>`).
+
+| Change-type label | Branch type |
+| ----------------- | ----------- |
+| `bug`             | `fix`       |
+| `enhancement`     | `feat`      |
+| `documentation`   | `docs`      |
+| `test`            | `test`      |
+| `refactor`        | `refactor`  |
+| `perf`            | `perf`      |
+| `build`           | `build`     |
+| `ci`              | `ci`        |
+| `chore`           | `chore`     |
+
+When the issue has no change-type label, or there is no issue, derive the type from the
+change. When the pull request title disagrees with the label, the title wins: it states
+what the change actually is, and the branch is deleted after the merge.
+
+Other skills point here for this table. `hotfix/` and `release/` have no label.
+
+## Existing Branches and Instructions
+
 When a repository's agent instruction files (AGENTS.md, CLAUDE.md) or existing branches
 follow another scheme, name new branches with this convention anyway, and point out
-the instruction to the user so it can be updated. Do not rename existing branches.
+the instruction to the user so it can be updated. Do not rename existing branches on
+your own; rename one only when the user asks, and use this convention for the new name.
 
 ## Additional Rules
 

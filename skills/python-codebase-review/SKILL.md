@@ -6,15 +6,18 @@ description: Deep, whole-codebase review of a Python project that writes a new R
 # Python Codebase Review
 
 Review an entire Python codebase and write `REVIEW.md`: bugs to fix and improvements to
-make, each with location, impact, and a concrete fix. Put it in the scratch directory
-the agent instruction files name (such as `.scratch/`), otherwise at the repository
-root. The value of this review is that every reported item is real and actionable, so
-verification matters more than volume.
+make, each with location, impact, and a concrete fix. `REVIEW.md` is a scratch file:
+put it in the scratch directory the agent instruction files name (such as `.scratch/`),
+otherwise in `.scratch/` at the repository root, and add that directory to
+`.git/info/exclude` when git does not already ignore it. Never put it at the repository
+root, and never commit it. The value of this review is that every reported item is real
+and actionable, so verification matters more than volume.
 
 The review is read-only. Do not edit, format, or commit source files; the only file you
-write in the repository is `REVIEW.md`, which stays uncommitted. Running tools and
-throwaway scripts under `/tmp` is fine. If the user passed arguments (a path to limit
-scope, or a focus such as "performance"), apply them to every phase.
+write in the repository is `REVIEW.md`. Running tools is fine, and so are throwaway
+probes in a `probes/` subdirectory of that scratch directory, which you remove at the
+end. If the user passed arguments (a path to limit scope, or a focus such as
+"performance"), apply them to every phase.
 
 ## 1. Baseline
 
@@ -106,8 +109,8 @@ When all reviewers return:
 1. Merge findings and remove duplicates: same root cause in overlapping lines is one
    finding; keep the clearest write-up and the highest justified priority.
 2. Verify every P0 and P1 yourself by reading the code. Where it is cheap, prove it with
-   a throwaway script or test under `/tmp`. Drop findings you cannot confirm, and
-   downgrade ones whose impact was overstated.
+   a throwaway script or test in the scratch `probes/` directory. Drop findings you
+   cannot confirm, and downgrade ones whose impact was overstated.
 3. Drop findings with confidence below 0.5 unless they are P0. Spot-check a sample of
    P2/P3 findings; if a reviewer's samples are often wrong, re-check the rest of that
    reviewer's findings.
@@ -160,7 +163,7 @@ findings by priority, and the top five items.
 Recommend a verification pass in a fresh session before acting on REVIEW.md (the
 `review-verification` skill). Then file the confirmed items as issues, as the
 `github-workflow` skill describes: self-contained, with no references to REVIEW.md or
-its finding IDs.
+its finding IDs. Delete REVIEW.md once its items are filed or fixed.
 
 Suggest fixing in batches by priority in a new session ("fix the P0 items in REVIEW.md,
 one commit each, with a regression test for each"), then running `/review` on the

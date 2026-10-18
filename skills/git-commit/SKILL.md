@@ -1,7 +1,7 @@
 ---
 name: git-commit
-description: Git commit guidelines, including which branch a commit goes on and GitHub stacked pull requests. Use before every git commit, including a bare "commit" or "commit and push" request, and when amending, squashing, rewording, staging files, writing commit messages, or splitting dependent changes into stacked branches and pull requests.
-allowed-tools: Bash(git add:*) Bash(git branch:*) Bash(git commit:*) Bash(git diff:*) Bash(git fetch:*) Bash(git log:*) Bash(git merge:*) Bash(git rebase:*) Bash(git show:*) Bash(git status:*) Bash(gh extension list:*) Bash(gh repo view:*) Bash(gh stack add:*) Bash(gh stack bottom:*) Bash(gh stack checkout:*) Bash(gh stack down:*) Bash(gh stack init:*) Bash(gh stack rebase:*) Bash(gh stack top:*) Bash(gh stack up:*) Bash(gh stack view:*)
+description: Git commit guidelines, including which branch a commit goes on, the first commit, and GitHub stacked pull requests. Use before every git commit, including a bare "commit" or "commit and push" request, and when amending, squashing, rewording, staging files, writing commit messages, or splitting dependent changes into stacked branches and pull requests.
+allowed-tools: Bash(git add:*) Bash(git branch:*) Bash(git commit:*) Bash(git diff:*) Bash(git fetch:*) Bash(git log:*) Bash(git merge:*) Bash(git rebase:*) Bash(git show:*) Bash(git status:*) Bash(gh extension list:*) Bash(gh stack add:*) Bash(gh stack bottom:*) Bash(gh stack checkout:*) Bash(gh stack down:*) Bash(gh stack init:*) Bash(gh stack rebase:*) Bash(gh stack top:*) Bash(gh stack up:*) Bash(gh stack view:*)
 ---
 
 # Git Commit Guidelines
@@ -10,28 +10,44 @@ allowed-tools: Bash(git add:*) Bash(git branch:*) Bash(git commit:*) Bash(git di
 
 Never commit on the repository's default branch. Before the first commit of a change,
 run `git branch --show-current`. If it prints the default branch, create a branch named
-as the `git-branch` skill describes and commit there. The only exception is a
-repository whose agent instruction files (AGENTS.md, CLAUDE.md) explicitly allow direct
-commits to the default branch.
+as the `git-branch` skill describes and commit there.
+
+Two exceptions:
+
+- **The first commit of a repository** (see First Commit) goes straight onto the default
+  branch.
+- **Straight-to-main repositories:** when the repository's agent instruction files
+  (AGENTS.md, CLAUDE.md) allow or require committing straight to the default branch,
+  commit there, with no branches or pull requests. Push only when the user asks, and
+  close issues with `Closes #N` in the commit message.
 
 ## Message Style
 
-Match the repository's existing style. Run `git log --oneline -20` (or
+With squash merges, only the pull request title reaches the default branch, as one
+commit. Write it in Conventional Commits without a scope: `<type>: <description>`, or
+`<type>!: <description>` for a breaking change (the `github-workflow` skill, if
+installed, has the details). Commits on the branch are free-form but clear: say what
+changed and why in a short subject.
+
+Commits that land as-is, such as those in straight-to-main repositories, follow the
+repository's style. Run `git log --oneline -20` (or
 `git log -20 --format=%B` when you need bodies) and mirror the prevailing subject
-format, casing, tense, prefixes, scopes, and body usage.
+format, casing, tense, prefixes, scopes, and body usage. If the history is too short to
+show a style, use [Conventional Commits](https://www.conventionalcommits.org/). The
+first commit has its own message (see First Commit).
 
-If the history is too short to show a style, use
-[Conventional Commits](https://www.conventionalcommits.org/).
+## Split Check
 
-## Pre-Commit Review
-
-Before committing, review all staged and unstaged changes to determine if they should be
-split into multiple commits. Changes belong in separate commits when they are different
-kinds of change (e.g., a feature and a bug fix), affect unrelated areas, or serve
-distinct purposes.
+Before committing, review all staged and unstaged changes to decide how to divide them
+into branches and pull requests. Changes belong in separate branches when they are
+different kinds of change (e.g., a feature and a bug fix), affect unrelated areas, or
+serve distinct purposes. Commits within a branch need no such split: only the pull
+request title reaches the default branch.
 
 If the user has not explicitly asked to split, suggest doing so and list the proposed
-commits. Proceed with a single commit only if all changes are logically cohesive.
+branches. Proceed with a single branch only if all changes are logically cohesive. In a
+straight-to-main repository, apply the check to commits instead, since each commit lands
+as-is.
 
 Also check for changes made outside the current session (e.g., editor saves, other
 tools). If they are relevant to the commit, offer to include them. If they are
@@ -40,44 +56,40 @@ unrelated, silently ignore them unless the user asks to include them.
 cSpell words added outside the session (typically by the user, in `cspell.json`,
 `.cspell.json`, `.vscode/settings.json`, or a custom dictionary file) are an exception:
 include them, without asking, in the commit that introduces the text using them. When
-commits are split, put each word in the commit it relates to.
+changes are split, put each word in the change it relates to.
 
 ## First Commit
 
-Unless the user instructs otherwise, the first commit of a repository (no commits yet,
-so `git log` reports none) must use this exact message, overriding the message style
-rules above:
+The first commit of a repository (no commits yet, so `git log` reports none) is the
+exception to "never commit on the default branch":
 
-```text
-That's one small step for mankind, one giant leap for a man
-```
+- It goes straight onto the default branch (`main`), with no split check.
+- It uses this exact message, overriding the message style rules above:
 
-## Clean History
+  ```text
+  That's one small step for mankind, one giant leap for a man
+  ```
 
-How much the commits on a branch matter depends on how the repository merges pull
-requests. Check the allowed methods with
-`gh repo view --json squashMergeAllowed,rebaseMergeAllowed,mergeCommitAllowed`.
+- It may contain a generated project skeleton, minimal README content, and the
+  Manifesto. It contains no real work: start that on a branch.
 
-- **Squash merge:** each pull request lands as one commit whose subject is the pull
-  request title. The branch's own commits never reach the default branch, so fix
-  review findings with new commits on top instead of rewriting pushed ones; no force
-  push is needed. Before the first push, still fold quick fixes into the commit they
-  correct.
-- **Rebase or fast-forward merge:** every commit lands on the default branch as-is.
-  Keep the history clean at all times: each commit is a complete, logical change with
-  no "fix typo" or "address review" follow-ups.
+Follow these rules unless the user instructs otherwise.
 
-When commits land as-is and changes correct or complete a previous commit (e.g., a
-quick fix or forgotten file), fold them into that commit instead of creating a new one:
+## Pushed Commits
 
-- **Not pushed:** amend it without asking. Use `git commit --amend` for the last commit,
-  or `git commit --fixup=<commit>` followed by `git rebase --autosquash <commit>~1` for
-  an older one.
-- **Pushed:** rewriting it requires a force push. Ask the user whether to amend and
-  force push, or create a new commit.
+Never rewrite pushed commits. Fix review findings with new commits on top. Do not force
+push. To check whether a commit has been pushed, run
+`git branch -r --contains <commit>`; empty output means it is unpushed.
 
-To check whether a commit has been pushed, run `git branch -r --contains <commit>`.
-Empty output means it is unpushed.
+Amending unpushed commits is allowed, but never required. Use `git commit --amend` for
+the last commit, or `git commit --fixup=<commit>` followed by
+`git rebase --autosquash <commit>~1` for an older one.
+
+Why squash merges: they are the only GitHub merge method that keeps the default branch
+linear with every commit signed and verified; the full rationale is in
+`github-workflow/references/repository-setup.md`, if the `github-workflow` skill is
+installed. The only force push the workflow allows is the rejected-layer procedure of
+the `parallel-issues` skill (if installed), and only with the user's approval.
 
 ## Stacked Pull Requests
 
@@ -86,7 +98,10 @@ Use
 when the work spans several dependent concerns that each deserve their own review, such
 as a schema change, then the API using it, then the UI. Each concern gets its own
 branch, and each branch builds on the one below it. A single cohesive change needs one
-branch, not a stack. Independent changes go on separate branches off the trunk.
+branch, not a stack. Independent changes go on separate branches off the default branch.
+
+Stacks follow dependencies. The `parallel-issues` skill, if installed, also stacks
+issues that edit the same files, and owns that exception.
 
 ### Availability
 
@@ -105,9 +120,9 @@ extension silently when `gh stack` is invoked.
 
 ### Building a Stack
 
-When splitting changes during the pre-commit review, group the proposed commits by layer
-and list the proposed branches with their commits. Order the layers so code sits in the
-same branch as its dependencies or above them.
+When splitting changes during the split check, list the proposed branches by layer with
+their changes. Order the layers so code sits in the same branch as its dependencies or
+above them.
 
 1. Only after `gh extension list` shows `github/gh-stack`, run `gh stack view --short`.
    Exit code 0 means the current branch already belongs to a stack; exit code 2 means it
@@ -126,12 +141,10 @@ issue, `<type>/<slug>` otherwise.
 
 ### Updating Layers
 
-Never cherry-pick between branches. Whether to rebase or merge depends on whether the
-layers are pushed and on the repository's merge method (Clean History).
+Never cherry-pick between branches.
 
-**Merge pushed layers when the repository squash-merges.** A merge rewrites nothing
-that is pushed, so no force push and no user decision is needed, and the squash drops
-the merge commits. Sign each merge commit (`git merge -S`).
+**Update pushed layers by merging.** A merge rewrites nothing that is pushed, and the
+squash drops the merge commits. Sign each merge commit (`git merge -S`).
 
 - **Fix a lower layer:** check out its branch (`gh stack checkout <branch>`), commit the
   fix on top, then check out each layer above it in order and `git merge -S` the branch
@@ -143,12 +156,13 @@ the merge commits. Sign each merge commit (`git merge -S`).
   how a merge commit resolved its conflicts, for a review of the resolutions alone.
 - Push each updated branch normally, bottom first.
 
-**Rebase in every other case:** layers not pushed yet, or a repository that rebases or
-fast-forwards, where merge commits would land on the trunk.
+**Unpushed layers may be rebased.** Never rebase a pushed layer, or any layer with a
+pushed layer above it: replaying the layers above would need a force push.
 
 - **Fix a lower layer:** check out its branch with `gh stack down` or
-  `gh stack checkout <branch>`, fold the change into the right commit as described in
-  Clean History, then run `gh stack rebase --upstack` to replay the layers above.
+  `gh stack checkout <branch>`, fold the change into the right commit with
+  `git commit --fixup=<commit>` and `git rebase --autosquash`, then run
+  `gh stack rebase --upstack` to replay the layers above.
 - **Catch up with the trunk:** run `gh stack rebase`.
 - **Move commits between layers or reorder them:** from the top branch, run
   `git rebase -i --update-refs <trunk>` so every branch moves with its commits. Supply
@@ -163,12 +177,6 @@ fast-forwards, where merge commits would land on the trunk.
   During a plain `git rebase`, run `git rebase --continue` or `git rebase --abort`, then
   `gh stack rebase --upstack` if a lower layer changed.
 
-Rewriting a pushed layer, including the layers above it that a cascading rebase replays,
-follows the pushed-commit rule in Clean History: ask before force pushing. On a
-repository that rebases or fast-forwards, a user's request to merge a pull request or
-stack that is behind its base already covers rebasing that stack's branches and pushing
-them with `--force-with-lease`; it covers no other branch.
-
 ### Pushing and Merging
 
 Push, open pull requests, or merge only when the user asks.
@@ -177,16 +185,15 @@ Push, open pull requests, or merge only when the user asks.
   one pull request per branch, and links them into a stack. Without `--auto`, it opens
   an editor that needs an interactive terminal. New pull requests are drafts unless you
   pass `--open`.
-- **Push after rewriting layers:** run `gh stack push`, which uses `--force-with-lease`.
-- **Merge:** follow the `github-workflow` skill's merge section. On a repository that
-  squash-merges, merge a whole stack with `gh stack merge --yes --squash`, run with no
-  number from a worktree that has the stack checked out: a bare number is read as a
-  stack number before a pull request number. When the repository only rebase-merges
-  and requires signed commits, fast-forward layer by layer instead, as that skill
-  describes.
+- **Merge:** follow the `github-workflow` skill's merge section, if installed. Otherwise
+  squash merge only: `gh pr merge <n> --squash` for one pull request, and
+  `gh stack merge --yes --squash` with no number, from a worktree with the stack checked
+  out, for a stack.
 
 ## Additional Guidelines
 
 - Always sign commits with `git commit -S`
-- Do NOT include AI co-authoring information
+- Do NOT add `Co-authored-by` or any other attribution for AI agents: agents are tools,
+  and the user signs off on every commit. Commits by external tools such as Dependabot
+  keep their own identity
 - Do NOT use `git -C <path>` when the current directory is already the repository root

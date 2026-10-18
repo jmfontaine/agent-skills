@@ -19,6 +19,10 @@ lint:
 lint-fix:
     uvx rumdl check --fix
 
+# Check that skills do not use retired workflow terms
+terms:
+    uvx prek run banned-terms --all-files
+
 # Run pre-commit on all files
 pre-commit:
     uvx prek run --all-files
@@ -32,7 +36,7 @@ pre-commit-update:
     uvx prek autoupdate --freeze
 
 # Run all quality assurance checks
-qa: format-check lint
+qa: format-check lint terms
 
 # Set local dev environment up
 setup:

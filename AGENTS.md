@@ -12,6 +12,8 @@ or are uploaded to Claude and ChatGPT.
 ## Project Structure
 
 ```text
+docs/
+└── workflow.md                  # The shared workflow, glossary, and setup
 skills/
 ├── git-branch/                  # Git branch naming guidelines
 ├── git-commit/                  # Git commit guidelines
@@ -41,7 +43,7 @@ pre-commit hooks (`.pre-commit-config.yaml`). Recipes live in the `justfile`:
 
 - `just setup`: Install the Git pre-commit hook.
 - `just format`: Format Markdown. Run after editing any Markdown file.
-- `just qa`: Check formatting and lint.
+- `just qa`: Check formatting, lint, and retired terms (the `banned-terms` hook).
 
 The QA workflow (`.github/workflows/qa.yml`) runs the same hooks on pushes and pull
 requests to `main`. Dependabot updates the pinned actions and hook revisions weekly.
@@ -65,6 +67,8 @@ requests to `main`. Dependabot updates the pinned actions and hook revisions wee
   folder's contents.
 - `CLAUDE.md` only imports this file for Claude Code versions that don't read
   `AGENTS.md`. Edit `AGENTS.md`.
+- Use the glossary in `docs/workflow.md` for workflow terms. The `banned-terms` hook
+  rejects retired terms under `skills/`.
 
 ## Key Files
 

@@ -8,6 +8,7 @@ reflow = true
 # are bodies; GitHub holds their titles separately. The parallel-issues prompt is sent
 # to an agent as is.
 [per-file-ignores]
+".github/pull_request_template.md" = ["MD041"]
 "CLAUDE.md" = ["MD041"]
 "skills/github-workflow/assets/issue-template.md" = ["MD041"]
 "skills/github-workflow/assets/pull-request-template.md" = ["MD041"]

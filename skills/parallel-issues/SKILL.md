@@ -265,15 +265,14 @@ stays loaded for 24 hours, across waves and `clean`, and every launch reuses it.
    the group's agent, or are made in an interactive session, as new commits on top, as
    the `git-commit` skill describes for updating layers. Never rewrite pushed commits.
 2. **Merge.** Squash merges only: the pull request title becomes the one commit on the
-   default branch, and GitHub signs it. Merge as the `github-workflow` skill describes.
-   Before the first merge, check that the repository allows squash merges
+   default branch, and GitHub signs it. Merge as the `github-workflow` skill's merge
+   section describes, for single pull requests and whole stacks alike, running stack
+   merges from the group's worktree, where the stack is checked out. Before the first
+   merge, check that the repository allows squash merges
    (`gh repo view --json squashMergeAllowed`); if it does not, stop and ask the user.
    Never bypass a rule: no `--admin`, no ruleset bypass, no unsigned commit let
    through. When several pull requests are ready, suggest merging them in one request;
-   never require it. Merge a single pull request with `gh pr merge <n> --squash`, and a
-   whole stack by running `gh stack merge --yes --squash` with no number from the
-   group's worktree, where the stack is checked out. GitHub rebases what is left of a
-   partly merged stack.
+   never require it.
 
    Every merge moves `main`, so check the next pull request with
    `gh pr view <n> --json mergeStateStatus` before merging it. While it reads

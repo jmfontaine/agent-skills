@@ -44,6 +44,12 @@ the repository's template (`.github/pull_request_template.md`) if one exists, ot
 - Under Scope notes, list deviations from the issue, follow-up issues created, and
   changes to canonical artifacts.
 
+**A stack:** push and open every layer with `gh stack submit --auto` from the top
+branch. It pushes each branch, opens one pull request per branch, and links them into a
+stack. Without `--auto` it opens an editor that needs an interactive terminal, and new
+pull requests are drafts unless you pass `--open`. A lower layer's body uses `Refs #N`;
+the layer that completes the issue uses `Closes #N`.
+
 Once the pull request is open, tell the user it is ready for an agent review from a
 fresh session (see the review reference).
 

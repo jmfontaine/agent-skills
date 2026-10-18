@@ -28,6 +28,18 @@ messages use that format, plus two branch-only types, `hotfix/` and `release/`:
 `<slug>` is a few lowercase words from the issue title, or from the change's one-line
 summary when there is no issue, joined by hyphens.
 
+## Stacked Layers
+
+Each layer of a stack is its own branch, named with the same convention:
+
+- **Layers for different issues** each carry their own issue: `fix/issue-12-…` below
+  `feat/issue-14-…`.
+- **One issue split into several layers:** every layer carries that issue's number, its
+  slug names the layer's part, and its type is that layer's own change type, e.g.,
+  `refactor/issue-42-extract-parser` below `feat/issue-42-parse-lists`. The pull request
+  of a lower layer refers to the issue; the layer that completes it closes it (the
+  `github-workflow` skill, if installed, has the details).
+
 ## Label Table
 
 An issue's change-type label sets the branch type. The same type starts the pull

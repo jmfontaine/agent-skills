@@ -137,7 +137,8 @@ above them.
    one, and it does not sign the commit.
 
 Name each branch following the `git-branch` skill: `<type>/issue-<N>-<slug>` for an
-issue, `<type>/<slug>` otherwise.
+issue, `<type>/<slug>` otherwise, and its Stacked Layers section when one issue spans
+several layers.
 
 ### Updating Layers
 
@@ -179,16 +180,10 @@ pushed layer above it: replaying the layers above would need a force push.
 
 ### Pushing and Merging
 
-Push, open pull requests, or merge only when the user asks.
-
-- **Open pull requests:** run `gh stack submit --auto`. It pushes every branch, opens
-  one pull request per branch, and links them into a stack. Without `--auto`, it opens
-  an editor that needs an interactive terminal. New pull requests are drafts unless you
-  pass `--open`.
-- **Merge:** follow the `github-workflow` skill's merge section, if installed. Otherwise
-  squash merge only: `gh pr merge <n> --squash` for one pull request, and
-  `gh stack merge --yes --squash` with no number, from a worktree with the stack checked
-  out, for a stack.
+Push, open pull requests, or merge only when the user asks. The `github-workflow`
+skill's pull requests reference, if installed, owns how stacks are pushed, opened and
+merged. Without it: open a stack with `gh stack submit --auto` from the top branch, and
+merge squash-only, with `gh stack merge --yes --squash` and no number for a whole stack.
 
 ## Additional Guidelines
 

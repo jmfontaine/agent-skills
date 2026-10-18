@@ -71,6 +71,17 @@ requests to `main`. Dependabot updates the pinned actions and hook revisions wee
 - Use the glossary in `docs/workflow.md` for workflow terms. The `banned-terms` hook
   rejects retired terms under `skills/`.
 
+## Shared workflow
+
+This repository follows the shared workflow: the `github-workflow` skill's repository
+setup describes its GitHub settings, rulesets, labels and templates. Those settings are
+managed as code outside this repository; change them there, never with `gh api` or the
+GitHub web UI.
+
+### Deviations from the shared workflow
+
+None.
+
 ## Key Files
 
 - `skills/*/SKILL.md`: Skill definitions

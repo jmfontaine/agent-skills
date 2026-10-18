@@ -19,10 +19,6 @@ lint:
 lint-fix:
     uvx rumdl check --fix
 
-# Check that skills do not use retired workflow terms
-terms:
-    uvx prek run banned-terms --all-files
-
 # Package each skill as a ZIP in dist/ for Claude and ChatGPT
 package:
     #!/usr/bin/env bash
@@ -54,3 +50,7 @@ qa: format-check lint terms
 # Set local dev environment up
 setup:
     uvx prek install  # Install pre-commit hooks
+
+# Check that skills do not use retired workflow terms
+terms:
+    uvx prek run banned-terms --all-files

@@ -36,14 +36,14 @@ request title (`<type>: <description>`).
 | Change-type label | Branch type |
 | ----------------- | ----------- |
 | `bug`             | `fix`       |
-| `enhancement`     | `feat`      |
-| `documentation`   | `docs`      |
-| `test`            | `test`      |
-| `refactor`        | `refactor`  |
-| `perf`            | `perf`      |
 | `build`           | `build`     |
-| `ci`              | `ci`        |
 | `chore`           | `chore`     |
+| `ci`              | `ci`        |
+| `documentation`   | `docs`      |
+| `enhancement`     | `feat`      |
+| `perf`            | `perf`      |
+| `refactor`        | `refactor`  |
+| `test`            | `test`      |
 
 When the issue has no change-type label, or there is no issue, derive the type from the
 change. When the pull request title disagrees with the label, the title wins: it states

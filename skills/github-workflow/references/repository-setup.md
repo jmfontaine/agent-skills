@@ -31,20 +31,26 @@ allows squash merges; if not, stop and ask.
   title plus `(#123)`.
 - Delete the head branch automatically after merge.
 
-## Ruleset on the default branch
+## Rulesets
 
-Protect the default branch with a repository ruleset that:
+Three repository rulesets, split by who may bypass them:
 
-- requires a pull request before merging, with zero required approvals;
-- requires signed commits;
-- requires the repository's status checks to pass;
-- gives the maintainer a bypass for pull request merges only
-  (`bypass_mode: pull_request`), so a maintainer can merge an external pull request
-  whose commits are unsigned.
+| Ruleset | Targets | Rules | Bypass |
+| --- | --- | --- | --- |
+| Signed commits | All branches | Require signed commits | The admin role, for pull request merges only (`bypass_mode: pull_request`) |
+| Default branch history | Default branch | Block deletion, block force pushes, require linear history | None |
+| Required checks | Default branch | Require the repository's status checks to pass; omitted when it has no CI | The admin role, always |
 
-Require no approvals: GitHub does not let an author approve their own pull request, and
-agents open pull requests through the maintainer's account. Agents never use the bypass.
-They ask the maintainer to merge an external pull request with unsigned commits.
+- **No pull request rule.** The maintainer may push straight to the default branch, and
+  straight-to-main repositories have no pull requests at all. Agents still work through
+  pull requests, as the rest of this skill describes.
+- **No required approvals:** GitHub does not let an author approve their own pull
+  request, and agents open pull requests through the maintainer's account.
+- **The signed-commits bypass** lets the maintainer merge an external pull request whose
+  commits are unsigned; GitHub signs the squash commit. **The required-checks bypass**
+  lets the maintainer push straight to the default branch, before any check has run.
+- **Agents never use either bypass.** They ask the maintainer to merge an external pull
+  request with unsigned commits, and never pass `--admin`.
 
 Internal commits (the maintainer's and agents') are always signed. CONTRIBUTING.md asks
 external contributors to sign when they can; edits in GitHub's web editor are signed by
@@ -59,10 +65,11 @@ more:
 
 | Group | Labels |
 | --- | --- |
-| Change type | `bug`, `enhancement`, `documentation`, `test`, `refactor`, `perf`, `build`, `ci`, `chore` |
+| Change type | `bug`, `build`, `chore`, `ci`, `documentation`, `enhancement`, `perf`, `refactor`, `test` |
 | State | `triage` |
 | Topic | `security` |
 | Dependabot | `dependencies` |
+| GitHub housekeeping | `duplicate`, `good first issue`, `help wanted`, `invalid`, `question`, `wontfix` |
 
 An issue has exactly one change-type label once triaged. The label sets the branch type
 and the pull request title type; the `git-branch` skill owns that mapping. Never create
@@ -99,9 +106,9 @@ Lot in private Notion instead.
 ## Straight-to-main repositories
 
 A repository whose agent instruction files allow or require committing straight to the
-default branch has no branches, pull requests, or merge settings to configure. Its
-instructions say so, and its ruleset must not block direct pushes. Everything else here
-still applies: labels, issue forms, milestones, signed commits.
+default branch has no branches or pull requests, and its merge settings go unused. The
+rulesets above already allow direct pushes. Everything else here still applies:
+labels, issue forms, milestones, signed commits.
 
 ## Drift checklist
 
@@ -126,10 +133,8 @@ Compare each result with the rules:
 
 1. **Merge settings.** Squash allowed; merge commits and rebase merging not allowed;
    branches deleted on merge; squash title `PR_TITLE`, message `BLANK`.
-2. **Ruleset.** One ruleset targets the default branch (take its `<id>` from the
-   list). It has the `pull_request` rule with `required_approving_review_count` 0,
-   `required_signatures`, and `required_status_checks`, and a bypass actor with
-   `bypass_mode` `pull_request`.
+2. **Rulesets.** The three rulesets above exist (take each `<id>` from the list), with
+   those targets, rules and bypass modes, and no other ruleset targets the repository.
 3. **Labels.** The names match the baseline exactly. Report missing and extra labels.
 4. **Templates.** In the checkout, `.github/pull_request_template.md` exists and every
    form under `.github/ISSUE_TEMPLATE/` adds `triage`.

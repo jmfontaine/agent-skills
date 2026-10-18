@@ -57,11 +57,19 @@ installs.
 
 ### Claude and ChatGPT
 
-Claude and ChatGPT install skills from uploaded files. Zip the skill folder so that it
-is the top-level entry of the archive:
+Claude and ChatGPT install skills from uploaded files. Each skill's ZIP must have the
+skill folder as its top-level entry. To package every skill into `dist/`, one ZIP per
+skill, run [just](https://just.systems):
 
 ```shell
 git clone https://github.com/jmfontaine/agent-skills.git
+cd agent-skills
+just package
+```
+
+To package a single skill without just:
+
+```shell
 cd agent-skills/skills
 zip -r ~/Downloads/git-commit.zip git-commit
 ```

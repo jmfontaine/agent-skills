@@ -23,6 +23,19 @@ lint-fix:
 terms:
     uvx prek run banned-terms --all-files
 
+# Package each skill as a ZIP in dist/ for Claude and ChatGPT
+package:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    rm -rf dist
+    mkdir dist
+    cd skills
+    for skill in */; do
+        skill="${skill%/}"
+        zip -qr "../dist/$skill.zip" "$skill" -x '*.DS_Store' '*/__pycache__/*' '*.pyc'
+        echo "dist/$skill.zip"
+    done
+
 # Run pre-commit on all files
 pre-commit:
     uvx prek run --all-files

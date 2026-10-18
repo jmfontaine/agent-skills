@@ -1,2 +1,4 @@
 .rumdl_cache/
 *.pyc
+dist/
+*.zip

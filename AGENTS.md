@@ -44,6 +44,7 @@ pre-commit hooks (`.pre-commit-config.yaml`). Recipes live in the `justfile`:
 - `just setup`: Install the Git pre-commit hook.
 - `just format`: Format Markdown. Run after editing any Markdown file.
 - `just qa`: Check formatting, lint, and retired terms (the `banned-terms` hook).
+- `just package`: Zip each skill into `dist/<skill-name>.zip` for Claude and ChatGPT.
 
 The QA workflow (`.github/workflows/qa.yml`) runs the same hooks on pushes and pull
 requests to `main`. Dependabot updates the pinned actions and hook revisions weekly.

@@ -38,12 +38,17 @@ instructions) and optional `scripts/`, `references/`, or `assets/` directories.
 ## Development
 
 [rumdl](https://rumdl.dev) formats and lints Markdown, wrapping prose at 88 columns
-(`.rumdl.toml`). [prek](https://prek.j178.dev) runs it with general file checks as
-pre-commit hooks (`.pre-commit-config.yaml`). Recipes live in the `justfile`:
+(`.rumdl.toml`). [CSpell](https://cspell.org) checks spelling against the word list in
+`cspell.json`, which the VS Code Code Spell Checker extension reads too: add words with
+its "Add Word to CSpell Configuration" command. [prek](https://prek.j178.dev) runs both
+with general file checks as pre-commit hooks (`.pre-commit-config.yaml`). Recipes live
+in the `justfile`:
 
 - `just setup`: Install the Git pre-commit hook.
 - `just format`: Format Markdown. Run after editing any Markdown file.
-- `just qa`: Check formatting, lint, and retired terms (the `banned-terms` hook).
+- `just spell`: Check spelling (the `cspell` hook).
+- `just qa`: Check formatting, lint, spelling, and retired terms (the `banned-terms`
+  hook).
 - `just package`: Zip each skill into `dist/<skill-name>.zip` for Claude and ChatGPT.
 
 The QA workflow (`.github/workflows/qa.yml`) runs the same hooks on pushes and pull

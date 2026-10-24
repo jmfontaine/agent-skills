@@ -21,7 +21,13 @@ repos:
       - id: rumdl-fmt
       - id: rumdl-check
 
+  - repo: https://github.com/streetsidesoftware/cspell-cli
+    rev: f6467e1f1ebecf5020560405c7b26e01786a43c8  # frozen: v10.4.0
+    hooks:
+      - id: cspell
+
   # Workflow terms: the glossary in docs/workflow.md lists what replaced each one
+  # cspell:ignore ning
   - repo: local
     hooks:
       - id: banned-terms

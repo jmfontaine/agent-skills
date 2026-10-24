@@ -45,11 +45,15 @@ pre-commit-update:
     uvx prek autoupdate --freeze
 
 # Run all quality assurance checks
-qa: format-check lint terms
+qa: format-check lint spell terms
 
 # Set local dev environment up
 setup:
     uvx prek install  # Install pre-commit hooks
+
+# Check spelling against cspell.json, the word list VS Code also uses
+spell:
+    uvx prek run cspell --all-files
 
 # Check that skills do not use retired workflow terms
 terms:

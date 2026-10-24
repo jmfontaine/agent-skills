@@ -59,7 +59,7 @@ Repository paths are relative to the project's repository root.
 | --- | --- |
 | Manifesto | Repository: `docs/manifesto.md` |
 | Product Map, with Now / Next / Later | Repository: `docs/product-map.md` |
-| Briefs | Repository: `docs/briefs/`, linked from the milestone description |
+| Briefs | Repository: `docs/briefs/NNNN-<name>.md`, linked from the milestone description |
 | ADRs | Repository: `docs/decisions/` |
 | Architecture section | Repository: the Architecture section of AGENTS.md |
 | Release plan | GitHub milestones, one per release |

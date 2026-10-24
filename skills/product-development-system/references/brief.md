@@ -22,8 +22,10 @@ no umbrella issue is needed.
 Read the milestone, the relevant Product Map and Manifesto sections, the Architecture
 section, relevant ADRs, and agent instruction files. Use
 [`assets/brief-template.md`](../assets/brief-template.md) if no suitable repository
-format exists. Briefs live in `docs/briefs/<name>.md` and are linked from the milestone
-description.
+format exists. Briefs live in `docs/briefs/NNNN-<name>.md` and are linked from the
+milestone description. `NNNN` is the next unused four-digit number (`0001`, `0002`, …),
+so briefs sort in creation order; a number never changes, even when the work moves to
+another release.
 
 - State the goal and primary user scenario from input or trigger through useful output
   and verification. Prefer thin, end-to-end work over isolated horizontal subsystems.

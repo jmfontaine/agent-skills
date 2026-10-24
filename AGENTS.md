@@ -80,6 +80,9 @@ setup describes its GitHub settings, rulesets, labels and templates. Those setti
 managed as code outside this repository; change them there, never with `gh api` or the
 GitHub web UI.
 
+It is a straight-to-main repository: commit directly on `main`, with no branches or
+pull requests.
+
 ### Deviations from the shared workflow
 
 None.

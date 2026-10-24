@@ -1,6 +1,7 @@
 ---
 name: python-codebase-review
 description: Deep, whole-codebase review of a Python project that writes a new REVIEW.md, a verified and prioritized list of fixes and improvements. Splits the code into slices and fans out parallel reviewer subagents, plus cross-cutting and security passes, on top of a ruff/type-checker/pytest baseline. Use this whenever the user wants to review, audit, assess, or find bugs and improvements across a Python repository, package, or service as a whole, even if they just say "review this codebase", "what should we fix in this project", or "audit the code quality". Do not use it for reviewing a diff, branch, commit, or PR (use /review), for a single file, or for checking the findings of an existing REVIEW.md (use review-verification).
+compatibility: Written for omp, whose task tool fans out the reviewers with its reviewer and security-reviewer agents and an outputSchema. The baseline script needs bash, and uses uv and uvx when available.
 ---
 
 # Python Codebase Review

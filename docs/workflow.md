@@ -3,6 +3,10 @@
 How the skills in this repository fit together. Read this page to see the whole flow,
 to look up a term, and to set up a machine and a GitHub repository to run it.
 
+It describes one opinionated way to work, the one these skills implement, not a general
+best practice. You can adopt part of it: each skill owns its steps and refers to the
+others for theirs, so take those along or replace them with your own rules.
+
 ## What it is for
 
 A solo maintainer who runs many AI agents, and who occasionally accepts a pull request
@@ -41,13 +45,13 @@ Each skill holds its own rules. This page links to them and does not restate the
 
 | Step | Skill |
 | --- | --- |
-| Manifesto, Product Map, Now / Next / Later, briefs, ADRs, release review | [product-development-system](../skills/product-development-system/SKILL.md) |
-| Issues, triage, labels, pull requests, agent review, merging; repository setup | [github-workflow](../skills/github-workflow/SKILL.md) |
-| Branch names, and the label to branch type table | [git-branch](../skills/git-branch/SKILL.md) |
-| Commits, the split check, stacked pull requests | [git-commit](../skills/git-commit/SKILL.md) |
-| Batches, waves, and groups of unattended agents | [parallel-issues](../skills/parallel-issues/SKILL.md) |
-| Whole-codebase review of a Python project | [python-codebase-review](../skills/python-codebase-review/SKILL.md) |
-| Checking the findings of a review file | [review-verification](../skills/review-verification/SKILL.md) |
+| Manifesto, Product Map, Now / Next / Later, briefs, ADRs, release review | [`product-development-system`](../skills/product-development-system/SKILL.md) |
+| Issues, triage, labels, pull requests, agent review, merging; repository setup | [`github-workflow`](../skills/github-workflow/SKILL.md) |
+| Branch names, and the label to branch type table | [`git-branch`](../skills/git-branch/SKILL.md) |
+| Commits, the split check, stacked pull requests | [`git-commit`](../skills/git-commit/SKILL.md) |
+| Batches, waves, and groups of unattended agents | [`parallel-issues`](../skills/parallel-issues/SKILL.md) |
+| Whole-codebase review of a Python project | [`python-codebase-review`](../skills/python-codebase-review/SKILL.md) |
+| Checking the findings of a review file | [`review-verification`](../skills/review-verification/SKILL.md) |
 
 ## Glossary
 
@@ -111,15 +115,16 @@ Install only what the skills you use need.
 
 | Tool | Needed by | Why |
 | --- | --- | --- |
-| [git](https://git-scm.com) with SSH commit signing | git-commit, github-workflow, parallel-issues | Every commit is signed; squash merges on GitHub are the only merge method |
-| [gh](https://cli.github.com) | github-workflow, git-commit, parallel-issues | Issues, pull requests, labels, repository settings |
-| `gh` token with the `workflow` scope | parallel-issues | Unattended agents push changes under `.github/workflows/` |
-| [`github/gh-stack`](https://github.com/github/gh-stack) extension | git-commit, parallel-issues | Stacked pull requests, one per layer |
-| [Herdr](https://herdr.dev) | parallel-issues | One workspace per group of agents; run from a Herdr pane |
-| [1Password CLI](https://developer.1password.com/docs/cli) (`op`) | parallel-issues | Reads the agent's signing key for unattended commits |
-| Python 3.10+ | parallel-issues | Runs the skill's launcher script |
-| [uv](https://docs.astral.sh/uv/) | uv | Python dependency management; the skill stops when `uv` is missing |
-| ruff, a type checker, pytest | python-codebase-review | The baseline the review builds on, from the project's own tooling |
+| [git](https://git-scm.com) with SSH commit signing | `git-commit`, `github-workflow`, `parallel-issues` | Every commit is signed; squash merges on GitHub are the only merge method |
+| [gh](https://cli.github.com) | `github-workflow`, `git-commit`, `parallel-issues` | Issues, pull requests, labels, repository settings |
+| `gh` token with the `workflow` scope | `parallel-issues` | Unattended agents push changes under `.github/workflows/` |
+| [`github/gh-stack`](https://github.com/github/gh-stack) extension | `git-commit`, `parallel-issues` | Stacked pull requests, one per layer |
+| [Herdr](https://herdr.dev) | `parallel-issues` | One workspace per group of agents; run from a Herdr pane |
+| [1Password CLI](https://developer.1password.com/docs/cli) (`op`) | `parallel-issues` | Reads the agent's signing key for unattended commits |
+| Python 3.10+ | `parallel-issues` | Runs the skill's launcher script |
+| [omp](https://omp.sh) | `parallel-issues`, `python-codebase-review` | Agents and reviews run as omp sessions and `task` subagents |
+| [uv](https://docs.astral.sh/uv/) | `uv` | Python dependency management; the skill stops when `uv` is missing |
+| ruff, a type checker, pytest | `python-codebase-review` | The baseline the review builds on, from the project's own tooling |
 
 Personal policies belong in your own agent instruction files, not in the skills:
 working hours, where scratch files live, private notes, and the like.

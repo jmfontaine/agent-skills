@@ -1,7 +1,7 @@
 ---
 name: parallel-issues
 description: Work several GitHub issues in parallel with unattended coding agents, one Herdr workspace and git worktree per group of issues, each group delivered as a stack of signed, reviewed pull requests. Use when the user wants to fix a batch, list, or milestone of issues at once, run agents overnight or while away, fan issues out to parallel agents, or check on, review, merge, or clean up such a run. Use it even for short requests such as "work on #12, #13 and #14 in parallel" or "launch the milestone before I go to bed".
-compatibility: Requires Herdr (run from a Herdr pane), gh with the github/gh-stack extension, the 1Password CLI (op), git with SSH commit signing, Python 3.10+, and the github-workflow, git-branch and git-commit skills, which the agents follow. Agents start as omp by default.
+compatibility: Written for omp. Agents start as omp by default, and the agent reviews run as omp task subagents. Requires Herdr (run from a Herdr pane), gh with the github/gh-stack extension and the workflow scope, the 1Password CLI (op), git with SSH commit signing, Python 3.10+, and the github-workflow, git-branch and git-commit skills, which the agents follow.
 ---
 
 # Parallel Issues

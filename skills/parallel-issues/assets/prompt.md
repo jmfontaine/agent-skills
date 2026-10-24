@@ -30,8 +30,8 @@ $issues
 
 ## For each issue, in order
 
-Follow the github-workflow skill from picking up the issue to opening its pull
-request, the git-commit skill for commits and stacks, and the repository's agent
+Follow the `github-workflow` skill from picking up the issue to opening its pull
+request, the `git-commit` skill for commits and stacks, and the repository's agent
 instruction files (AGENTS.md, CLAUDE.md) for its checks and conventions.
 
 1. Put the work on the issue's branch. The first branch is already checked out.
@@ -72,7 +72,7 @@ When every issue is done, or you stopped at one:
    the default branch, so write it as Conventional Commits without a scope:
    `<type>: <description>`, or `<type>!: <description>` for a breaking change. The
    type states what the change actually is, whatever the branch prefix says. Write the
-   body as the github-workflow skill describes, mirroring a recent merged pull request
+   body as the `github-workflow` skill describes, mirroring a recent merged pull request
    (`gh pr list --state merged`): a `Closes #<number>` line, the summary, the
    verification you actually ran with its results, and scope notes, including rejected
    review findings.
@@ -80,7 +80,7 @@ When every issue is done, or you stopped at one:
    stack. It keeps the pull requests you opened.
 4. Wait for every pull request's checks: `gh pr checks <n> --watch --interval 60`.
    Fix a failure caused by your change with a new commit on its branch, reviewed like
-   any other change, merge it into the layers above as the git-commit skill describes,
+   any other change, merge it into the layers above as the `git-commit` skill describes,
    push, and wait again. Note a failure your change did not cause in the pull request.
    When the default branch moves and a stack needs updating, merge `$trunk` into the
    bottom branch and then each layer into the next one up; do not rebase.

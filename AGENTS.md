@@ -2,10 +2,10 @@
 
 ## Project Overview
 
-A collection of agent-agnostic skills following the
-[Agent Skills specification](https://agentskills.io/specification). Skills install with
-`npx skills add jmfontaine/agent-skills` into Claude Code, Codex, omp, and other agents,
-or are uploaded to Claude and ChatGPT.
+Skills targeting, in order of priority, omp, Claude, ChatGPT, Claude Code, and Codex,
+following the [Agent Skills specification](https://agentskills.io/specification). Other
+agents are neither targeted nor tested. Skills install with
+`npx skills add jmfontaine/agent-skills`, or are uploaded to Claude and ChatGPT.
 
 **Repository:** <https://github.com/jmfontaine/agent-skills>
 
@@ -60,8 +60,10 @@ requests to `main`. Dependabot updates the pinned actions and hook revisions wee
 - `allowed-tools` is optional and experimental: a space-separated list of Claude Code
   permission rules (e.g., `Bash(git add:*) Bash(git commit:*)`). Support varies by
   agent.
-- Write skill bodies for any agent. Say "agent instruction files (AGENTS.md, CLAUDE.md)"
-  instead of naming one agent's file.
+- Write skill bodies for every target agent where practical, omp first. Say
+  "agent instruction files (AGENTS.md, CLAUDE.md)" instead of naming one agent's file.
+  When a skill relies on one agent's features, such as omp's `task` subagents, say so in
+  its `compatibility` field.
 - `npx skills add` copies the whole skill directory, so keep files the skill does not
   need at runtime out of `skills/<skill-name>/`.
 - Skills have no version field. `npx skills update` detects changes from the skill

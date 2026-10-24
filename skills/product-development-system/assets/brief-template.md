@@ -10,7 +10,7 @@ Architecture section entries or ADRs.]
 ## Primary scenario
 
 [Describe one end-to-end workflow from input or trigger to useful output and
-verification.]
+verification. Link the Product Map scenario it refines.]
 
 ## In scope
 

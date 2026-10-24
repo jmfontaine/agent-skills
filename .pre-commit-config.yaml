@@ -33,5 +33,5 @@ repos:
       - id: banned-terms
         name: banned terms
         language: pygrep
-        entry: '(?i)\b(slice[ -]briefs?|slice[ -]reviews?|slice[ -]issues?|technical[ -]foundations?|spec[ -]checks?|pre-commit[ -]reviews?|intake[ -]issues?|user[ -]review|milestone[ -]plan(s|ning)?|pilots?|epics?)\b|(?<!architecture )\bdecision[ -]records?\b'
+        entry: '(?i)\b(slice[ -]briefs?|slice[ -]reviews?|slice[ -]issues?|technical[ -]foundations?|spec[ -]checks?|pre-commit[ -]reviews?|intake[ -]issues?|user[ -]review|milestone[ -]plan(s|ning)?|pilots?|epics?|journeys?)\b|(?<!architecture )\bdecision[ -]records?\b'
         files: ^skills/

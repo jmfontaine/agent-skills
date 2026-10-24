@@ -27,6 +27,8 @@ description.
 
 - State the goal and primary user scenario from input or trigger through useful output
   and verification. Prefer thin, end-to-end work over isolated horizontal subsystems.
+  The scenario refines one of the Product Map's key scenarios, or part of one; link it.
+  If none matches, the map is missing a scenario or the work has drifted from it.
 - Define in-scope behavior and explicit exclusions. Ask “does this work need it?” rather
   than “might the product eventually need it?”
 - Include only necessary requirements, relevant constraints, and technical decisions.
@@ -38,8 +40,8 @@ description.
   well.”
 - State the agreed appetite and the first things to cut if scope grows. Preserve a
   meaningful end-to-end result when cutting.
-- Explain alignment with the Manifesto and link the milestone and Product Map
-  capability.
+- Explain alignment with the Manifesto and link the milestone, Product Map capability,
+  and Product Map scenario.
 
 Trace meaningful work as:
 

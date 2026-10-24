@@ -11,7 +11,11 @@ to match whatever was built.
 
 - Group major capabilities by user outcome. Distinguish umbrella capabilities from their
   parts and remove duplicates.
-- Sketch the main user journeys or lifecycle stages connecting those capabilities.
+- Write the key scenarios: how a Manifesto target user reaches an outcome across
+  capabilities. Each names the user and what they are trying to achieve, the trigger,
+  the steps across capabilities, the outcome, and the Manifesto principle it
+  illustrates, when one applies. Keep scenarios at the outcome level; concrete commands
+  and outputs belong in briefs or user documentation.
 - Surface cross-cutting product concerns and external ownership or integration
   boundaries.
 - Keep important future capability areas visible when they are part of product intent.
@@ -20,7 +24,7 @@ to match whatever was built.
   Links or named sections are sufficient; do not invent an identifier system merely for
   traceability.
 
-A compact document can use capability groups, key journeys, cross-cutting concerns, and
+A compact document can use capability groups, key scenarios, cross-cutting concerns, and
 boundaries. Add a diagram only if it clarifies relationships. Distinguish intended
 capabilities from those already delivered when useful, but leave issue-level status and
 execution detail to GitHub milestones and issues.
@@ -55,7 +59,7 @@ intent belongs in the Parking Lot.
 
 Use the agent as a systems thinker: find omissions, overlaps, and inconsistent
 boundaries. Ask whether a missing area was deliberately excluded or simply overlooked.
-Check that the main journeys make sense end to end and that the map follows the
+Check that the key scenarios make sense end to end and that the map follows the
 Manifesto.
 
 The map is ready when it gives enough context to choose a coherent next outcome without

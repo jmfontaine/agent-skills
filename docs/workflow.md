@@ -60,8 +60,9 @@ Use these terms and no others. The last column lists the names the workflow reti
 | Term | Meaning | Common name | Don't use |
 | --- | --- | --- | --- |
 | Manifesto | Written statement of the product's direction: target users, capabilities, principles, non-goals | Product vision statement | |
-| Product Map | Coarse map of intended capabilities by user outcome, with the Now / Next / Later roadmap | Capability map; Now/Next/Later roadmap | Milestone plan, backlog |
+| Product Map | Coarse map of intended capabilities by user outcome, with key scenarios and the Now / Next / Later roadmap | Capability map; Now/Next/Later roadmap | Milestone plan, backlog |
 | Capability | One entry of the Product Map | Capability | Epic |
+| Scenario | How a Manifesto target user reaches an outcome across capabilities; key scenarios live in the Product Map, and a brief's scenario refines one | Use case | Journey, user journey |
 | Brief | Optional spec for work spanning several issues or needing product decisions: scenario, scope, exclusions, acceptance criteria, appetite | Feature brief (Shape Up: pitch) | Slice brief, slice issue, epic |
 | Appetite | Effort the user is willing to spend on a milestone or brief; not an estimate | Appetite (Shape Up) | |
 | ADR | A consequential choice with alternatives and consequences; superseded, never rewritten | Architecture Decision Record | Decision record |

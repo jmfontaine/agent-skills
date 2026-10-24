@@ -18,7 +18,7 @@ complete just because issues were closed.
 
 | Area | Questions |
 | --- | --- |
-| Product | Did the release solve the intended user problem? Which criteria passed, failed, or remain unverified? What capability was missing or unnecessary? |
+| Product | Did the release solve the intended user problem? Which criteria passed, failed, or remain unverified? What capability was missing or unnecessary? Which Product Map scenarios did it deliver or change? |
 | Architecture | Which choices and abstractions proved useful or premature? What should remain simple? What is now durable enough for the Architecture section? Is any technical debt worth addressing now? |
 | Manifesto | Did evidence challenge a principle, boundary, or AI/agent assumption? Is this a real direction change or a local implementation issue? |
 | Planning | Is the planned next outcome still best? Should Now / Next / Later change? What did the appetite teach us about scope? |
@@ -30,8 +30,8 @@ direction. Avoid rewriting the north star to rationalize implementation drift.
 
 For each meaningful finding, name the evidence, implication, and destination:
 
-- Product intent, newly understood capabilities, or roadmap changes → Product Map
-  (including Now / Next / Later) in Git.
+- Product intent, newly understood capabilities or scenarios, or roadmap changes →
+  Product Map (including Now / Next / Later) in Git.
 - Durable technical reality → Architecture section of AGENTS.md in Git.
 - Consequential rationale → new or superseding ADR in Git.
 - Scope or acceptance learning for the work just done → the brief in Git, when there is

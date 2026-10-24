@@ -168,7 +168,7 @@ reuses the agent signing key already loaded in its private ssh-agent, and reads 
 key from 1Password only when none is loaded or it has under 8 hours left.
 
 Worktrees contain only tracked files. When the repository's instruction files point
-agents at gitignored reference material (for example `docs/discogs/api/`), send each
+agents at gitignored reference material (for example `docs/vendor-api/`), send each
 agent its absolute path in the main checkout right after the launch
 (`herdr agent prompt <agent> "<message>"`), or the agents will not find it.
 

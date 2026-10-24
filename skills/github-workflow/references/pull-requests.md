@@ -17,8 +17,8 @@ own branch and pull request, opening an issue for it when it is committed work.
 - Compare the diff with the issue's acceptance criteria and out-of-scope list, and with
   the brief's exclusions when a brief exists. Remove anything that does not belong.
 
-Interactive work has no per-commit reviewer. The agent review happens once the pull
-request is open (see the review reference).
+Interactive work gets no review before each commit: its one agent review runs on the
+open pull request (see "Deliver for maintainer review").
 
 ## Open
 
@@ -50,8 +50,36 @@ stack. Without `--auto` it opens an editor that needs an interactive terminal, a
 pull requests are drafts unless you pass `--open`. A lower layer's body uses `Refs #N`;
 the layer that completes the issue uses `Closes #N`.
 
-Once the pull request is open, tell the user it is ready for an agent review from a
-fresh session (see the review reference).
+## Deliver for maintainer review
+
+Opening the pull request does not end the task. Take it to the point where the
+maintainer only has to review and merge, without asking along the way:
+
+1. **Checks.** Wait for them: `gh pr checks <n> --watch`. Fix a failure the change
+   caused with a new commit. Note in the pull request a failure it did not cause.
+2. **Agent review.** Run it on the pull request head as the review reference describes,
+   from a subagent with a fresh context, such as an omp `reviewer` task subagent. One
+   review covers a stack. Where the agent cannot start a subagent, stop here and tell
+   the user the pull request is ready for an agent review from a fresh session.
+3. **Fixes.** Fix every valid blocking finding, and the non-blocking ones that are small
+   and inside the issue's scope, with new commits on top. Rerun the checks, then have
+   the reviewer check the fixes only. Stop after three review rounds. A finding you
+   reject stays open, with your reason.
+4. **Post.** Post one agent review of the final head on the pull request (see the
+   review reference).
+5. **Report.** End with one of:
+   - **Ready for your review:** the pull request link, the review's verdict, the
+     checks' state, what the review changed, and proposed follow-up issues, which wait
+     for the user's approval before being filed.
+   - **Blocked:** what needs the user, and why. Only these stop a delivery: a change to
+     scope, acceptance criteria, or appetite (see below); a setting outside the
+     repository, such as a ruleset managed as code; a conflict whose resolution changes
+     behavior; a required check that fails for a reason outside the issue's scope; or a
+     blocking finding still open after the third round.
+
+An unattended run, such as one the `parallel-issues` skill launches, ends at the open
+pull request instead: its local review covers each commit, and the session that
+launched it runs the agent review.
 
 ## Changes to the brief or other canonical artifacts
 
@@ -79,7 +107,8 @@ After pushing fixes, request a re-review only where the reviewer expects it, suc
 
 ## Merge
 
-Merge only when the user asks. Squash merge is the only merge method (the rationale is
+Merge only when the user asks. Clearing a blocker, such as a ruleset change, is not a
+request to merge. Squash merge is the only merge method (the rationale is
 in [Repository setup](repository-setup.md)). Find out whether the repository allows it:
 `gh repo view --json squashMergeAllowed`. If it does not, stop and ask the user.
 
@@ -129,6 +158,35 @@ ready, suggest this; never require it.
 3. Stop only for a conflict whose resolution changes behavior, or for a failing check.
    Resolve import-only and formatting conflicts yourself.
 
-After the merge, confirm that the linked issues closed. When a milestone's issues are
-all closed, the next step is the release review (the `product-development-system` skill,
-if installed).
+Clean up after every merge (below).
+
+## Clean up after a merge
+
+Cleanup is part of the merge. Run it without asking after each merge, whether you
+merged or the user says they did. For a stack, apply it to every merged layer.
+
+1. Confirm that the linked issues closed.
+2. If the work happened in its own worktree, remove it: `git worktree remove <dir>`.
+   Otherwise switch to the default branch and run `git pull --ff-only`. Uncommitted
+   changes that are not yours travel with the switch. If they block it, leave them and
+   the branch in place, and report both.
+3. Delete the local branch when its tip is the head the pull request merged with
+   (`gh pr view <n> --json headRefOid`): `git branch -D <branch>`. `git branch -d`
+   refuses, because a squash merge leaves the branch's commits off the default branch.
+   A branch at another commit, such as a follow-up pushed after the merge, stays and is
+   reported.
+4. The repository deletes the remote branch on merge. If it is still there at the
+   merged head, delete it: `git push origin --delete <branch>`.
+5. Run `git fetch --prune` and delete the task's scratch files.
+6. Close the pull requests this task opened that the merge superseded, and delete their
+   branches:
+   `gh pr close <n> --delete-branch --comment "[AgentName] Superseded by #<m>."`.
+
+Touch only what this task created. Another session's branch, worktree, pull request, or
+uncommitted changes stay as they are; list them in the report. Groups that the
+`parallel-issues` skill launched are removed with its `clean` command, never by hand.
+When agent instruction files defer GitHub writes, do the local steps now and the remote
+ones once allowed, without asking.
+
+When a milestone's issues are all closed, the next step is the release review (the
+`product-development-system` skill, if installed).

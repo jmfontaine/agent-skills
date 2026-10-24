@@ -46,7 +46,7 @@ Each skill holds its own rules. This page links to them and does not restate the
 | Step | Skill |
 | --- | --- |
 | Manifesto, Product Map, Now / Next / Later, briefs, ADRs, release review | [`product-development-system`](../skills/product-development-system/SKILL.md) |
-| Issues, triage, labels, pull requests, agent review, merging; repository setup | [`github-workflow`](../skills/github-workflow/SKILL.md) |
+| Issues, triage, labels, pull requests, agent review, merging, cleanup; repository setup | [`github-workflow`](../skills/github-workflow/SKILL.md) |
 | Branch names, and the label to branch type table | [`git-branch`](../skills/git-branch/SKILL.md) |
 | Commits, the split check, stacked pull requests | [`git-commit`](../skills/git-commit/SKILL.md) |
 | Batches, waves, and groups of unattended agents | [`parallel-issues`](../skills/parallel-issues/SKILL.md) |
@@ -81,7 +81,7 @@ Use these terms and no others. The last column lists the names the workflow reti
 | Deviation | A documented exception in `AGENTS.md` "Deviations from the shared workflow" | | |
 | Scratch file | Working material for a task in progress, never committed or cited | Scratch file | |
 | Local review | Unattended runs: fresh reviewer checks the diff before each commit | Pre-push review | Pre-commit review |
-| Agent review | One per PR or stack, fresh session: acceptance criteria, scope, correctness, consistency | Code review | Spec check |
+| Agent review | One per PR or stack, fresh context (subagent or new session), posted on the PR: acceptance criteria, scope, correctness, consistency | Code review | Spec check |
 | Bot review | A hosted review bot's review | Automated code review | |
 | Maintainer review | The maintainer's final review before merging | Maintainer review | User review |
 | Batch | Issues approved in one planning session | Batch | |

@@ -4,7 +4,7 @@ A pull request gets up to three reviews, in this order:
 
 | Review | Question | Reviewer |
 | --- | --- | --- |
-| Agent review | Does the PR deliver its issue's acceptance criteria and verification, within scope, correctly, and consistently with the rest of the repository? | An agent using this skill, in a fresh session that did not write the PR |
+| Agent review | Does the PR deliver its issue's acceptance criteria and verification, within scope, correctly, and consistently with the rest of the repository? | An agent using this skill, with a fresh context that did not write the PR |
 | Bot review | Is the diff correct and safe? Optional. | A hosted review bot |
 | Maintainer review | Is it right to merge? | The maintainer, who then merges |
 
@@ -14,9 +14,10 @@ covers a pull request, or a whole stack. Agents never approve or request changes
 
 ## Run an agent review
 
-Independence matters: an author rarely spots what they already rationalized. Prefer a
-fresh session, ideally a different model from the author's. If this session wrote the
-pull request, say so in the review.
+Independence matters: an author rarely spots what they already rationalized. Use a
+fresh context: a subagent the author starts counts, as does a new session. Prefer a
+different model from the author's. Give the reviewer the pull request number, not the
+author's reasoning. When the author started the reviewer, say so in the review.
 
 1. **Gather.** Read the PR
    (`gh pr view <n> --json title,body,closingIssuesReferences,files,commits,isDraft`),
@@ -45,10 +46,17 @@ pull request, say so in the review.
 
 ## Post the review
 
-Report in chat unless the user asked you to post on GitHub. Post a single review with
+During a delivery (see the pull requests reference), post the review on the pull request
+once the fixes are in, as one review of the final head. When the user asks for a review
+on its own, report in chat unless they ask you to post it. Post a single review with
 the comment event. Never approve or request changes: the agent acts through the
 maintainer's account, so its approval would be the maintainer's, and GitHub rejects
 both events from the PR's author.
+
+Inline comments carry only the findings still open: blocking ones left after the last
+round, non-blocking ones not fixed, and those the author rejected. The author replies to
+each rejected finding's comment with its reason. Findings fixed during the delivery go
+in the body, each with the commit that fixed it.
 
 For a summary-only review, write the body to a file and run
 `gh pr review <n> --comment --body-file <file>`. To attach findings to lines, create the
@@ -63,9 +71,14 @@ The file contains:
 ```json
 {
   "event": "COMMENT",
-  "body": "[AgentName] Agent review ...",
+  "body": "[AgentName reviewer] Agent review ...",
   "comments": [
-    { "path": "src/verify.ts", "line": 42, "side": "RIGHT", "body": "[AgentName] ..." }
+    {
+      "path": "src/verify.ts",
+      "line": 42,
+      "side": "RIGHT",
+      "body": "[AgentName reviewer] ..."
+    }
   ]
 }
 ```
@@ -78,7 +91,7 @@ posting.
 Shape the body as:
 
 ```markdown
-[AgentName] Agent review of #<issue>
+[AgentName reviewer] Agent review of #<issue>
 
 **Verdict:** Ready for maintainer review | Needs changes (<count> blocking)
 
@@ -92,10 +105,13 @@ Shape the body as:
 
 **Non-blocking**
 1. <finding>
+
+**Fixed during delivery**
+1. <finding>: <commit>
 ```
 
-Omit empty sections. On a re-review, check the previous findings and the new changes
-only; do not raise fresh nits on unchanged code.
+Omit empty sections. On a re-review, check the previous findings and the commits pushed
+since the posted review only; do not raise fresh nits on unchanged code.
 
 ## Configure a hosted review bot
 

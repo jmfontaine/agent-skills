@@ -73,8 +73,6 @@ requests to `main`. Dependabot updates the pinned actions and hook revisions wee
   need at runtime out of `skills/<skill-name>/`.
 - Skills have no version field. `npx skills update` detects changes from the skill
   folder's contents.
-- `CLAUDE.md` only imports this file for Claude Code versions that don't read
-  `AGENTS.md`. Edit `AGENTS.md`.
 - Use the glossary in `docs/workflow.md` for workflow terms. The `banned-terms` hook
   rejects retired terms under `skills/`.
 

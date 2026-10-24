@@ -134,10 +134,11 @@ a skill by name, such as `/git-commit` in Claude Code.
 
 ## Contributing
 
-Feedback and contributions are welcome. Good changes make a skill more correct,
-clearer, or more reliable, or fit how I actually work. Supporting other agents, tools,
-conventions, or environments is not a goal of this project: fork it and adapt the
-skills to yours instead.
+I share these skills as a look at how I work, not as a project to contribute to.
+Questions and ideas are welcome in
+[Discussions](https://github.com/jmfontaine/agent-skills/discussions/categories/ideas).
+I don't expect pull requests: fork the repository and adapt the skills to your own
+workflow instead.
 
 ## License
 

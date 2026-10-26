@@ -40,6 +40,9 @@ Each works on its own.
 - [`python-codebase-review`](skills/python-codebase-review/SKILL.md): Review a whole
   Python codebase with parallel reviewers on a ruff, type checker, and pytest baseline,
   and write a verified, prioritized list of fixes and improvements to `REVIEW.md`.
+- [`retro`](skills/retro/SKILL.md): Review recent coding-agent sessions for friction
+  and mistakes, trace each to the skill or instruction that allowed it, and propose
+  evidence-backed changes for approval.
 - [`review-verification`](skills/review-verification/SKILL.md): Check every finding in
   an existing review file against the code or a dependency version, mark each with a
   verdict and evidence, and add what the review missed.

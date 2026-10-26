@@ -123,8 +123,8 @@ Install only what the skills you use need.
 | [`github/gh-stack`](https://github.com/github/gh-stack) extension | `git-commit`, `parallel-issues` | Stacked pull requests, one per layer |
 | [Herdr](https://herdr.dev) | `parallel-issues` | One workspace per group of agents; run from a Herdr pane |
 | [1Password CLI](https://developer.1password.com/docs/cli) (`op`) | `parallel-issues` | Reads the agent's signing key for unattended commits |
-| Python 3.10+ | `parallel-issues` | Runs the skill's launcher script |
-| [omp](https://omp.sh) | `parallel-issues`, `python-codebase-review` | Agents and reviews run as omp sessions and `task` subagents |
+| Python 3.10+ | `parallel-issues`, `retro` | Runs the skills' scripts: the launcher, the session digests |
+| [omp](https://omp.sh) | `parallel-issues`, `python-codebase-review`, `retro` | Agents and reviews run as omp sessions and `task` subagents; `retro` reads omp's session transcripts |
 | [uv](https://docs.astral.sh/uv/) | `uv` | Python dependency management; the skill stops when `uv` is missing |
 | ruff, a type checker, pytest | `python-codebase-review` | The baseline the review builds on, from the project's own tooling |
 

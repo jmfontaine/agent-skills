@@ -22,6 +22,7 @@ skills/
 ├── product-development-system/  # Product development lifecycle and focused resources
 ├── project-review/              # Project file review
 ├── python-codebase-review/      # Whole-codebase Python review
+├── retro/                       # Improve skills from reviews of agent sessions
 ├── review-verification/         # Verify an existing review file's findings
 └── uv/                          # Python package management with uv
 ```

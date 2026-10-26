@@ -39,7 +39,7 @@ Three repository rulesets, split by who may bypass them:
 | --- | --- | --- | --- |
 | Signed commits | All branches | Require signed commits | The admin role, for pull request merges only (`bypass_mode: pull_request`) |
 | Default branch history | Default branch | Block deletion, block force pushes, require linear history | None |
-| Required checks | Default branch | Require the repository's status checks to pass; omitted when it has no CI | The admin role, always |
+| Required checks | Default branch | Require `CI passed` from GitHub Actions; omitted when the repository has no CI | The admin role, always |
 
 - **No pull request rule.** The maintainer may push straight to the default branch, and
   straight-to-main repositories have no pull requests at all. Agents still work through
@@ -51,6 +51,11 @@ Three repository rulesets, split by who may bypass them:
   lets the maintainer push straight to the default branch, before any check has run.
 - **Agents never use either bypass.** They ask the maintainer to merge an external pull
   request with unsigned commits, and never pass `--admin`.
+- **One required check.** The pull request CI workflow has a `CI passed` job (job id
+  `ci-passed`) that needs every other job of the workflow, runs with `if: always()`, and
+  fails when any of them failed or was cancelled. Rulesets require only that check, so
+  adding, renaming or dropping a job or a matrix entry, such as a Python version, needs
+  no ruleset change. A new job joins the summary job's `needs`.
 
 Internal commits (the maintainer's and agents') are always signed. CONTRIBUTING.md asks
 external contributors to sign when they can; edits in GitHub's web editor are signed by

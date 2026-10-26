@@ -18,8 +18,9 @@ Two exceptions:
   branch.
 - **Straight-to-main repositories:** when the repository's agent instruction files
   (AGENTS.md, CLAUDE.md) allow or require committing straight to the default branch,
-  commit there, with no branches or pull requests. Push only when the user asks, and
-  close issues with `Closes #N` in the commit message.
+  commit there, with no branches or pull requests. Once the user has approved a change
+  and it is finished and checked, commit it (signed) without asking. Push only when the
+  user asks, and close issues with `Closes #N` in the commit message.
 
 ## Message Style
 
@@ -57,6 +58,13 @@ cSpell words added outside the session (typically by the user, in `cspell.json`,
 `.cspell.json`, `.vscode/settings.json`, or a custom dictionary file) are an exception:
 include them, without asking, in the commit that introduces the text using them. When
 changes are split, put each word in the change it relates to.
+
+## Staging
+
+Stage files by explicit path (`git add <path>…`), and commit only what you staged. Never
+use `git commit -a`, `git commit -am`, `git add -A` or `git add .`: other sessions or
+the user may have uncommitted edits in the same checkout. To change another repository,
+work in its own worktree, never in its main checkout.
 
 ## First Commit
 
@@ -184,6 +192,16 @@ Push, open pull requests, or merge only when the user asks. The `github-workflow
 skill's pull requests reference, if installed, owns how stacks are pushed, opened and
 merged. Without it: open a stack with `gh stack submit --auto` from the top branch, and
 merge squash-only, with `gh stack merge --yes --squash` and no number for a whole stack.
+
+## Identity and Pushing
+
+A throwaway test repository sets its identity per command:
+`git -c user.name=<name> -c user.email=<email> …`, or
+`env GIT_AUTHOR_NAME=<name> GIT_AUTHOR_EMAIL=<email> … git …`. Never `export` it in a
+persistent shell: the exported identity leaks into later real commits.
+
+Before pushing, check the author and committer of the commits being pushed:
+`git log --format='%h %an <%ae> / %cn <%ce>' <upstream>..`.
 
 ## Additional Guidelines
 

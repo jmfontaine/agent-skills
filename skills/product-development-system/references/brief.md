@@ -11,7 +11,8 @@ Write a brief when at least one of these holds:
 - The work spans several issues that must fit together.
 - Product decisions (scenario, scope, exclusions) must be settled before issues can be
   written.
-- The user wants to agree an appetite for this work separate from the milestone's.
+- The work needs its own cut order, user checkpoints, or stop rule, separate from the
+  milestone's.
 
 Skip it when one issue, or a few independent ones, can state the acceptance criteria
 directly. Do not write a brief to restate an issue. The milestone groups the issues;
@@ -40,8 +41,11 @@ another release.
 - Number the acceptance criteria (AC1, AC2, …) so issues can cite them. Make them
   observable, including important failure behavior. Avoid vague criteria such as “works
   well.”
-- State the agreed appetite and the first things to cut if scope grows. Preserve a
-  meaningful end-to-end result when cutting.
+- State the first things to cut if scope grows, preserving a meaningful end-to-end
+  result when cutting. List what needs the user, in order: product decisions, checks
+  only the user can do (by-hand checks), and merges and releases. Give open-ended work
+  (a spike, method research, an approach not yet settled) a stop rule: the condition at
+  which the agent stops and reports.
 - Explain alignment with the Manifesto and link the milestone, Product Map capability,
   and Product Map scenario.
 
@@ -57,10 +61,10 @@ desired task.
 ## Assess readiness
 
 The work is ready when its scenario is end to end, scope and exclusions are clear,
-acceptance criteria are observable, appetite is agreed, and blocking product or
-technical questions are resolved. The brief must be on the default branch before
-implementation starts. If a required decision is unresolved, identify it and continue
-independent preparation rather than filling it in as fact.
+acceptance criteria are observable, the cut order and what needs the user are stated,
+and blocking product or technical questions are resolved. The brief must be on the
+default branch before implementation starts. If a required decision is unresolved,
+identify it and continue independent preparation rather than filling it in as fact.
 
 A contributor should be able to implement from repository context without private Notion
 discussion. Create issues only after the work has this context and belongs to the
@@ -73,13 +77,13 @@ than copying them.
 Treat the brief as the scope boundary. Decide how to record a discovery by what it
 changes:
 
-- **A clarification that leaves scope, acceptance criteria, and appetite unchanged**
-  goes in the same pull request as the implementation, under its Scope notes. Update the
-  brief in that pull request only if it would otherwise be left stale.
-- **A change to scope, acceptance criteria, or appetite is a product decision.** Stop
-  and ask the user. If they agree, make the change in its own pull request, branched
-  from the default branch and merged first. Then update the implementation pull request
-  by merging the default branch into it. The two pull requests need not be stacked.
+- **A clarification that leaves scope and acceptance criteria unchanged** goes in the
+  same pull request as the implementation, under its Scope notes. Update the brief in
+  that pull request only if it would otherwise be left stale.
+- **A change to scope or acceptance criteria is a product decision.** Stop and ask the
+  user. If they agree, make the change in its own pull request, branched from the
+  default branch and merged first. Then update the implementation pull request by
+  merging the default branch into it. The two pull requests need not be stacked.
 
 Do not quietly expand scope or mark criteria complete without evidence. Promote
 project-wide technical choices to the Architecture section when durable, with

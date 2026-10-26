@@ -72,10 +72,10 @@ maintainer only has to review and merge, without asking along the way:
      checks' state, what the review changed, and proposed follow-up issues, which wait
      for the user's approval before being filed.
    - **Blocked:** what needs the user, and why. Only these stop a delivery: a change to
-     scope, acceptance criteria, or appetite (see below); a setting outside the
-     repository, such as a ruleset managed as code; a conflict whose resolution changes
-     behavior; a required check that fails for a reason outside the issue's scope; or a
-     blocking finding still open after the third round.
+     scope or acceptance criteria (see below); a stop rule's condition being met; a
+     setting outside the repository, such as a ruleset managed as code; a conflict
+     whose resolution changes behavior; a required check that fails for a reason
+     outside the issue's scope; or a blocking finding still open after the third round.
 
 An unattended run, such as one the `parallel-issues` skill launches, ends at the open
 pull request instead: its local review covers each commit, and the session that
@@ -88,10 +88,10 @@ section of AGENTS.md is wrong or incomplete. Keep those changes reviewable:
 
 - **Clarification without a scope change**, such as recording a decision made during
   implementation: include it in the same pull request and list it under Scope notes.
-- **Change to scope, acceptance criteria, or appetite:** a product decision. Stop and
-  present the tradeoff to the user first; until they decide, keep the implementation
-  within the current brief. Once they agree, put the artifact change in its own pull
-  request and merge it first, so it can be accepted or rejected alone. Then bring the
+- **Change to scope or acceptance criteria:** a product decision. Stop and present the
+  tradeoff to the user first; until they decide, keep the implementation within the
+  current brief. Once they agree, put the artifact change in its own pull request and
+  merge it first, so it can be accepted or rejected alone. Then bring the
   implementation pull request up to date by merging the default branch into it.
 
 ## Update after review

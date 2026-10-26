@@ -94,8 +94,8 @@ In `.github/dependabot.yml`, every update entry sets:
 ## Milestones
 
 A milestone is one release, named `vX.Y.Z`. Its issues are the committed work for that
-release. Link the brief, if there is one, and the appetite from the milestone
-description. Do not use GitHub Projects to plan work.
+release. Link the brief, if there is one, from the milestone description, which also
+states the scope and what needs the user. Do not use GitHub Projects to plan work.
 
 ## Ideas without a commitment
 

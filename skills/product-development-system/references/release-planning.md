@@ -12,37 +12,54 @@ still be able to plan from canonical artifacts without private context.
 ## Choose what goes into the next milestone
 
 Prefer “a user can archive one source and later verify its integrity” to “implement the
-database layer.” Find the smallest meaningful end-to-end outcome that advances product
-intent or tests an important assumption. Explain why it is useful now and what makes it
-demonstrable.
+database layer.” Size a release by what is worth shipping to a user, not by the
+smallest outcome that can be demonstrated. Explain why each outcome is useful now and
+what makes it demonstrable.
 
-A milestone holds one or a few related outcomes. For each, keep a brief description, its
-Product Map capability, essential dependencies, and what would demonstrate success. Do
-not invent work to fill a release.
+A milestone holds two to four related outcomes from Next. For each, keep a brief
+description, its Product Map capability, essential dependencies, and what would
+demonstrate success. Do not invent work: work that does not trace to the Product Map
+does not belong in a release. Pulling in Next outcomes, or bugs found during the
+release, is not invented work. Fix small bugs found during a release in that release,
+unless the user says otherwise.
 
-If an outcome is too large, split it into smaller end-to-end releases or narrow
-supported inputs, platforms, or variations. Keep necessary technical work inside the
-outcome it enables. An exceptional enabling task needs a concrete consumer and bounded
-purpose; it must not become a speculative architecture release.
+If an outcome is too large to ship in one release, narrow supported inputs, platforms,
+or variations. Keep necessary technical work inside the outcome it enables. An
+exceptional enabling task needs a concrete consumer and bounded purpose; it must not
+become a speculative architecture release.
 
-## Set the appetite
+## Set scope and the user's checkpoints
 
-Write the appetite in the milestone description. An appetite is how much effort the user
-is willing to invest, not a prediction or a guaranteed delivery date. Use an established
-budget or propose one explicitly; do not treat an agent's estimate as an agreed
-commitment. A brief may set a narrower appetite for its own work.
+Write the scope boundary (in scope, out of scope) in the milestone description, with
+the cut order: what to cut first if scope grows, preserving a useful end-to-end
+outcome. A brief may set a narrower scope and cut order for its own work.
 
-When appetite is exceeded, first defer variations, integrations, optimizations, or
+List what needs the user, in this order: product decisions, checks only the user can do
+(by-hand checks), and merges and releases. The user's attention is the scarce resource,
+so name each of these up front.
+
+Give open-ended work (a spike, method research, an approach not yet settled) a stop
+rule: the condition at which the agent stops and reports, for example “stop and report
+if the method is not settled after the spike.”
+
+When scope grows, first defer variations, integrations, optimizations, or
 generalization while preserving a useful end-to-end outcome. Present the tradeoff if
-meaningful delivery still does not fit; the user decides whether to change the appetite
-or the outcome.
+meaningful delivery still does not fit; the user decides whether to change the scope or
+the outcome.
+
+## Estimate
+
+When the user asks how long something will take, estimate from the recorded durations of
+past milestones; [release reviews](release-review.md) record them. Give agent time and
+the user's time separately. Never estimate as if a person were writing the code.
 
 ## Commit the work
 
-The milestone description states the outcomes, the appetite, and links to the Product
-Map section and to any [brief](brief.md). Create issues only for work committed to the
-milestone, and give each the milestone. An issue without a milestone is accepted, not
-committed. Do not decompose Next or Later into issues; they stay as roadmap entries.
+The milestone description states the outcomes, the scope and cut order, what needs the
+user, and links to the Product Map section and to any [brief](brief.md). Create issues
+only for work committed to the milestone, and give each the milestone. An issue without
+a milestone is accepted, not committed. Do not decompose Next or Later into issues;
+they stay as roadmap entries.
 
 Issues cite the brief's acceptance criteria rather than copying them. The
 `github-workflow` skill, if installed, covers milestones, issue format, and labels. See

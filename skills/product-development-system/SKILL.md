@@ -5,6 +5,10 @@ description: Guide product development from manifesto and product map through re
 
 # Product Development System
 
+Coding agents implement. The user sets direction, makes the product decisions, does the
+checks agents cannot do, and merges. Planning follows from that: the scarce resource is
+the user's attention, not implementation time.
+
 Specify the whole product coarsely and the next release precisely. Help the user make
 product decisions; do not turn the process into an automatic pipeline of documents or
 approvals.
@@ -38,7 +42,7 @@ advance. Reference and template paths are relative to this skill directory.
 | --- | --- |
 | Draft, challenge, or simplify vision, a manifesto, or product principles | [Manifesto refinement](references/manifesto.md) |
 | Map the intended product, find missing capabilities and boundaries, or update Now / Next / Later | [Product map](references/product-map.md) |
-| Choose the next release's outcomes, set its appetite, or replan | [Release planning](references/release-planning.md) |
+| Choose the next release's outcomes, set its scope and the user's checkpoints, estimate, or replan | [Release planning](references/release-planning.md) |
 | Decide whether work needs a brief, write one, or assess readiness to build | [Brief](references/brief.md) |
 | Review a finished milestone and decide what changes next | [Release review](references/release-review.md) |
 | Establish or revise the project's technical baseline | [Architecture section](references/architecture-section.md) |
@@ -80,8 +84,9 @@ so on).
 - Contributors and coding agents must be able to work without access to or awareness of
   private Notion. Keep project documents self-contained.
 - Keep distant work coarse and current work precise. Prefer thin, end-to-end work that
-  delivers something useful over isolated horizontal subsystems. Use an appetite to
-  bound effort; reduce scope first when work no longer fits.
+  delivers something useful over isolated horizontal subsystems. Bound work by scope and
+  a cut order, and give open-ended work a stop rule; reduce scope first when work no
+  longer fits.
 - Trace meaningful implementation work through its issue, the milestone (and brief, when
   there is one), the Product Map capability, and the Manifesto. A broken link needs
   investigation, not invented justification.

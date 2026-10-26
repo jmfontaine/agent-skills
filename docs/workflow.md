@@ -63,8 +63,8 @@ Use these terms and no others. The last column lists the names the workflow reti
 | Product Map | Coarse map of intended capabilities by user outcome, with key scenarios and the Now / Next / Later roadmap | Capability map; Now/Next/Later roadmap | Milestone plan, backlog |
 | Capability | One entry of the Product Map | Capability | Epic |
 | Scenario | How a Manifesto target user reaches an outcome across capabilities; key scenarios live in the Product Map, and a brief's scenario refines one | Use case | Journey, user journey |
-| Brief | Optional spec for work spanning several issues or needing product decisions: scenario, scope, exclusions, acceptance criteria, appetite | Feature brief (Shape Up: pitch) | Slice brief, slice issue, epic |
-| Appetite | Effort the user is willing to spend on a milestone or brief; not an estimate | Appetite (Shape Up) | |
+| Brief | Optional spec for work spanning several issues or needing product decisions: scenario, scope, exclusions, acceptance criteria, cut order, what needs the user, stop rule | Feature brief (Shape Up: pitch) | Slice brief, slice issue, epic, appetite |
+| Stop rule | The condition at which an agent stops and reports on open-ended work, such as a spike | | |
 | ADR | A consequential choice with alternatives and consequences; superseded, never rewritten | Architecture Decision Record | Decision record |
 | Architecture section | The `AGENTS.md` section holding the project's technical baseline | Architecture overview | Technical foundation |
 | Release review | One PR when a milestone's issues are closed: delivered vs planned, artifacts updated | Sprint review (Scrum) | Slice review |
@@ -90,7 +90,8 @@ Use these terms and no others. The last column lists the names the workflow reti
 | Group | Issues one agent delivers in one worktree as one stack | | Group A, G6 |
 
 "Vertical slice" survives only as a descriptive phrase: thin, end-to-end work. It is
-not a kind of issue or document. "Pilot" is not a workflow term either.
+not a kind of issue or document. "Pilot" is not a workflow term either. "Appetite" is
+retired: scope, a cut order, and a stop rule bound the work, not an effort budget.
 
 A `banned-terms` hook (`.pre-commit-config.yaml`) rejects the retired terms under
 `skills/`. Bare "review" when a specific review is meant, and "trunk" for the default

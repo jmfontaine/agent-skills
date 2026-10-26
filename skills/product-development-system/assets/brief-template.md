@@ -47,7 +47,10 @@ them, and state how each will be verified.]
 [Identify capabilities, principles, and boundaries that this work advances or must
 respect.]
 
-## Appetite and scope cuts
+## Scope cuts, user checkpoints, and stop rule
 
-[State the agreed effort budget. Name what to cut first if work outgrows it while
-preserving a meaningful end-to-end outcome.]
+[Name what to cut first if scope grows while preserving a meaningful end-to-end
+outcome. List what needs the user, in order: product decisions, checks only the user
+can do (by-hand checks), and merges and releases. For open-ended work (a spike, method
+research, an approach not yet settled), state the condition at which the agent stops
+and reports, or state “None.”]

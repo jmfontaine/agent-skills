@@ -94,6 +94,10 @@ pushed (amend, rebase, squash or reset it), and never force-push, unless the
 supervising session tells you the user approved the rejected-layer procedure for named
 branches. Fix review findings and failing checks with new commits on top.
 
+Before the closing line, check each acceptance criterion of each issue against the
+code or the test results. A criterion that is not met goes under "This needs you",
+never under "Scope notes".
+
 End with each issue's pull request URL, or the reason it has none, then either
 "Nothing here needs you" or "This needs you: …" listing each item, such as a push
 GitHub rejected.

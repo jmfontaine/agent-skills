@@ -142,7 +142,12 @@ Planning happens with the user, before anything runs.
    - issues the user did not open, or that someone else edited (the launcher refuses
      them anyway, because their text could steer an unattended agent);
    - issues whose acceptance criteria or verification are unclear, which belong in an
-     interactive session first.
+     interactive session first;
+   - a change that spans several repositories, such as dropping a Python version
+     everywhere, or a change in one repository that needs a settings change in
+     another. The launcher works in one repository; run such a change from one
+     coordinating session that owns the order of the pull requests across the
+     repositories, never from separate sessions given the same prompt.
 6. Size the run knowing that each group is a long agent session with its own model
    usage, and that the test suites run concurrently on one machine.
 7. Present the plan as a table (wave, group named after its issues, issues in order,

@@ -7,10 +7,6 @@ _list:
 format:
     uvx rumdl fmt
 
-# Check formatting without modifying files
-format-check:
-    uvx rumdl fmt --check
-
 # Run linter
 lint:
     uvx rumdl check
@@ -32,10 +28,6 @@ package:
         echo "dist/$skill.zip"
     done
 
-# Run pre-commit on all files
-pre-commit:
-    uvx prek run --all-files
-
 # Install pre-commit hooks
 pre-commit-install:
     uvx prek install
@@ -44,8 +36,9 @@ pre-commit-install:
 pre-commit-update:
     uvx prek autoupdate --freeze
 
-# Run all quality assurance checks
-qa: format-check lint spell terms
+# Run all quality assurance checks, with the hook versions CI uses (tracked files only)
+qa:
+    uvx prek run --all-files
 
 # Set local dev environment up
 setup:
@@ -54,7 +47,3 @@ setup:
 # Check spelling against cspell.json, the word list VS Code also uses
 spell:
     uvx prek run cspell --all-files
-
-# Check that skills do not use retired workflow terms
-terms:
-    uvx prek run banned-terms --all-files

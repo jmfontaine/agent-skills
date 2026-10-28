@@ -1,5 +1,7 @@
 [global]
 line-length = 88
+# Worktrees keep agent scratch files under .git/worktrees/; never lint or reformat them.
+exclude = [".git"]
 
 [MD013]
 reflow = true

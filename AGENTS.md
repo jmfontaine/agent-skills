@@ -49,8 +49,9 @@ in the `justfile`:
 - `just setup`: Install the Git pre-commit hook.
 - `just format`: Format Markdown. Run after editing any Markdown file.
 - `just spell`: Check spelling (the `cspell` hook).
-- `just qa`: Check formatting, lint, spelling, and retired terms (the `banned-terms`
-  hook).
+- `just qa`: Run every pre-commit hook on all tracked files, with the versions CI uses:
+  formatting, lint, spelling, retired terms (the `banned-terms` hook), and general file
+  checks. It skips untracked files, so `git add` a new file before running it.
 - `just package`: Zip each skill into `dist/<skill-name>.zip` for Claude and ChatGPT.
 
 The QA workflow (`.github/workflows/qa.yml`) runs the same hooks on pushes and pull

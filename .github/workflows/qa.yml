@@ -22,3 +22,16 @@ jobs:
       # Runs the hooks pinned in .pre-commit-config.yaml, which Dependabot keeps updated
       - name: Run pre-commit hooks
         run: uvx prek run --all-files --show-diff-on-failure
+
+  # The one status check `main` requires. It needs every job above, so adding,
+  # renaming or dropping a job never touches the ruleset. Keep its `needs` in step
+  # with the jobs.
+  ci-passed:
+    name: CI passed
+    needs: [lint]
+    if: always()
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Fail unless every job passed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1

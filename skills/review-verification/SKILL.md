@@ -47,13 +47,28 @@ False positive) and its evidence: `file:line`, or the probe you ran and its outp
 **Verdict:** False positive. `cache.py:88` closes only caches the client created.
 ```
 
-For a partial confirmation, say which sub-claim fails. Keep the original text, so the
-reader can see what changed.
+Choose the verdict for the claims, not just the headline. If a finding combines a real
+validation gap with a consequence that does not occur, use Partially confirmed and
+name the failed sub-claim. Use False positive when the alleged defect is absent,
+including behavior the project documents and tests as intentional. Keep the original
+text so the reader can see what changed.
+
+For an older review, separate a claim that never held from one that the project has
+since fixed. Use False positive for a finding that no longer holds at the requested
+revision, but add "fixed since the reviewed version" and cite the change or old and
+current code. Do not imply the original reviewer was wrong.
 
 ## 4. Add omissions
 
-Add important problems the review missed as N1, N2, … in the same format as its
-findings, each with evidence of the same standard. Report only what you confirmed.
+Search for omissions before concluding there are none. Within the review's scope,
+follow the paths you inspected from input validation through side effects and error
+handling. Check failure paths the findings did not cover: invalid inputs, exceptions
+from external components, and failures after an operation has changed persistent
+state. A successful happy-path probe does not establish that these paths are safe.
+
+Add important problems you confirm as N1, N2, … in the same format as the findings,
+with evidence of the same standard. Do not invent an item to fill the list. If you
+find none, state which adjacent paths you checked.
 
 ## 5. Report
 
@@ -63,3 +78,6 @@ Reply in chat with:
 - each false positive with a one-line reason;
 - the added items;
 - what you did not run again, such as the baseline checks.
+
+Reconcile the counts with the inventory and the verdicts in the file before replying;
+do not count a fixed finding as still holding.

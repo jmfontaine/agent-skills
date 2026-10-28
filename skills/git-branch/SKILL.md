@@ -8,7 +8,9 @@ allowed-tools: Bash(git branch:*) Bash(git checkout:*) Bash(git switch:*)
 
 ## Naming Style
 
-Use one convention in every repository, whatever its existing branches look like:
+Use one convention in every repository, whatever its existing branches look like,
+unless the repository's agent instruction files set another (see
+[Existing Branches and Instructions](#existing-branches-and-instructions)):
 
 - `<type>/issue-<N>-<slug>` for work on an issue (e.g., `feat/issue-123-add-login-page`)
 - `<type>/<slug>` for anything else (e.g., `ci/pin-python-patch`)
@@ -65,10 +67,11 @@ Other skills point here for this table. `hotfix/` and `release/` have no label.
 
 ## Existing Branches and Instructions
 
-When a repository's agent instruction files (AGENTS.md, CLAUDE.md) or existing branches
-follow another scheme, name new branches with this convention anyway, and point out
-the instruction to the user so it can be updated. Do not rename existing branches on
-your own; rename one only when the user asks, and use this convention for the new name.
+A repository's agent instruction files (AGENTS.md, CLAUDE.md) override this
+convention: when they set another naming scheme, follow it. Existing branches do not:
+when they follow another scheme that no instruction file sets, name new branches with
+this convention anyway. Do not rename existing branches on your own; rename one only
+when the user asks, and use the scheme that applies for the new name.
 
 ## Additional Rules
 

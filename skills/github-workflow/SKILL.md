@@ -16,12 +16,13 @@ it, so one edit never leaves a stale duplicate behind.
 
 Read agent instruction files (AGENTS.md, CLAUDE.md) and the repository's existing GitHub
 conventions before acting: templates under `.github/`, labels, milestones, and the
-allowed merge method. Compare them with
+allowed merge method. The instruction files override this skill and the skills it
+points to wherever they differ. Compare the conventions with
 [Repository setup](references/repository-setup.md): every repository uses the same
-configuration, and a difference without a reason recorded under "Deviations from the
-shared workflow" in AGENTS.md is drift to report, not to mirror. Branch names follow the
-`git-branch` skill in every repository: `<type>/issue-<N>-<slug>` for an issue,
-`<type>/<slug>` otherwise.
+configuration, and a difference without a reason recorded in AGENTS.md (under
+"Deviations from the shared workflow") is drift to report, not to mirror. Branch names
+follow the `git-branch` skill: `<type>/issue-<N>-<slug>` for an issue, `<type>/<slug>`
+otherwise.
 
 When agent instruction files allow or require committing straight to the default branch,
 there are no branches, pull requests, or reviews. Commit on the default branch, push

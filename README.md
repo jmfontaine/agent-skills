@@ -58,7 +58,7 @@ expect the repository setup the workflow describes.
 
 - [`git-branch`](skills/git-branch/SKILL.md): Git branch naming guidelines:
   `<type>/issue-<N>-<slug>` for issue work and `<type>/<slug>` otherwise, with the
-  Conventional Commits type of the change, in every repository.
+  Conventional Commits type of the change.
 - [`git-commit`](skills/git-commit/SKILL.md): Git commit guidelines: which branch a
   commit goes on, the first commit, the split check, and GitHub stacked pull requests.
 - [`github-workflow`](skills/github-workflow/SKILL.md): Track work in GitHub issues and
@@ -137,6 +137,11 @@ zip -r ~/Downloads/git-commit.zip git-commit
 
 Agents load a skill when a task matches its description. Most agents also let you invoke
 a skill by name, such as `/git-commit` in Claude Code.
+
+The skills hold a general workflow. A repository's agent instruction files (AGENTS.md,
+CLAUDE.md) can override any part of a skill, so adjust a skill for one repository there
+rather than in the skill: for example, committing straight to `main` instead of using
+branches and pull requests.
 
 ## Contributing
 

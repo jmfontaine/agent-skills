@@ -12,8 +12,9 @@ an issue, then a pull request, before anyone notices.
 ## Scope
 
 - The only file you change is the review file itself. Do not create branches, commits,
-  issues, or pull requests, even when the repository's instructions say finished work
-  is committed: the review file is a scratch input, not a deliverable.
+  issues, or pull requests: the review file is a scratch input, not a deliverable, so a
+  general rule to commit finished work does not cover it. Instruction files that say
+  what to do with review files do.
 - Throwaway probes and environments go in a `probes/` subdirectory of the scratch
   directory the agent instruction files name, otherwise `.scratch/probes/` at the
   repository root, added to `.git/info/exclude` when git does not already ignore it.

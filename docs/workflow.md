@@ -14,9 +14,12 @@ from an external contributor. The maintainer decides what to build and has the f
 say on every merge. Agents do the work in between: they write issues, implement them,
 review each other's pull requests, and run unattended overnight.
 
-Every repository uses the same workflow and the same configuration. A repository
-deviates only for a reason recorded in its `AGENTS.md`, in a section called "Deviations
-from the shared workflow".
+Every repository uses the same workflow and the same configuration by default. A
+repository's agent instruction files (AGENTS.md, CLAUDE.md) can override any part of a
+skill: the skills hold the general workflow, and the instruction files hold what a
+repository needs to do differently. Agents follow the instruction files wherever the
+two disagree. A repository records its deviations, with their reasons, in a section of
+its `AGENTS.md` called "Deviations from the shared workflow".
 
 ## The flow
 

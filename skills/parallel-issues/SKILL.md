@@ -177,8 +177,9 @@ agents at gitignored reference material (for example `docs/vendor-api/`), send e
 agent its absolute path in the main checkout right after the launch
 (`herdr agent prompt <agent> "<message>"`), or the agents will not find it.
 
-Branch names follow the `git-branch` skill in every repository, whatever its
-instruction files or earlier branches say: `<type>/issue-<N>-<slug>`. The type comes
+The launcher names every branch with the `git-branch` skill's convention,
+`<type>/issue-<N>-<slug>`. It does not read instruction files, so it cannot follow
+another naming scheme a repository sets there. The type comes
 from the issue's change-type label, as that skill's label table sets it: `bug` →
 `fix`, `enhancement` → `feat`, `documentation` → `docs`, and every other change-type
 label (`test`, `refactor`, `perf`, `build`, `ci`, `chore`) is its own name. The

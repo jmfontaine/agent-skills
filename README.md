@@ -35,6 +35,9 @@ use, and lists what to set up.
 
 Each works on its own.
 
+- [`dependency-alternatives`](skills/dependency-alternatives/SKILL.md): Audit a
+  repository's dependencies, map the features it uses, and research alternatives with
+  cited health, adoption, and risk data, migration effort, and a recommendation.
 - [`project-review`](skills/project-review/SKILL.md): Review project files for
   consistency, completeness, correctness, and simplicity.
 - [`python-codebase-review`](skills/python-codebase-review/SKILL.md): Review a whole

@@ -15,6 +15,7 @@ agents are neither targeted nor tested. Skills install with
 docs/
 └── workflow.md                  # The shared workflow, glossary, and setup
 skills/
+├── dependency-alternatives/     # Dependency audit and alternatives research
 ├── git-branch/                  # Git branch naming guidelines
 ├── git-commit/                  # Git commit guidelines
 ├── github-workflow/             # GitHub issues, pull requests, and reviews

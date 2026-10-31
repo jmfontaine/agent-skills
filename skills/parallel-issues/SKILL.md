@@ -50,13 +50,16 @@ the work until they return, which defeats the batch.
 
 End every turn with one of these, stated in so many words:
 
-- "I need you for: …", listing each item and why; or
-- "You can go AFK now. Nothing needs you until …", naming what will need them next
-  (the agents finishing, a merge decision, the next 1Password prompt), or "until I
-  report back" when nothing will.
+- "I need you for: …", listing each item and why;
+- "You can go AFK now. Nothing needs you until …", only while agents this session
+  launched are still working, naming what will need the user next (the agents
+  finishing, a merge decision, the next 1Password prompt). Say it right after the
+  launch prints every group as started; or
+- "Nothing is running. Next step: …", naming the step that waits on the user, such as
+  approving the plan or launching the next wave.
 
-Say it right after the launch prints every group as started, and again whenever a
-step that needed the user is done.
+Never tell the user to go AFK while nothing is running. Planning, filing issues,
+merging and cleanup end with one of the other two.
 
 Notifications come from this session only, and only when the user is needed. Whenever
 a turn ends with "I need you for: …" while the user may be away, also send that list:

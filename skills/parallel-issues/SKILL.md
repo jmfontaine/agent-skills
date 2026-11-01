@@ -92,7 +92,10 @@ otherwise.
   - `git config commit.gpgsign` is `true` in the repository.
   - `git config agent.signingKey` holds a 1Password reference to the agent's SSH
     private key, such as `op://Private/Agent signing/private key`. It can differ per
-    directory tree through `includeIf`.
+    directory tree through `includeIf`. With several 1Password accounts,
+    `git config agent.signingAccount` names the account that holds the key, by an
+    ID `op read --account` takes (the account ID from `op account get`, not its
+    name); without it, `op` reads from its default account.
   - The agent's public key is in `gpg.ssh.allowedSignersFile` for the repository's
     `user.email`, and is added to the user's GitHub account as a **Signing** key.
   - The user is present when the key is read from 1Password (see Signing key).

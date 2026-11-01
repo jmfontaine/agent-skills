@@ -26,10 +26,13 @@ Agents run unattended, so ``launch`` prepares everything that would prompt:
 - Signing, which is mandatory. ``commit.gpgsign`` must be true, and git config
   ``agent.signingKey`` must hold a 1Password reference (``op://...``) to an SSH
   private key whose public key is in ``gpg.ssh.allowedSignersFile`` for the
-  repository's ``user.email``. The key is loaded into a private ssh-agent for
-  ``KEY_HOURS``; agents sign through ``ssh-keygen``, and the key is never written
-  to disk. Reading it asks the user through 1Password, so a launch reuses the
-  loaded key while it has ``KEY_MIN_HOURS`` left, and reads it again only otherwise.
+  repository's ``user.email``. With several 1Password accounts, git config
+  ``agent.signingAccount`` holds the ID of the one holding the key, as
+  ``op read --account`` takes it; without it, ``op`` reads from its default
+  account. The key is loaded into a private ssh-agent for ``KEY_HOURS``; agents
+  sign through ``ssh-keygen``, and the key is never written to disk. Reading it
+  asks the user through 1Password, so a launch reuses the loaded key while it has
+  ``KEY_MIN_HOURS`` left, and reads it again only otherwise.
 - Pushing. Agents reach GitHub over HTTPS through ``gh auth git-credential``, and so
   do the launcher's own fetches and pushes, so none reaches the user's SSH agent.
 - Sleep. On macOS, ``caffeinate -i`` keeps the machine awake for ``KEY_HOURS``.
@@ -130,7 +133,7 @@ import time
 from collections.abc import Generator, Sequence
 from pathlib import Path
 from string import Template
-from typing import Any
+from typing import Any, NamedTuple
 
 USAGE = "Run one coding agent per group of GitHub issues, each group as a stack."
 SCRIPT = Path(__file__).resolve()
@@ -181,6 +184,7 @@ PANE_READY_SECONDS = 30.0
 PANE_READY_PAUSE = 1.0
 MAX_ITEMS = 100  # issue comments and edits fetched in one query
 SIGNING_KEY_SETTING = "agent.signingKey"
+SIGNING_ACCOUNT_SETTING = "agent.signingAccount"
 KEY_HOURS = 24
 # A launch reuses the loaded key only while it has this long left, so that the
 # agents it starts can still sign at the end of a long session.
@@ -530,8 +534,17 @@ def allowed_blobs(path: str, email: str) -> set[str]:
     return blobs
 
 
-def signing_settings() -> tuple[str, str, str]:
-    """The repository's ``user.email``, agent key reference and allowed signers."""
+class KeySource(NamedTuple):
+    """Where the agent key is in 1Password: a secret reference, and the account to
+    read it from, or None for ``op``'s default account.
+    """
+
+    reference: str
+    account: str | None
+
+
+def signing_settings() -> tuple[str, KeySource, str]:
+    """The repository's ``user.email``, agent key source and allowed signers."""
     email = git_config("user.email")
     if not email:
         raise StepError("no user.email for this repository; check your git config")
@@ -544,14 +557,19 @@ def signing_settings() -> tuple[str, str, str]:
             f"agents sign every commit: set commit.gpgsign=true, {SIGNING_KEY_SETTING}"
             " and gpg.ssh.allowedSignersFile for this repository"
         )
-    return email, reference, allowed_signers
+    source = KeySource(reference, git_config(SIGNING_ACCOUNT_SETTING))
+    return email, source, allowed_signers
 
 
-def key_socket(reference: str) -> Path:
-    """The ssh-agent socket for ``reference``: one agent per key, so loading one
+def key_socket(source: KeySource) -> Path:
+    """The ssh-agent socket for ``source``: one agent per key, so loading one
     scope's key never disturbs agents signing with another.
     """
-    digest = hashlib.sha256(reference.encode()).hexdigest()[:12]
+    # The same reference can name different keys in different accounts.
+    name = (
+        f"{source.account}\n{source.reference}" if source.account else source.reference
+    )
+    digest = hashlib.sha256(name.encode()).hexdigest()[:12]
     return STATE_DIR / f"ssh-agent-{digest}.sock"
 
 
@@ -578,14 +596,14 @@ def key_expires(socket: Path) -> float | None:
 
 
 def loaded_key(
-    reference: str, email: str, allowed_signers: str
+    source: KeySource, email: str, allowed_signers: str
 ) -> tuple[str, Path, float] | None:
-    """The public key, socket and expiry time of ``reference``'s loaded key.
+    """The public key, socket and expiry time of ``source``'s loaded key.
 
     None when no live key is loaded, or the agent holds anything but one key that
     ``allowed_signers`` allows for ``email``.
     """
-    socket = key_socket(reference)
+    socket = key_socket(source)
     expires = key_expires(socket)
     if expires is None:
         return None
@@ -599,16 +617,16 @@ def loaded_key(
 
 
 def load_signing_key(
-    reference: str, email: str, allowed_signers: str
+    source: KeySource, email: str, allowed_signers: str
 ) -> tuple[str, Path, float]:
-    """Read the key behind ``reference`` from 1Password into its own ssh-agent.
+    """Read the key behind ``source`` from 1Password into its own ssh-agent.
 
     Return the public key, the agent socket and the time the key expires. Reading
     asks the user through 1Password, and fails once that prompt times out.
     """
     STATE_DIR.mkdir(parents=True, exist_ok=True, mode=0o700)
     STATE_DIR.chmod(0o700)
-    socket = key_socket(reference)
+    socket = key_socket(source)
     env = {**os.environ, "SSH_AUTH_SOCK": str(socket)}
     probe = subprocess.run(["ssh-add", "-l"], env=env, capture_output=True, check=False)
     if probe.returncode == 2:  # 0: keys loaded, 1: running but empty, 2: no agent
@@ -617,7 +635,9 @@ def load_signing_key(
     # Read through the 1Password app, which can reach personal vaults, rather than
     # a service account the shell may export for other tools.
     app_env = {k: v for k, v in os.environ.items() if k != "OP_SERVICE_ACCOUNT_TOKEN"}
-    key = run(["op", "read", reference], env=app_env, timeout=None)  # waits on the user
+    account = ["--account", source.account] if source.account else []
+    read = ["op", "read", *account, source.reference]
+    key = run(read, env=app_env, timeout=None)  # waits on the user
     if "PRIVATE KEY" not in key:
         raise StepError(f"{SIGNING_KEY_SETTING} does not point at an SSH private key")
     # Taken before loading, so the recorded time never outlasts the key. Re-adding a
@@ -649,16 +669,16 @@ def key_lifetime(expires: float) -> str:
     return f"expires {when} ({left:.1f} h left); launches reuse it until {until}"
 
 
-def launch_key(reference: str, email: str, allowed_signers: str) -> tuple[str, Path]:
+def launch_key(source: KeySource, email: str, allowed_signers: str) -> tuple[str, Path]:
     """The key for a launch: the loaded one while it has ``KEY_MIN_HOURS`` left,
     otherwise one read from 1Password, which asks the user.
     """
-    current = loaded_key(reference, email, allowed_signers)
+    current = loaded_key(source, email, allowed_signers)
     if current and current[2] - time.time() >= KEY_MIN_HOURS * 3600:
         public, socket, expires = current
         print(f"signing key: reused; it {key_lifetime(expires)}")
     else:
-        public, socket, expires = load_signing_key(reference, email, allowed_signers)
+        public, socket, expires = load_signing_key(source, email, allowed_signers)
         print(f"signing key: read from 1Password; it {key_lifetime(expires)}")
     return public, socket
 
@@ -787,11 +807,11 @@ def launch(
     top = run(["git", "rev-parse", "--show-toplevel"]).strip()
     github_git(["git", "fetch", "--quiet", "origin"])
 
-    email, reference, allowed_signers = signing_settings()
+    email, source, allowed_signers = signing_settings()
     live_agents: set[str] = set()
     env_flags: list[str] = []
     if not dry_run:
-        public, socket = launch_key(reference, email, allowed_signers)
+        public, socket = launch_key(source, email, allowed_signers)
         env_flags = [
             flag
             for key, value in agent_env(public, socket).items()
@@ -1498,9 +1518,9 @@ def release_run(dry_run: bool) -> None:
 
 def key(action: str | None) -> int:
     """Print the loaded key's lifetime, or ``load`` or ``unload`` it."""
-    email, reference, allowed_signers = signing_settings()
+    email, source, allowed_signers = signing_settings()
     if action == "unload":
-        socket = str(key_socket(reference))
+        socket = str(key_socket(source))
         stop_signing_agent(socket)
         with runs() as recorded:
             for common, entry in list(recorded.items()):
@@ -1511,9 +1531,9 @@ def key(action: str | None) -> int:
         print("signing key: unloaded")
         return 0
     if action == "load":
-        _, socket, expires = load_signing_key(reference, email, allowed_signers)
+        _, socket, expires = load_signing_key(source, email, allowed_signers)
         record_run(socket, None)
-    elif current := loaded_key(reference, email, allowed_signers):
+    elif current := loaded_key(source, email, allowed_signers):
         expires = current[2]
     else:
         print(
@@ -1529,8 +1549,8 @@ def print_env() -> int:
     """Print ``export`` lines that sign with the loaded key and reach GitHub over
     HTTPS. Never asks 1Password: with no key loaded, it fails instead.
     """
-    email, reference, allowed_signers = signing_settings()
-    current = loaded_key(reference, email, allowed_signers)
+    email, source, allowed_signers = signing_settings()
+    current = loaded_key(source, email, allowed_signers)
     if not current:
         raise StepError(
             "the agent signing key is not loaded; `key --load` reads it from"

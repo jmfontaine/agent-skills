@@ -36,6 +36,14 @@ another release.
   than “might the product eventually need it?”
 - Include only necessary requirements, relevant constraints, and technical decisions.
   Keep unproven choices local to this brief.
+- Give each technical decision detail in proportion to the cost of being wrong about
+  it. A choice that is expensive to reverse once built, such as the data model, storage,
+  a public interface, or a protocol, names the strong alternatives and why this one
+  wins. A choice reversible in hours gets one line or none.
+- When the work accepts untrusted input or stores user data, state the threats with
+  their mitigations, and the data's lifecycle: what is sanitized on the way in (such as
+  embedded file metadata), what deletion removes and cascades to, and how long backups
+  keep deleted data.
 - Retain only questions that materially block this implementation. Move future
   possibilities to their appropriate home.
 - Number the acceptance criteria (AC1, AC2, …) so issues can cite them. Make them

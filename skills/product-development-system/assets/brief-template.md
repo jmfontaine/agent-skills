@@ -23,12 +23,14 @@ verification. Link the Product Map scenario it refines.]
 ## Requirements
 
 [State necessary behavior and constraints. Make their relationship to the scenario and
-milestone clear.]
+milestone clear. When the work accepts untrusted input or stores user data, state the
+threats with their mitigations, and the data's lifecycle.]
 
 ## Design decisions
 
 [Record decisions constraining this work. Link established durable choices; keep new
-local choices here.]
+local choices here. Give a hard-to-reverse choice its strong alternatives and why it
+wins; a reversible choice gets one line.]
 
 ## Blocking questions
 

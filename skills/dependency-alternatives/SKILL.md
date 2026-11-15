@@ -110,9 +110,17 @@ step 3. For a dependency with no usage found, the entry says so instead:
 
 When some dependencies have no usage found, list their numbers in one line above the
 question, with the places searched, and say they may be removable. Keep them
-selectable. Then ask which numbers
-to research. Accept ranges (`1-4`), comma-separated values (`1,3,7`), a mix of both,
-or `all`. Do no research until the user answers.
+selectable.
+
+Then recommend a selection: the dependencies with no usage found, and those you
+already have reason to suspect of health or fit problems, such as a deprecated or
+long-unmaintained one. Put the recommended numbers and the reason in one line, and ask
+which numbers to research. Accept ranges (`1-4`), comma-separated values (`1,3,7`), a
+mix of both, `all`, or an acceptance of the recommendation ("your pick", "go ahead").
+Proceed on the recommendation for the last of these, and on every dependency for `all`.
+Do no research before an answer. Ask the question open, with no recommendation, only
+when the selection is genuinely the user's, such as when what they want from the audit
+(a license limit, a runtime they are moving to) decides it.
 
 ## 3. Map actual feature usage
 

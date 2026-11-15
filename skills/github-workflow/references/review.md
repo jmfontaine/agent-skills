@@ -4,7 +4,7 @@ A pull request gets up to three reviews, in this order:
 
 | Review | Question | Reviewer |
 | --- | --- | --- |
-| Agent review | Does the PR deliver its issue's acceptance criteria and verification, within scope, correctly, and consistently with the rest of the repository? | An agent using this skill, with a fresh context that did not write the PR |
+| Agent review | Does the PR deliver its issue's acceptance criteria and verification, within scope, correctly, and consistently with the rest of the repository? | The omp `reviewer` agent, started as a subagent with a fresh context that did not write the PR |
 | Bot review | Is the diff correct and safe? Optional. | A hosted review bot |
 | Maintainer review | Is it right to merge? | The maintainer, who then merges |
 
@@ -14,10 +14,16 @@ covers a pull request, or a whole stack. Agents never approve or request changes
 
 ## Run an agent review
 
-Independence matters: an author rarely spots what they already rationalized. Use a
-fresh context: a subagent the author starts counts, as does a new session. Prefer a
-different model from the author's. Give the reviewer the pull request number, not the
-author's reasoning. When the author started the reviewer, say so in the review.
+Independence matters: an author rarely spots what they already rationalized. The
+reviewer is the omp `reviewer` agent, started from a `task` call with
+`"agent": "reviewer"` inside each `tasks[]` item. Omp's configuration chooses its
+model, not this skill. Give the reviewer the pull request number, not the author's
+reasoning. State in the review which model ran, as the subagent's result reports it;
+never infer it. Where the agent cannot start a subagent, a new session with a fresh
+context stands in, and the review says so.
+
+Check each reviewer finding against the repository's rules before you relay it, in the
+posted review or to the user: a finding that contradicts them is wrong, so drop it.
 
 1. **Gather.** Read the PR
    (`gh pr view <n> --json title,body,closingIssuesReferences,files,commits,isDraft`),
@@ -37,7 +43,8 @@ author's reasoning. When the author started the reviewer, say so in the review.
    - **Correctness:** bugs and missing failure behavior on the changed paths. Do not
      repeat a bot's findings; mention one only to disagree or to raise its severity.
    - **Consistency:** documentation, agent instructions, or the brief left stale by the
-     change, and commits that break the repository's history rules.
+     change, and commits that break the repository's history rules. Branch commits are
+     free-form; only the PR title must be a Conventional Commit.
    - Skip anything CI already enforces, such as formatting and lint.
 4. **Classify.** A finding is blocking when the acceptance criteria or verification
    fail, the work leaves scope, or it introduces a bug. Everything else is
@@ -92,6 +99,8 @@ Shape the body as:
 
 ```markdown
 [AgentName reviewer] Agent review of #<issue>
+
+**Reviewer:** <agent> (<model, from the subagent result>)
 
 **Verdict:** Ready for maintainer review | Needs changes (<count> blocking)
 

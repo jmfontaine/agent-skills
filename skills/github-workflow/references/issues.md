@@ -84,7 +84,8 @@ Read the issue, its comments, and linked context such as the brief. Check that n
 else holds it: no other assignee and no open pull request
 (`gh issue view <n> --json assignees,closedByPullRequestsReferences`). When the user
 asks you to take it, assign it (`gh issue edit <n> --add-assignee @me`) and create its
-branch, `<type>/issue-<N>-<slug>` as the `git-branch` skill describes.
+branch, `<type>/issue-<N>-<slug>` as the `git-branch` skill describes, from the fetched
+default branch: `git fetch origin`, then `git switch -c <branch> origin/<default>`.
 
 If the acceptance criteria or verification are missing or ambiguous, fix the issue with
 the user before coding rather than guessing. When the work reveals something outside the

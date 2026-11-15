@@ -1,7 +1,7 @@
 ---
 name: git-commit
 description: Git commit guidelines, including which branch a commit goes on, the first commit, and GitHub stacked pull requests. Use before every git commit, including a bare "commit" or "commit and push" request, and when amending, squashing, rewording, staging files, writing commit messages, or splitting dependent changes into stacked branches and pull requests.
-allowed-tools: Bash(git add:*) Bash(git branch:*) Bash(git commit:*) Bash(git diff:*) Bash(git fetch:*) Bash(git log:*) Bash(git merge:*) Bash(git rebase:*) Bash(git show:*) Bash(git status:*) Bash(gh extension list:*) Bash(gh stack add:*) Bash(gh stack bottom:*) Bash(gh stack checkout:*) Bash(gh stack down:*) Bash(gh stack init:*) Bash(gh stack rebase:*) Bash(gh stack top:*) Bash(gh stack up:*) Bash(gh stack view:*)
+allowed-tools: Bash(git add:*) Bash(git branch:*) Bash(git commit:*) Bash(git diff:*) Bash(git fetch:*) Bash(git log:*) Bash(git merge:*) Bash(git rebase:*) Bash(git show:*) Bash(git status:*) Bash(git switch:*) Bash(gh extension list:*) Bash(gh stack add:*) Bash(gh stack bottom:*) Bash(gh stack checkout:*) Bash(gh stack down:*) Bash(gh stack init:*) Bash(gh stack rebase:*) Bash(gh stack top:*) Bash(gh stack up:*) Bash(gh stack view:*)
 ---
 
 # Git Commit Guidelines
@@ -10,7 +10,8 @@ allowed-tools: Bash(git add:*) Bash(git branch:*) Bash(git commit:*) Bash(git di
 
 Never commit on the repository's default branch. Before the first commit of a change,
 run `git branch --show-current`. If it prints the default branch, create a branch named
-as the `git-branch` skill describes and commit there.
+as the `git-branch` skill describes, from the fetched default branch
+(`git fetch origin`, then `git switch -c <branch> origin/<default>`), and commit there.
 
 Two exceptions:
 
@@ -45,10 +46,10 @@ different kinds of change (e.g., a feature and a bug fix), affect unrelated area
 serve distinct purposes. Commits within a branch need no such split: only the pull
 request title reaches the default branch.
 
-If the user has not explicitly asked to split, suggest doing so and list the proposed
-branches. Proceed with a single branch only if all changes are logically cohesive. In a
-straight-to-main repository, apply the check to commits instead, since each commit lands
-as-is.
+Split unrelated changes by default, without asking: put each group on its own branch,
+then report the split. Keep a single branch when all changes are logically cohesive, or
+when the user asks for one. In a straight-to-main repository, apply the check to
+commits instead, since each commit lands as-is.
 
 Also check for changes made outside the current session (e.g., editor saves, other
 tools). If they are relevant to the commit, offer to include them. If they are
@@ -200,12 +201,15 @@ A throwaway test repository sets its identity per command:
 `env GIT_AUTHOR_NAME=<name> GIT_AUTHOR_EMAIL=<email> … git …`. Never `export` it in a
 persistent shell: the exported identity leaks into later real commits.
 
-Before pushing, check the author and committer of the commits being pushed:
-`git log --format='%h %an <%ae> / %cn <%ce>' <upstream>..`.
+After every commit or amend, and again before pushing, check the author and committer
+against the signing identity: `git log -1 --format='%an <%ae> / %cn <%ce>'` for the
+commit just made, and `git log --format='%h %an <%ae> / %cn <%ce>' <upstream>..` for the
+commits being pushed.
 
 ## Additional Guidelines
 
 - Always sign commits with `git commit -S`
+- Never use `--no-verify`: fix what the hooks report
 - Do NOT add `Co-authored-by` or any other attribution for AI agents: agents are tools,
   and the user signs off on every commit. Commits by external tools such as Dependabot
   keep their own identity

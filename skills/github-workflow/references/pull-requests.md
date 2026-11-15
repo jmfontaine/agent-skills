@@ -39,6 +39,10 @@ the repository's template (`.github/pull_request_template.md`) if one exists, ot
 - Link each issue the PR completes with a closing keyword on its own line:
   `Closes #42`. Use `Refs #42` for partial work, such as a lower layer of a stack.
   Closing keywords take effect only when the PR merges into the default branch.
+  Everywhere else, in the body, commit messages and comments, never write close,
+  closes, closed, fix, fixes, fixed, resolve, resolves or resolved before an issue
+  number, as in "a follow-up that closes #N": GitHub reads it as a closing keyword.
+  Write "refs" or "completes" instead.
 - Under Verification, list what you ran and the result, then anything unverified and
   why.
 - Under Scope notes, list deviations from the issue, follow-up issues created, and
@@ -58,13 +62,14 @@ maintainer only has to review and merge, without asking along the way:
 1. **Checks.** Wait for them: `gh pr checks <n> --watch`. Fix a failure the change
    caused with a new commit. Note in the pull request a failure it did not cause.
 2. **Agent review.** Run it on the pull request head as the review reference describes,
-   from a subagent with a fresh context, such as an omp `reviewer` task subagent. One
-   review covers a stack. Where the agent cannot start a subagent, stop here and tell
-   the user the pull request is ready for an agent review from a fresh session.
+   including who reviews. One review covers a stack. Where the agent cannot start the
+   reviewer subagent, stop here and tell the user the pull request is ready for an agent
+   review from a fresh session.
 3. **Fixes.** Fix every valid blocking finding, and the non-blocking ones that are small
-   and inside the issue's scope, with new commits on top. Rerun the checks, then have
-   the reviewer check the fixes only. Stop after three review rounds. A finding you
-   reject stays open, with your reason.
+   and inside the issue's scope, with new commits on top. A fix that changes a threshold
+   or a claim about behavior is verified by running it, not by re-reading. Rerun the
+   checks, then have the reviewer check the fixes only. Stop after three review rounds.
+   A finding you reject stays open, with your reason.
 4. **Post.** Post one agent review of the final head on the pull request (see the
    review reference).
 5. **Report.** End with one of:
@@ -113,8 +118,10 @@ in [Repository setup](repository-setup.md)). Find out whether the repository all
 `gh repo view --json squashMergeAllowed`. If it does not, stop and ask the user.
 
 Before merging, confirm that checks pass (`gh pr checks <n>`), blocking findings are
-resolved, and the user has reviewed the PR. Never use `--admin` to bypass branch
-protection or a ruleset.
+resolved, and the user has reviewed the PR. Confirm that
+`gh pr view <n> --json closingIssuesReferences` lists exactly the issues this PR
+completes: a stray closing keyword closes an issue that is not done. Never use
+`--admin` to bypass branch protection or a ruleset.
 
 GitHub creates the squash commit and signs it with its own key, and the branch does not
 need to contain the base first. A ruleset that requires signed commits still checks

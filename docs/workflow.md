@@ -77,6 +77,7 @@ Use these terms and no others. The last column lists the names the workflow reti
 | Change-type label | The one label that sets the branch type and PR title type | Type label | |
 | Acceptance criteria | Observable conditions true when done, including failure behavior | Acceptance criteria | Outcome |
 | Verification | How anyone confirms the acceptance criteria | Test plan | |
+| Agent notes | The collapsed `<details>` block that closes an issue or PR body: detail only agents and reviewers need | Collapsed section | |
 | Default branch | The repository's `main` | Default branch | Trunk |
 | Trunk | The branch a stack's bottom PR targets | Trunk (GitHub stacked PRs) | |
 | Stack, layer | Dependent PRs, each on the one below; one branch and PR per layer, bottom to top | Stacked PRs | |

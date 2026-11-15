@@ -67,6 +67,19 @@ Load only the reference the task needs. Paths are relative to this skill directo
   act. When `gh` can record a link as an issue relationship (blocked by, blocking,
   duplicate of), set the relationship instead of writing the link in the body, where it
   would go stale.
+- **Write bodies for a person first.** Issue and pull request bodies are documents, not
+  messages: they describe the work and outlive the conversation. Headings name their
+  content, the text uses neither "I" nor "you", and questions or status for the
+  maintainer go in a comment or the report. The maintainer reads bodies on a phone;
+  agents read them whole. Keep the part above the agent notes to one screen, about 200
+  words, in plain words: name what a thing does, not its file path, line number,
+  commit, or ID (acceptance criterion numbers, option numbers), unless readers know it
+  by that name, such as a command-line flag. Everything else an agent or reviewer needs
+  goes in the closing `<details>` block the templates end with, `Agent notes`, with a
+  blank line after `</summary>` so its Markdown renders. Leave out what nobody reads:
+  review rounds and fixed findings (the posted agent review records them), the options
+  of a settled decision, and how the work went. A small change gets a short body and no
+  agent notes.
 - **Report real evidence.** Claim a verification step only after running it. Mark
   anything unverified as such; never tick a checkbox without evidence.
 - **Prefix agent comments.** Start agent-authored comments, replies, and review bodies

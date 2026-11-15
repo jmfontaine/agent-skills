@@ -92,8 +92,8 @@ Treat the brief as the scope boundary. Decide how to record a discovery by what 
 changes:
 
 - **A clarification that leaves scope and acceptance criteria unchanged** goes in the
-  same pull request as the implementation, under its Scope notes. Update the brief in
-  that pull request only if it would otherwise be left stale.
+  same pull request as the implementation, under its Decisions section. Update the
+  brief in that pull request only if it would otherwise be left stale.
 - **A change to scope or acceptance criteria is a product decision.** Stop and ask the
   user. If they agree, make the change in its own pull request, branched from the
   default branch and merged first. Then update the implementation pull request by

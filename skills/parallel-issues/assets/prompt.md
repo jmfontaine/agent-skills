@@ -10,7 +10,7 @@ Edit files only inside this worktree. The only branches you may create, commit t
 push are $branches.
 
 Nobody is watching this session. Do not stop to ask questions. Where a choice is open,
-take the conservative option and record it under "Scope notes" in the pull request,
+take the conservative option and record it under "Decisions" in the pull request,
 but only a choice that leaves every acceptance criterion met and changes no public
 behavior (an output format, a flag, an exit code, documented behavior). A choice
 the user might reverse is also listed under "This needs you" in your final message.
@@ -57,12 +57,13 @@ instruction files (AGENTS.md, CLAUDE.md) for its checks and conventions.
    wrong behavior, a failing or flaky test, or a false statement in code, docs or the
    pull request. Everything else, such as polish or extra hardening, is not blocking:
    fix it only when it is small and inside the issue's scope, and otherwise list it
-   under "Scope notes". Never fix silently a finding whose fix changes behavior (an
+   under "Decisions". Never fix silently a finding whose fix changes behavior (an
    output format, a flag, an exit code, documented behavior): report it as a decision
    under "This needs you", with the alternatives. Fix every other blocking finding,
    rerun the checks, and review again, three reviews at most. If a blocking finding is
-   still open after the third, commit, list it under "Scope notes", and list it under
-   "This needs you" in your final message. Note any finding you rejected and why.
+   still open after the third, commit, list it under "Decisions", and list it under
+   "This needs you" in your final message. List each finding you rejected, with the
+   reason, under "Decisions". Findings you fixed go nowhere in the body.
 5. Commit. Signing and the author identity are already configured for this session:
    never change `user.*`, `gpg.*` or `commit.gpgsign`, and never pass
    `--no-gpg-sign`. If a commit cannot be signed, stop and report it. Commits must
@@ -83,10 +84,10 @@ When every issue is done, or you stopped at one:
    the default branch, so write it as Conventional Commits without a scope:
    `<type>: <description>`, or `<type>!: <description>` for a breaking change. The
    type states what the change actually is, whatever the branch prefix says. Write the
-   body as the `github-workflow` skill describes, mirroring a recent merged pull request
-   (`gh pr list --state merged`): a `Closes #<number>` line, the summary, the
-   verification you actually ran with its results, and scope notes, including rejected
-   review findings.
+   body with the repository's pull request template, as the `github-workflow` skill
+   describes: the summary, "Decisions", the verification you actually ran with
+   its results, the `Closes #<number>` line, and the agent notes. Older pull requests
+   may use an earlier layout; follow the template, not them.
 3. With two or more pull requests, run `gh stack submit --auto` to link them into a
    stack. It keeps the pull requests you opened.
 4. Wait for every pull request's required checks:
@@ -107,8 +108,8 @@ supervising session tells you the user approved the rejected-layer procedure for
 branches. Fix review findings and failing checks with new commits on top.
 
 Before the closing line, check each acceptance criterion of each issue against the
-code or the test results. A criterion that is not met goes under "This needs you",
-never under "Scope notes".
+code or the test results. A criterion that is not met goes under "This needs you" in
+your final message and under "Decisions" in the pull request.
 
 End with each issue's pull request URL, or the reason it has none, then either
 "Nothing here needs you" or "This needs you: …" listing each item. Say "Nothing here

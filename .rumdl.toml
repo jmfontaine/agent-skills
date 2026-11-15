@@ -7,9 +7,10 @@ exclude = [".git"]
 reflow = true
 
 # Issue and pull request templates are bodies; GitHub holds their titles separately.
+# They end with a collapsed <details> block for agent notes.
 # The parallel-issues prompt is sent to an agent as is.
 [per-file-ignores]
-".github/pull_request_template.md" = ["MD041"]
-"skills/github-workflow/assets/issue-template.md" = ["MD041"]
-"skills/github-workflow/assets/pull-request-template.md" = ["MD041"]
+".github/pull_request_template.md" = ["MD033", "MD041"]
+"skills/github-workflow/assets/issue-template.md" = ["MD033", "MD041"]
+"skills/github-workflow/assets/pull-request-template.md" = ["MD033", "MD041"]
 "skills/parallel-issues/assets/prompt.md" = ["MD041"]

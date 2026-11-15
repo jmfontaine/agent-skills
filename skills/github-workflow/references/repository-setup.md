@@ -84,8 +84,9 @@ a label outside the baseline; ask the user instead.
 
 - **Issue forms** under `.github/ISSUE_TEMPLATE/` add the `triage` label to every issue
   they create. Triage removes it (see the issues reference).
-- **Pull request template** at `.github/pull_request_template.md`: the `Closes #N` line,
-  Summary, Verification, and Scope notes, as in `assets/pull-request-template.md`.
+- **Pull request template** at `.github/pull_request_template.md`: the summary,
+  Decisions, Verification, the `Closes #N` line, and the collapsed Agent notes, as in
+  `assets/pull-request-template.md`.
 
 ## Dependabot
 

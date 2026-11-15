@@ -43,10 +43,14 @@ the repository's template (`.github/pull_request_template.md`) if one exists, ot
   closes, closed, fix, fixes, fixed, resolve, resolves or resolved before an issue
   number, as in "a follow-up that closes #N": GitHub reads it as a closing keyword.
   Write "refs" or "completes" instead.
-- Under Verification, list what you ran and the result, then anything unverified and
-  why.
-- Under Scope notes, list deviations from the issue, follow-up issues created, and
-  changes to canonical artifacts.
+- Open the body with two or three sentences on what changed and why.
+- Under Decisions, list each choice the change makes that the issue did not settle:
+  deviations from the issue, changes to canonical artifacts, work left to follow-up
+  issues, and review findings rejected, each with its reason. Write "None." when the
+  change follows the issue as written.
+- Under Verification, give at most five lines: what was checked and the result, then
+  anything unverified and why. Each command and its full result go under Verification
+  details in the agent notes.
 
 **A stack:** push and open every layer with `gh stack submit --auto` from the top
 branch. It pushes each branch, opens one pull request per branch, and links them into a
@@ -92,7 +96,7 @@ Implementation sometimes shows that a brief, an ADR, the Manifesto, or the Archi
 section of AGENTS.md is wrong or incomplete. Keep those changes reviewable:
 
 - **Clarification without a scope change**, such as recording a decision made during
-  implementation: include it in the same pull request and list it under Scope notes.
+  implementation: include it in the same pull request and list it under Decisions.
 - **Change to scope or acceptance criteria:** a product decision. Stop and present the
   tradeoff to the user first; until they decide, keep the implementation within the
   current brief. Once they agree, put the artifact change in its own pull request and
@@ -105,7 +109,9 @@ Treat each finding as a claim to check, not an order. Fix valid findings with ne
 commits on top of the branch. Never rewrite pushed commits, which means no force
 pushes. Reply to each addressed thread with what changed, or why the finding does not
 apply, prefixed with `[AgentName]`. Leave resolving a thread to whoever opened it unless
-the user says otherwise.
+the user says otherwise. Keep the body about the final change: correct any statement a
+fix made false, but add no review log. The posted agent review records the findings and
+the commits that fixed them.
 
 After pushing fixes, request a re-review only where the reviewer expects it, such as
 `@codex review` or `@claude review` for a bot running in manual mode.

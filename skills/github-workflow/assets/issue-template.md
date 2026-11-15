@@ -4,9 +4,9 @@
 
 ## Decision Needed
 
-[Only while the work waits for a choice: the question, each option with its tradeoff,
-and your recommendation. Once decided, replace this section with one line, "Decided:
-<choice>, because <reason>." Otherwise remove it.]
+[Only while the work waits for a choice: the question, then a table with one row per
+option and the columns Option, Tradeoff, and Recommendation. Once decided, replace this
+section with one line, "Decided: <choice>, because <reason>." Otherwise remove it.]
 
 ## Acceptance Criteria
 

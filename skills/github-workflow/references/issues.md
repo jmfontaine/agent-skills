@@ -55,7 +55,8 @@ forms: the forms are written for people filing through the web.
   commit SHA, in the agent notes, never the review, plan, or research file the issue
   came from, its finding IDs (F1, I27, N4), or "the review".
 - **Decision Needed:** when the work needs a choice from the user, add this section
-  right after the summary, with each option, its tradeoff, and your recommendation.
+  right after the summary: the question, then a table with one row per option and the
+  columns Option, Tradeoff, and Recommendation (marking the recommended row).
   When you report back, list every open decision by issue number. Once the user
   decides, replace the section with one line, `Decided: <choice>, because <reason>.`,
   and update the acceptance criteria. The issue's edit history keeps the options.
@@ -101,5 +102,5 @@ issue, open or propose a separate issue instead of growing the pull request.
 
 A closing keyword in a merged pull request closes the issue (see the pull requests
 reference). Close manually only with a reason:
-`gh issue close <n> --reason "not planned" --comment "[Agent] <why>"`. Use
+`gh issue close <n> --reason "not planned" --comment "**[Agent]** <why>"`. Use
 `completed` only when the acceptance criteria were delivered and verified.

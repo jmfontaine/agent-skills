@@ -83,11 +83,16 @@ Load only the reference the task needs. Paths are relative to this skill directo
 - **Report real evidence.** Claim a verification step only after running it. Mark
   anything unverified as such; never tick a checkbox without evidence.
 - **Prefix agent comments by role.** Agents post through the maintainer's account, so a
-  prefix marks agent text: `[Agent review]` starts an agent review and each of its
-  inline comments, and `[Agent]` starts every other agent comment or reply. Name no
-  model in a prefix: a posted review mixes the reviewer's findings with the posting
+  bold prefix marks agent text: `**[Agent review]**` starts an agent review and each of
+  its inline comments, and `**[Agent]**` starts every other agent comment or reply. Name
+  no model in a prefix: a posted review mixes the reviewer's findings with the posting
   agent's checks of them. The review body names the reviewer's model once (see the
   review reference). Issue and pull request bodies are artifacts and take no prefix.
+- **Format for hierarchy.** In bodies, reviews, and comments, use headings for
+  sections, a bold lead phrase for a list item that runs past one line, a table to
+  compare options or results, and code formatting for commands, paths, and identifiers.
+  Keep lists one level deep and one idea per item. Bold marks labels, never whole
+  sentences.
 - **Title case.** Write issue titles, headings, form labels, and bold labels that act
   as headings in US title case: capitalize every word except articles, coordinating
   conjunctions, and prepositions of three letters or fewer, unless the word starts or

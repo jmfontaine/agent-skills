@@ -108,7 +108,7 @@ section of AGENTS.md is wrong or incomplete. Keep those changes reviewable:
 Treat each finding as a claim to check, not an order. Fix valid findings with new
 commits on top of the branch. Never rewrite pushed commits, which means no force
 pushes. Reply to each addressed thread with what changed, or why the finding does not
-apply, prefixed with `[Agent]`. Leave resolving a thread to whoever opened it unless
+apply, prefixed with `**[Agent]**`. Leave resolving a thread to whoever opened it unless
 the user says otherwise. Keep the body about the final change: correct any statement a
 fix made false, but add no review log. The posted agent review records the findings and
 the commits that fixed them.
@@ -193,7 +193,7 @@ merged or the user says they did. For a stack, apply it to every merged layer.
 5. Run `git fetch --prune` and delete the task's scratch files.
 6. Close the pull requests this task opened that the merge superseded, and delete their
    branches:
-   `gh pr close <n> --delete-branch --comment "[Agent] Superseded by #<m>."`.
+   `gh pr close <n> --delete-branch --comment "**[Agent]** Superseded by #<m>."`.
 
 Touch only what this task created. Another session's branch, worktree, pull request, or
 uncommitted changes stay as they are; list them in the report. Groups that the

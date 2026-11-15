@@ -78,13 +78,13 @@ The file contains:
 ```json
 {
   "event": "COMMENT",
-  "body": "[Agent review] Needs changes: 1 blocking finding. ...",
+  "body": "**[Agent review]** Needs changes: 1 blocking finding. ...",
   "comments": [
     {
       "path": "src/verify.ts",
       "line": 42,
       "side": "RIGHT",
-      "body": "[Agent review] ..."
+      "body": "**[Agent review]** **<Finding title>.** <consequence> **Fix:** <fix>"
     }
   ]
 }
@@ -99,40 +99,43 @@ Shape the body as below, verdict first. Omit empty sections and the issue refere
 when there is no issue.
 
 ```markdown
-[Agent review] Ready for maintainer review: <no findings | no blocking findings>.
-[Agent review] Needs changes: <count> blocking <finding | findings>.
+**[Agent review]** Ready for maintainer review: <no findings | no blocking findings>.
+**[Agent review]** Needs changes: <count> blocking <finding | findings>.
 
 Reviewed by `<model, from the subagent result>` in a fresh context, separate from the
 agent that wrote this pull request. Checked against #<issue>.
 
-**Blocking**
+### Blocking
 
-1. <finding>
+1. **<Finding title>.** <Location> <consequence>.
+   **Fix:** <suggested fix>.
 
-**Not Blocking**
+### Not Blocking
 
-1. <finding>
+1. **<Finding title>.** <Location> <consequence>.
+   **Fix:** <suggested fix>.
 
-**Unverified**
+### Unverified
 
-- <item>: <reason>
+- **<Item>:** <reason>
 
-**Fixed During Delivery**
+### Fixed During Delivery
 
-1. <finding>: <commit>
+1. **<Finding title>.** <What was wrong>: <commit>
 
 <details>
 <summary>What Was Checked</summary>
 
-- <item>: <evidence>
+- **<Item>:** <evidence>
 
 </details>
 ```
 
 The first line is one of the two verdicts. A failed acceptance criterion is a blocking
-finding; "What Was Checked" lists the items that passed. On a re-review, check the
-previous findings and the commits pushed since the posted review only; do not raise
-fresh nits on unchanged code.
+finding; "What Was Checked" lists the items that passed. Each finding's title is a short
+statement of the problem, such as "Version pull request body lacks Decisions". On a
+re-review, check the previous findings and the commits pushed since the posted review
+only; do not raise fresh nits on unchanged code.
 
 ## Configure a Hosted Review Bot
 

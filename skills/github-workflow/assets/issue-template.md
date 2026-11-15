@@ -2,19 +2,19 @@
 
 [In two or three sentences, say what is wrong or wanted, and why it matters.]
 
-## Decision needed
+## Decision Needed
 
 [Only while the work waits for a choice: the question, each option with its tradeoff,
 and your recommendation. Once decided, replace this section with one line, "Decided:
 <choice>, because <reason>." Otherwise remove it.]
 
-## Acceptance criteria
+## Acceptance Criteria
 
 - [In one line each, state what is observably true when the work is done, including
   important failure behavior.]
 
 <details>
-<summary>Agent notes</summary>
+<summary>Agent Notes</summary>
 
 ### Context
 
@@ -31,7 +31,7 @@ thresholds, or remove this section.]
 
 [Describe how anyone confirms the acceptance criteria.]
 
-### Out of scope
+### Out of Scope
 
 [List only exclusions a contributor might otherwise assume, or remove this section.]
 

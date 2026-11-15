@@ -11,7 +11,7 @@ GitHub's own fields:
 
 A report's existence is not a commitment, and committed work needs verifiable
 acceptance criteria. Use no other kinds, issue types, or labels to express state. The
-labels themselves are listed in [Repository setup](repository-setup.md).
+labels themselves are listed in [Repository Setup](repository-setup.md).
 
 ## Triage
 
@@ -30,16 +30,16 @@ product's boundaries. Then do one of:
 Do not close a valid report just because it is unplanned. Questions about product
 boundaries belong to the user. Never create a label outside the baseline; ask instead.
 
-## Write an issue
+## Write an Issue
 
 Write the body with `assets/issue-template.md`, even when the repository has issue
 forms: the forms are written for people filing through the web.
 
-- **Title:** the outcome, such as "Report checksum mismatch in verify command", not the
-  activity, such as "Work on verify".
+- **Title:** the outcome, such as "Report Checksum Mismatch in Verify Command", not the
+  activity, such as "Work on Verify". Write it in US title case.
 - **Summary:** two or three sentences that open the body: what is wrong or wanted, and
   why it matters, in plain words.
-- **Acceptance criteria:** what is observably true when the work is done, including
+- **Acceptance Criteria:** what is observably true when the work is done, including
   important failure behavior, one line each. What a criterion needs beyond its line,
   such as exact names, formats, or thresholds, goes under Details in the agent notes.
 - **Context**, in the agent notes: link the brief and the requirement or acceptance
@@ -49,12 +49,12 @@ forms: the forms are written for people filing through the web.
   issue without verification cannot be reviewed. Every step must be possible on the
   branch the work lands on: CI that runs only on pull requests to the default branch
   does not run on a stacked layer.
-- **Out of scope**, in the agent notes: only the exclusions a contributor might
+- **Out of Scope**, in the agent notes: only the exclusions a contributor might
   otherwise assume.
 - **Self-contained:** a reader who sees only the issue understands it. Cite code at a
   commit SHA, in the agent notes, never the review, plan, or research file the issue
   came from, its finding IDs (F1, I27, N4), or "the review".
-- **Decision needed:** when the work needs a choice from the user, add this section
+- **Decision Needed:** when the work needs a choice from the user, add this section
   right after the summary, with each option, its tradeoff, and your recommendation.
   When you report back, list every open decision by issue number. Once the user
   decides, replace the section with one line, `Decided: <choice>, because <reason>.`,
@@ -74,7 +74,7 @@ When the user has approved a set of issues, create them all in one pass. Do not 
 one first and wait for review before the rest, even if an earlier session or a memory
 note says otherwise.
 
-### File several issues from a review or plan
+### File Several Issues From a Review or Plan
 
 1. List what you would file (title, labels, blocked-by) and wait for approval.
 2. Before creating anything, have a reviewer that did not draft the bodies check each
@@ -84,7 +84,7 @@ note says otherwise.
 3. Create them all in one pass, then search the created bodies for the source file's
    name and finding IDs. Delete the source file once its content is filed.
 
-## Pick up an issue
+## Pick Up an Issue
 
 Read the issue, its comments, and linked context such as the brief. Check that nobody
 else holds it: no other assignee and no open pull request
@@ -97,9 +97,9 @@ If the acceptance criteria or verification are missing or ambiguous, fix the iss
 the user before coding rather than guessing. When the work reveals something outside the
 issue, open or propose a separate issue instead of growing the pull request.
 
-## Close an issue
+## Close an Issue
 
 A closing keyword in a merged pull request closes the issue (see the pull requests
 reference). Close manually only with a reason:
-`gh issue close <n> --reason "not planned" --comment "[AgentName] <why>"`. Use
+`gh issue close <n> --reason "not planned" --comment "[Agent] <why>"`. Use
 `completed` only when the acceptance criteria were delivered and verified.

@@ -1,16 +1,16 @@
-# Repository setup
+# Repository Setup
 
 Every repository uses the same GitHub configuration, so the rest of this skill can rely
 on it. This reference states the rules; it ships no configuration files. Check a
 repository against them with the drift checklist at the end.
 
 A repository deviates only for a reason recorded in its AGENTS.md, under the section
-"Deviations from the shared workflow". Without a recorded reason, a difference from
+"Deviations From the Shared Workflow". Without a recorded reason, a difference from
 these rules is drift: report it, and fix it only when the user asks. When agent
 instruction files say the repository's GitHub settings are managed as code, change
 them there through a pull request, never with `gh api` or the web UI.
 
-## Why squash merges
+## Why Squash Merges
 
 Squash merges are the only GitHub merge method that keeps the default branch linear
 with every commit signed and verified: commits on the branch are signed by the
@@ -23,7 +23,7 @@ Because only the squash commit lands, only the pull request title matters. Branc
 commits are free-form but always signed. Before merging, check that the repository
 allows squash merges; if not, stop and ask.
 
-## Merge settings
+## Merge Settings
 
 - Allow squash merging only. Disable merge commits and rebase merging.
 - Default squash commit title: the pull request title.
@@ -85,7 +85,7 @@ a label outside the baseline; ask the user instead.
 - **Issue forms** under `.github/ISSUE_TEMPLATE/` add the `triage` label to every issue
   they create. Triage removes it (see the issues reference).
 - **Pull request template** at `.github/pull_request_template.md`: the summary,
-  Decisions, Verification, the `Closes #N` line, and the collapsed Agent notes, as in
+  Decisions, Verification, the `Closes #N` line, and the collapsed Agent Notes, as in
   `assets/pull-request-template.md`.
 
 ## Dependabot
@@ -103,20 +103,20 @@ A milestone is one release, named `vX.Y.Z`. Its issues are the committed work fo
 release. Link the brief, if there is one, from the milestone description, which also
 states the scope and what needs the user. Do not use GitHub Projects to plan work.
 
-## Ideas without a commitment
+## Ideas Without a Commitment
 
 On public repositories, enable GitHub Discussions with an "Ideas" category: it is the
 Parking Lot for ideas nobody has committed to. Private repositories keep the Parking
 Lot in private Notion instead.
 
-## Straight-to-main repositories
+## Straight-to-Main Repositories
 
 A repository whose agent instruction files allow or require committing straight to the
 default branch has no branches or pull requests, and its merge settings go unused. The
 rulesets above already allow direct pushes. Everything else here still applies:
 labels, issue forms, milestones, signed commits.
 
-## Drift checklist
+## Drift Checklist
 
 Run these read-only commands, compare with the rules above, and report each
 difference. Change nothing unless the user asks (and never through `gh api` when the

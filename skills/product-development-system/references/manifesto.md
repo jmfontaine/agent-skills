@@ -1,10 +1,10 @@
-# Manifesto refinement
+# Manifesto Refinement
 
 Turn an early vision into a concise, durable north star that guides later
 specifications. First expand understanding, then compress expression. Keep
 implementation detail in later artifacts.
 
-## Explore the product decisions
+## Explore the Product Decisions
 
 Read the whole current document and relevant comments before proposing changes.
 Establish whether it is a manifesto, charter, principles document, or specification;
@@ -37,7 +37,7 @@ stable contracts and governance for platforms; integrity and recoverability for
 preservation; delegation boundaries and fallbacks for AI-heavy products. These are
 prompts, not a mandatory checklist.
 
-## Refine conversationally
+## Refine Conversationally
 
 For a material unresolved issue, explain the issue and consequence, propose concise
 wording or alternatives, and let the user resolve the product choice. When an edit is
@@ -60,7 +60,7 @@ Once ideas stabilize, a useful structure is:
 Adapt this structure to the product. Keep open questions here only when they affect the
 vision; move implementation questions to the relevant later artifact.
 
-## Simplify and challenge
+## Simplify and Challenge
 
 Remove duplicate principles, overlapping capabilities, temporary project facts,
 decorative formatting, and vague marketing language. Preserve distinctions that affect

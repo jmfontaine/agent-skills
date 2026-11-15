@@ -18,9 +18,9 @@ Read agent instruction files (AGENTS.md, CLAUDE.md) and the repository's existin
 conventions before acting: templates under `.github/`, labels, milestones, and the
 allowed merge method. The instruction files override this skill and the skills it
 points to wherever they differ. Compare the conventions with
-[Repository setup](references/repository-setup.md): every repository uses the same
+[Repository Setup](references/repository-setup.md): every repository uses the same
 configuration, and a difference without a reason recorded in AGENTS.md (under
-"Deviations from the shared workflow") is drift to report, not to mirror. Branch names
+"Deviations From the Shared Workflow") is drift to report, not to mirror. Branch names
 follow the `git-branch` skill: `<type>/issue-<N>-<slug>` for an issue, `<type>/<slug>`
 otherwise.
 
@@ -44,11 +44,11 @@ Load only the reference the task needs. Paths are relative to this skill directo
 | Current task | Read |
 | --- | --- |
 | Create, triage, structure, pick up, or close an issue | [Issues](references/issues.md) |
-| Open, describe, update, or merge a pull request | [Pull requests](references/pull-requests.md) |
+| Open, describe, update, or merge a pull request | [Pull Requests](references/pull-requests.md) |
 | Review a pull request, respond to findings, or configure a review bot | [Review](references/review.md) |
-| Set up or check a repository's settings, labels, and templates | [Repository setup](references/repository-setup.md) |
+| Set up or check a repository's settings, labels, and templates | [Repository Setup](references/repository-setup.md) |
 
-## Shared rules
+## Shared Rules
 
 - **Visible actions need authorization.** Creating or editing issues, pushing, opening
   pull requests, posting comments or reviews, and merging are seen by others. Do them
@@ -75,19 +75,24 @@ Load only the reference the task needs. Paths are relative to this skill directo
   words, in plain words: name what a thing does, not its file path, line number,
   commit, or ID (acceptance criterion numbers, option numbers), unless readers know it
   by that name, such as a command-line flag. Everything else an agent or reviewer needs
-  goes in the closing `<details>` block the templates end with, `Agent notes`, with a
+  goes in the closing `<details>` block the templates end with, `Agent Notes`, with a
   blank line after `</summary>` so its Markdown renders. Leave out what nobody reads:
   review rounds and fixed findings (the posted agent review records them), the options
   of a settled decision, and how the work went. A small change gets a short body and no
   agent notes.
 - **Report real evidence.** Claim a verification step only after running it. Mark
   anything unverified as such; never tick a checkbox without evidence.
-- **Prefix agent comments.** Start agent-authored comments, replies, and review bodies
-  with `[AgentName]`, using the configured name or the agent's actual identity, such as
-  `[Claude]` or `[Codex]`. An agent review and its inline comments add the role, such
-  as `[Claude reviewer]`, so the review stands apart from the author's replies even
-  when both run on the same model. Issue and pull request bodies are artifacts and
-  take no prefix.
+- **Prefix agent comments by role.** Agents post through the maintainer's account, so a
+  prefix marks agent text: `[Agent review]` starts an agent review and each of its
+  inline comments, and `[Agent]` starts every other agent comment or reply. Name no
+  model in a prefix: a posted review mixes the reviewer's findings with the posting
+  agent's checks of them. The review body names the reviewer's model once (see the
+  review reference). Issue and pull request bodies are artifacts and take no prefix.
+- **Title case.** Write issue titles, headings, form labels, and bold labels that act
+  as headings in US title case: capitalize every word except articles, coordinating
+  conjunctions, and prepositions of three letters or fewer, unless the word starts or
+  ends the title, and keep code and names as written. Pull request titles and commit
+  subjects follow Conventional Commits instead, such as `fix: report checksum mismatch`.
 - **Defer to the Git skills.** Follow the `git-branch` and `git-commit` skills, if
   installed, for branch names, commits, and stacked pull requests. Without them, sign
   every commit and never rewrite pushed commits.

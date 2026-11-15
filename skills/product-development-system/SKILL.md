@@ -17,7 +17,7 @@ Use **product** for what users receive: vision, capabilities, scope, roadmap, an
 outcomes. Use **project** for the implementation context: repository, contributors,
 tooling, architecture, and execution environment.
 
-## Orient and route
+## Orient and Route
 
 Read the relevant existing artifacts and agent instruction files (AGENTS.md, CLAUDE.md).
 Identify the current work, what is authoritative, what is already decided, and the next
@@ -40,21 +40,21 @@ advance. Reference and template paths are relative to this skill directory.
 
 | Current task | Read |
 | --- | --- |
-| Draft, challenge, or simplify vision, a manifesto, or product principles | [Manifesto refinement](references/manifesto.md) |
-| Map the intended product, find missing capabilities and boundaries, or update Now / Next / Later | [Product map](references/product-map.md) |
-| Choose the next release's outcomes, set its scope and the user's checkpoints, estimate, or replan | [Release planning](references/release-planning.md) |
+| Draft, challenge, or simplify vision, a manifesto, or product principles | [Manifesto Refinement](references/manifesto.md) |
+| Map the intended product, find missing capabilities and boundaries, or update Now / Next / Later | [Product Map](references/product-map.md) |
+| Choose the next release's outcomes, set its scope and the user's checkpoints, estimate, or replan | [Release Planning](references/release-planning.md) |
 | Decide whether work needs a brief, write one, or assess readiness to build | [Brief](references/brief.md) |
-| Review a finished milestone and decide what changes next | [Release review](references/release-review.md) |
-| Establish or revise the project's technical baseline | [Architecture section](references/architecture-section.md) |
-| Promote an artifact, resolve conflicting sources, place an idea, create work items, or preserve a decision | [Artifact lifecycle](references/artifact-lifecycle.md) |
-| Author, edit, or comment on an artifact; reconcile prior feedback | [Collaboration conventions](references/collaboration-conventions.md) |
+| Review a finished milestone and decide what changes next | [Release Review](references/release-review.md) |
+| Establish or revise the project's technical baseline | [Architecture Section](references/architecture-section.md) |
+| Promote an artifact, resolve conflicting sources, place an idea, create work items, or preserve a decision | [Artifact Lifecycle](references/artifact-lifecycle.md) |
+| Author, edit, or comment on an artifact; reconcile prior feedback | [Collaboration Conventions](references/collaboration-conventions.md) |
 
 For “what next?”, locate the earliest unresolved decision that affects the requested
 work, explain its implication, and load that reference. Revisit earlier artifacts when
 evidence challenges them. Continue within the user's authorized scope; do not silently
 expand into the next phase.
 
-## Artifact locations
+## Artifact Locations
 
 Use these default locations unless the project already has established conventions.
 Repository paths are relative to the project's repository root.
@@ -75,7 +75,7 @@ Manifesto, Product Map, briefs, and ADRs under `docs/product/` instead
 (`docs/product/manifesto.md`, `docs/product/briefs/`, `docs/product/decisions/`, and
 so on).
 
-## Shared constraints
+## Shared Constraints
 
 - **Git** holds canonical durable artifacts. **GitHub milestones and issues** hold the
   release plan and committed work. The **Parking Lot** holds uncommitted ideas;
@@ -92,8 +92,12 @@ so on).
   investigation, not invented justification.
 - Consider AI and agents explicitly: how they help build the product and whether they
   belong in its runtime, interfaces, or user model. Do not assume one implies the other.
-- Prefix agent-authored comments and replies with `[AgentName]`, using the established
-  name. Use restrained formatting that reflects conceptual hierarchy.
+- Prefix agent-authored comments and replies in source documents with `[AgentName]`,
+  using the established name; GitHub comments follow the `github-workflow` skill, if
+  installed. Use restrained formatting that reflects conceptual hierarchy, and write
+  titles and headings in US title case: capitalize every word except articles,
+  coordinating conjunctions, and prepositions of three letters or fewer, unless the word
+  starts or ends the title.
 - Working material for a task in progress (drafts, plans, research exports) is scratch:
   keep it in the scratch directory the agent instruction files name, else an ignored
   `.scratch/`, and delete it once its content is filed or the task is done.
@@ -105,13 +109,13 @@ implementation framework and does not restate GitHub mechanics; follow the
 `github-workflow` skill, if installed, for issues, pull requests, reviews, milestones,
 and labels.
 
-## Templates, only when creating the corresponding artifact
+## Templates, Only When Creating the Corresponding Artifact
 
-- [Brief template](assets/brief-template.md): tailor it to the work at hand and
+- [Brief Template](assets/brief-template.md): tailor it to the work at hand and
   existing repository conventions.
-- [ADR template](assets/adr-template.md): use only when consequential rationale needs
+- [ADR Template](assets/adr-template.md): use only when consequential rationale needs
   preserving.
-- [Architecture section template](assets/architecture-section-template.md): adapt it to
+- [Architecture Section Template](assets/architecture-section-template.md): adapt it to
   the project's actual technical choices when creating the AGENTS.md section.
 
 End with what changed or was decided, any material unresolved question, and the next

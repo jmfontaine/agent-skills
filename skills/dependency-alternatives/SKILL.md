@@ -41,7 +41,7 @@ comparison, not a list of switches.
   - several matches (`pytest` and `pytest-cov`): list them and ask which one;
   - used: run steps 3 to 5 for that dependency only.
 
-## 1. Discover dependencies
+## 1. Discover Dependencies
 
 Inventory every direct dependency, not just runtime packages. Check what applies:
 
@@ -84,7 +84,7 @@ Group the dependencies by category: runtime, testing, linting and formatting, ty
 build, CI, infrastructure, and other for anything that fits none. Omit empty
 categories. List a dependency once, even when several places declare or pin it.
 
-## 2. Let the user choose
+## 2. Let the User Choose
 
 Present one numbered list, numbered continuously across the category headings. The
 list is for choosing, so keep each entry to the name and a few words on its role in
@@ -122,7 +122,7 @@ Do no research before an answer. Ask the question open, with no recommendation, 
 when the selection is genuinely the user's, such as when what they want from the audit
 (a license limit, a runtime they are moving to) decides it.
 
-## 3. Map actual feature usage
+## 3. Map Actual Feature Usage
 
 For each selected dependency, find which of its features the repository uses. Search:
 
@@ -144,7 +144,7 @@ When the user selects a dependency with no usage found, search again with these
 methods. If the baseline is still empty, skip step 4 for it: in step 5, give the
 places searched instead of the baseline and comparison, and recommend Remove.
 
-## 4. Research alternatives
+## 4. Research Alternatives
 
 Find candidates in the ecosystem's comparison articles, curated lists, the current
 dependency's issue tracker (users often name what they moved to), and registries.
@@ -202,7 +202,7 @@ called abandoned, a security advisory, or a feature called missing.
 Use this structure:
 
 ````markdown
-# Dependency alternatives: <repository>
+# Dependency Alternatives: <repository>
 
 Researched on <YYYY-MM-DD>. Health metrics go stale; check them again before acting.
 
@@ -256,6 +256,10 @@ Researched on <YYYY-MM-DD>. Health metrics go stale; check them again before act
 
 Kept: <dependencies>.
 ````
+
+Keep every heading in US title case, as above: capitalize every word except articles,
+coordinating conjunctions, and prepositions of three letters or fewer, unless the word
+starts or ends the heading.
 
 - Give the pros, cons, new possibilities, and migration effort for each recommended
   alternative, not for every viable one.

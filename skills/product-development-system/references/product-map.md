@@ -1,4 +1,4 @@
-# Product map development
+# Product Map Development
 
 Map the whole intended product at low resolution. Preserve coherence across releases
 without designing the entire system or promising every possibility.
@@ -7,7 +7,7 @@ Start from the Manifesto and known user workflows. For an existing product, comp
 documented intent with observed behavior and identify gaps rather than rewriting intent
 to match whatever was built.
 
-## Build the map
+## Build the Map
 
 - Group major capabilities by user outcome. Distinguish umbrella capabilities from their
   parts and remove duplicates.
@@ -55,7 +55,7 @@ Next → Now when the user creates its milestone (see
 in Later without a release is still part of product intent; an idea that is not yet
 intent belongs in the Parking Lot.
 
-## Challenge and finish
+## Challenge and Finish
 
 Use the agent as a systems thinker: find omissions, overlaps, and inconsistent
 boundaries. Ask whether a missing area was deliberately excluded or simply overlooked.

@@ -1,4 +1,4 @@
-# Release planning
+# Release Planning
 
 Choose what the next release delivers. The release plan is a GitHub milestone named
 `vX.Y.Z`; its issues are the committed work. The roadmap is the Now / Next / Later
@@ -9,7 +9,7 @@ section and ADRs that constrain the work, and the Parking Lot when available.
 User-reported issues are input to triage, not automatic commitments. Contributors must
 still be able to plan from canonical artifacts without private context.
 
-## Choose what goes into the next milestone
+## Choose What Goes Into the Next Milestone
 
 Prefer “a user can archive one source and later verify its integrity” to “implement the
 database layer.” Size a release by what is worth shipping to a user, not by the
@@ -28,7 +28,7 @@ or variations. Keep necessary technical work inside the outcome it enables. An
 exceptional enabling task needs a concrete consumer and bounded purpose; it must not
 become a speculative architecture release.
 
-## Set scope and the user's checkpoints
+## Set Scope and the User's Checkpoints
 
 Write the scope boundary (in scope, out of scope) in the milestone description, with
 the cut order: what to cut first if scope grows, preserving a useful end-to-end
@@ -55,7 +55,7 @@ the user's time separately. When no durations are recorded yet, give agent time 
 minutes to hours and label it a guess until real durations exist. Never estimate as if a
 person were writing the code.
 
-## Commit the work
+## Commit the Work
 
 The milestone description states the outcomes, the scope and cut order, what needs the
 user, and links to the Product Map section and to any [brief](brief.md). Create issues

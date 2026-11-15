@@ -1,4 +1,4 @@
-# Artifact lifecycle and source of truth
+# Artifact Lifecycle and Source of Truth
 
 Use one canonical home per kind of information. Authority follows the artifact's
 purpose; a newer timestamp or a planning item does not silently override product intent.
@@ -10,7 +10,7 @@ purpose; a newer timestamp or a planning item does not silently override product
 | GitHub milestones and issues | The release plan (one milestone per release), committed work and its execution status, user-reported issues | Planned work, not a collection of vague possibilities; user-reported issues stay untriaged until triaged |
 | Discussions or Notion | Parking Lot (uncommitted ideas), exploration, research, rough drafts, private discussion. Discussions “Ideas” category on a public repository; private Notion otherwise | Never a dependency for contributors or the authority over promoted Git artifacts |
 
-## Promote cleanly
+## Promote Cleanly
 
 Promote an artifact when it materially affects what contributors or coding agents should
 build. Use the artifact locations in SKILL.md unless the repository already has its own
@@ -32,7 +32,7 @@ reports and private discussion as evidence that may justify a deliberate update,
 automatic override. Explain a material conflict instead of silently resolving product
 judgment by recency.
 
-## Move possibilities into commitments deliberately
+## Move Possibilities Into Commitments Deliberately
 
 The usual internal path is:
 
@@ -57,7 +57,7 @@ covers), and a way to verify completion. Do not turn Next or Later into speculat
 issue trees. The `github-workflow` skill, if installed, covers issue format and
 mechanics.
 
-## Preserve consequential rationale
+## Preserve Consequential Rationale
 
 Use a lightweight ADR (Architecture Decision Record) when a future contributor could
 unknowingly reverse an important choice. Architecture, ownership, compatibility,
@@ -74,7 +74,7 @@ not.
 - The Architecture section states the current choice and links the ADR for its
   rationale. Do not copy the rationale into both.
 
-## Work within available tools and scope
+## Work Within Available Tools and Scope
 
 Use available tools to carry out requested changes. These conventions do not themselves
 authorize publishing private material, sending messages, creating external work items,

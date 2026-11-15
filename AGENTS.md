@@ -69,6 +69,10 @@ requests to `main`. Dependabot updates the pinned actions and hook revisions wee
   `description` allows up to 1024 characters.
 - Avoid names that collide with agent built-ins. For example, Claude Code's `/review`
   alias shadows a skill named `review`.
+- Write every heading in this repository, and every title or heading a skill tells an
+  agent to write, in US title case: capitalize every word except articles, coordinating
+  conjunctions, and prepositions of three letters or fewer, unless the word starts or
+  ends the title. Conventional Commits titles and subjects keep their lowercase form.
 - `allowed-tools` is optional and experimental: a space-separated list of Claude Code
   permission rules (e.g., `Bash(git add:*) Bash(git commit:*)`). Support varies by
   agent.
@@ -93,7 +97,7 @@ requests to `main`. Dependabot updates the pinned actions and hook revisions wee
   check that every commit is still signed (`git log --format='%h %G? %s'
   origin/main..`), run `just qa` again, then push.
 
-## Shared workflow
+## Shared Workflow
 
 This repository follows the shared workflow: the `github-workflow` skill's repository
 setup describes its GitHub settings, rulesets, labels and templates. Those settings are
@@ -103,7 +107,7 @@ GitHub web UI.
 It is a straight-to-main repository: commit directly on `main`, with no branches or
 pull requests.
 
-### Deviations from the shared workflow
+### Deviations From the Shared Workflow
 
 None.
 

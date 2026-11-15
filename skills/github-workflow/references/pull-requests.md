@@ -1,4 +1,4 @@
-# Pull requests
+# Pull Requests
 
 A pull request delivers one issue and carries the evidence that it works. Reviewers
 should be able to judge it from the PR, its issue, and the linked brief (when one
@@ -10,7 +10,7 @@ Deliver one issue per pull request. Split dependent concerns into stacked pull r
 (the `git-commit` skill, if installed). Put an unrelated fix found along the way on its
 own branch and pull request, opening an issue for it when it is committed work.
 
-## Before opening
+## Before Opening
 
 - Run the issue's verification and the repository's QA checks. Note each command or
   scenario and its result.
@@ -18,7 +18,7 @@ own branch and pull request, opening an issue for it when it is committed work.
   the brief's exclusions when a brief exists. Remove anything that does not belong.
 
 Interactive work gets no review before each commit: its one agent review runs on the
-open pull request (see "Deliver for maintainer review").
+open pull request (see "Deliver for Maintainer Review").
 
 ## Open
 
@@ -50,7 +50,7 @@ the repository's template (`.github/pull_request_template.md`) if one exists, ot
   change follows the issue as written.
 - Under Verification, give at most five lines: what was checked and the result, then
   anything unverified and why. Each command and its full result go under Verification
-  details in the agent notes.
+  Details in the agent notes.
 
 **A stack:** push and open every layer with `gh stack submit --auto` from the top
 branch. It pushes each branch, opens one pull request per branch, and links them into a
@@ -58,7 +58,7 @@ stack. Without `--auto` it opens an editor that needs an interactive terminal, a
 pull requests are drafts unless you pass `--open`. A lower layer's body uses `Refs #N`;
 the layer that completes the issue uses `Closes #N`.
 
-## Deliver for maintainer review
+## Deliver for Maintainer Review
 
 Opening the pull request does not end the task. Take it to the point where the
 maintainer only has to review and merge, without asking along the way:
@@ -90,7 +90,7 @@ An unattended run, such as one the `parallel-issues` skill launches, ends at the
 pull request instead: its local review covers each commit, and the session that
 launched it runs the agent review.
 
-## Changes to the brief or other canonical artifacts
+## Changes to the Brief or Other Canonical Artifacts
 
 Implementation sometimes shows that a brief, an ADR, the Manifesto, or the Architecture
 section of AGENTS.md is wrong or incomplete. Keep those changes reviewable:
@@ -103,12 +103,12 @@ section of AGENTS.md is wrong or incomplete. Keep those changes reviewable:
   merge it first, so it can be accepted or rejected alone. Then bring the
   implementation pull request up to date by merging the default branch into it.
 
-## Update after review
+## Update After Review
 
 Treat each finding as a claim to check, not an order. Fix valid findings with new
 commits on top of the branch. Never rewrite pushed commits, which means no force
 pushes. Reply to each addressed thread with what changed, or why the finding does not
-apply, prefixed with `[AgentName]`. Leave resolving a thread to whoever opened it unless
+apply, prefixed with `[Agent]`. Leave resolving a thread to whoever opened it unless
 the user says otherwise. Keep the body about the final change: correct any statement a
 fix made false, but add no review log. The posted agent review records the findings and
 the commits that fixed them.
@@ -120,7 +120,7 @@ After pushing fixes, request a re-review only where the reviewer expects it, suc
 
 Merge only when the user asks. Clearing a blocker, such as a ruleset change, is not a
 request to merge. Squash merge is the only merge method (the rationale is
-in [Repository setup](repository-setup.md)). Find out whether the repository allows it:
+in [Repository Setup](repository-setup.md)). Find out whether the repository allows it:
 `gh repo view --json squashMergeAllowed`. If it does not, stop and ask the user.
 
 Before merging, confirm that checks pass (`gh pr checks <n>`), blocking findings are
@@ -158,7 +158,7 @@ Ask the maintainer to merge it; never bypass the ruleset.
   request (HTTP 403), so update a stack that is behind or conflicts locally: merge the
   base into the bottom branch, then each layer into the next one up.
 
-### Several at once
+### Several at Once
 
 When the user asks to merge several pull requests or stacks (a list, a range, or "the
 ready ones"), merge them in one pass without asking about each one. When several are
@@ -173,7 +173,7 @@ ready, suggest this; never require it.
 
 Clean up after every merge (below).
 
-## Clean up after a merge
+## Clean Up After a Merge
 
 Cleanup is part of the merge. Run it without asking after each merge, whether you
 merged or the user says they did. For a stack, apply it to every merged layer.
@@ -193,7 +193,7 @@ merged or the user says they did. For a stack, apply it to every merged layer.
 5. Run `git fetch --prune` and delete the task's scratch files.
 6. Close the pull requests this task opened that the merge superseded, and delete their
    branches:
-   `gh pr close <n> --delete-branch --comment "[AgentName] Superseded by #<m>."`.
+   `gh pr close <n> --delete-branch --comment "[Agent] Superseded by #<m>."`.
 
 Touch only what this task created. Another session's branch, worktree, pull request, or
 uncommitted changes stay as they are; list them in the report. Groups that the

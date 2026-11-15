@@ -12,13 +12,13 @@ Hosted bots read the diff and repository guidance but not linked issues or brief
 they cannot judge acceptance criteria or scope. The agent review does. One agent review
 covers a pull request, or a whole stack. Agents never approve or request changes.
 
-## Run an agent review
+## Run an Agent Review
 
 Independence matters: an author rarely spots what they already rationalized. The
 reviewer is the omp `reviewer` agent, started from a `task` call with
 `"agent": "reviewer"` inside each `tasks[]` item. Omp's configuration chooses its
 model, not this skill. Give the reviewer the pull request number, not the author's
-reasoning. State in the review which model ran, as the subagent's result reports it;
+reasoning. Name in the review which model ran, as the subagent's result reports it;
 never infer it. Where the agent cannot start a subagent, a new session with a fresh
 context stands in, and the review says so.
 
@@ -51,7 +51,7 @@ posted review or to the user: a finding that contradicts them is wrong, so drop 
    non-blocking. Give each finding its location, evidence, consequence, and a suggested
    fix. Label inferences that you could not confirm.
 
-## Post the review
+## Post the Review
 
 During a delivery (see the pull requests reference), post the review on the pull request
 once the fixes are in, as one review of the final head. When the user asks for a review
@@ -78,13 +78,13 @@ The file contains:
 ```json
 {
   "event": "COMMENT",
-  "body": "[AgentName reviewer] Agent review ...",
+  "body": "[Agent review] Needs changes: 1 blocking finding. ...",
   "comments": [
     {
       "path": "src/verify.ts",
       "line": 42,
       "side": "RIGHT",
-      "body": "[AgentName reviewer] ..."
+      "body": "[Agent review] ..."
     }
   ]
 }
@@ -95,34 +95,46 @@ root. Put findings about other lines, such as stale documentation the PR did not
 in the review body. Keep the body file in the scratch directory and delete it after
 posting.
 
-Shape the body as:
+Shape the body as below, verdict first. Omit empty sections and the issue reference
+when there is no issue.
 
 ```markdown
-[AgentName reviewer] Agent review of #<issue>
+[Agent review] Ready for maintainer review: <no findings | no blocking findings>.
+[Agent review] Needs changes: <count> blocking <finding | findings>.
 
-**Reviewer:** <agent> (<model, from the subagent result>)
-
-**Verdict:** Ready for maintainer review | Needs changes (<count> blocking)
-
-**Verification**
-- Passed: <item>: <evidence>
-- Failed: <item>: <evidence>
-- Unverified: <item>: <reason>
+Reviewed by `<model, from the subagent result>` in a fresh context, separate from the
+agent that wrote this pull request. Checked against #<issue>.
 
 **Blocking**
+
 1. <finding>
 
-**Non-blocking**
+**Not Blocking**
+
 1. <finding>
 
-**Fixed during delivery**
+**Unverified**
+
+- <item>: <reason>
+
+**Fixed During Delivery**
+
 1. <finding>: <commit>
+
+<details>
+<summary>What Was Checked</summary>
+
+- <item>: <evidence>
+
+</details>
 ```
 
-Omit empty sections. On a re-review, check the previous findings and the commits pushed
-since the posted review only; do not raise fresh nits on unchanged code.
+The first line is one of the two verdicts. A failed acceptance criterion is a blocking
+finding; "What Was Checked" lists the items that passed. On a re-review, check the
+previous findings and the commits pushed since the posted review only; do not raise
+fresh nits on unchanged code.
 
-## Configure a hosted review bot
+## Configure a Hosted Review Bot
 
 Each bot reads its own guidance file. Keep it to consequential, repository-specific
 rules, and leave mechanical checks to CI.
@@ -135,7 +147,7 @@ rules, and leave mechanical checks to CI.
 
 Never create a REVIEW.md for a bot. REVIEW.md is always a scratch file.
 
-## Maintainer review
+## Maintainer Review
 
 The maintainer reads the agent review, the bot review if any, and the diff, then
 merges. GitHub does not let an author approve their own pull request, and pull requests

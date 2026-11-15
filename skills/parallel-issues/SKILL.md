@@ -32,7 +32,7 @@ stack, one pull request per issue, bottom first. A **layer** is one branch and p
 request of a stack. A group is named after its issues, never with a letter: `#185`
 for one issue, `#185/#187/#180` for three.
 
-## When the user is needed
+## When the User Is Needed
 
 Gather every question before the first unattended step, ask them together, and start
 only once all are answered. A question that surfaces after the user has left blocks
@@ -64,15 +64,16 @@ merging and cleanup end with one of the other two.
 
 Notifications come from this session only, and only when the user is needed. Whenever
 a turn ends with "I need you for: …" while the user may be away, also send that list:
-`parallel_issues.py notify "<short title>"` with the list on standard input. Never let
-the watcher or the agents ping the user: the watcher runs with `--no-notify` (see
-While it runs), and the agents' own notifications are off through `agent.ompConfig`.
+`parallel_issues.py notify "<Short Title>"`, with the title in US title case and the
+list on standard input. Never let the watcher or the agents ping the user: the watcher
+runs with `--no-notify` (see While It Runs), and the agents' own notifications are off
+through `agent.ompConfig`.
 
 Ask the user to send decisions for an agent through this session, not by typing in
 the agent's Herdr pane: this session cannot see those messages, and an agent's pane is
 removed by `clean`.
 
-## Before the first run
+## Before the First Run
 
 Check each item and fix what is missing with the user; the launcher refuses to start
 otherwise.
@@ -99,7 +100,7 @@ otherwise.
     name); without it, `op` reads from its default account.
   - The agent's public key is in `gpg.ssh.allowedSignersFile` for the repository's
     `user.email`, and is added to the user's GitHub account as a **Signing** key.
-  - The user is present when the key is read from 1Password (see Signing key).
+  - The user is present when the key is read from 1Password (see Signing Key).
 - The default branch should require signed commits (a ruleset), so an unverified
   commit fails the push instead of landing.
 - Optional, through git config:
@@ -117,7 +118,7 @@ otherwise.
     takes `ssh-keygen`'s arguments, so it can be a wrapper that runs an extra check
     before signing. The agents and `env` get it as `gpg.ssh.program`.
 
-## Plan the batch
+## Plan the Batch
 
 Planning happens with the user, before anything runs.
 
@@ -203,7 +204,7 @@ the change actually is.
 
 A group that fails a check is reported and skipped; the others still launch.
 
-## Signing key
+## Signing Key
 
 Reading the agent key asks the user through 1Password, and the prompt fails after a
 minute when nobody approves it. So read it only while the user is there. It then
@@ -232,7 +233,7 @@ stays loaded for 24 hours, across waves and `clean`, and every launch reuses it.
   python3 <skill-dir>/scripts/parallel_issues.py exec -- git push
   ```
 
-## While it runs
+## While It Runs
 
 - Right after the launch, and after every relaunch or message to an agent, start
   `parallel_issues.py status --wait --no-notify --timeout 2` as a background job: the
@@ -278,7 +279,7 @@ stays loaded for 24 hours, across waves and `clean`, and every launch reuses it.
   for up to 30 minutes, so one `record` call is enough. `status` shows a group whose
   agent stopped without recording.
 
-## After the run
+## After the Run
 
 1. **Agent review.** Each pull request, or each stack, gets the agent review the
    `github-workflow` skill describes (if installed): a fresh session that checks the
@@ -363,7 +364,7 @@ stays loaded for 24 hours, across waves and `clean`, and every launch reuses it.
    `clean` exits nonzero while it prints any `keep`, `FAILED`, or `leftover` line.
    Resolve each line with the user, then run `clean` again until it exits 0.
 
-## What the safeguards do not cover
+## What the Safeguards Do Not Cover
 
 The agents act as the user on GitHub. The launcher's issue checks and the prompt's
 instructions not to read comments or follow linked pages reduce what can steer an

@@ -7,7 +7,7 @@ It describes one opinionated way to work, the one these skills implement, not a 
 best practice. You can adopt part of it: each skill owns its steps and refers to the
 others for theirs, so take those along or replace them with your own rules.
 
-## What it is for
+## What It Is For
 
 A solo maintainer who runs many AI agents, and who occasionally accepts a pull request
 from an external contributor. The maintainer decides what to build and has the final
@@ -19,9 +19,9 @@ repository's agent instruction files (AGENTS.md, CLAUDE.md) can override any par
 skill: the skills hold the general workflow, and the instruction files hold what a
 repository needs to do differently. Agents follow the instruction files wherever the
 two disagree. A repository records its deviations, with their reasons, in a section of
-its `AGENTS.md` called "Deviations from the shared workflow".
+its `AGENTS.md` called "Deviations From the Shared Workflow".
 
-## The flow
+## The Flow
 
 ```mermaid
 flowchart TD
@@ -42,7 +42,7 @@ flowchart TD
 - A **brief** is optional. Write one only when work spans several issues or needs
   product decisions settled first.
 
-## Who owns each step
+## Who Owns Each Step
 
 Each skill holds its own rules. This page links to them and does not restate them.
 
@@ -83,7 +83,7 @@ Use these terms and no others. The last column lists the names the workflow reti
 | Stack, layer | Dependent PRs, each on the one below; one branch and PR per layer, bottom to top | Stacked PRs | |
 | Squash merge | The only merge method; PR title becomes the commit, body blank | Squash and merge | Rebase merge, fast-forward merge |
 | Split check | Deciding how to divide changes into branches and PRs | PR splitting | Pre-commit review |
-| Deviation | A documented exception in `AGENTS.md` "Deviations from the shared workflow" | | |
+| Deviation | A documented exception in `AGENTS.md` "Deviations From the Shared Workflow" | | |
 | Scratch file | Working material for a task in progress, never committed or cited | Scratch file | |
 | Local review | Unattended runs: fresh reviewer checks the diff before each commit | Pre-push review | Pre-commit review |
 | Agent review | One per PR or stack, fresh context (subagent or new session), posted on the PR: acceptance criteria, scope, correctness, consistency | Code review | Spec check |
@@ -101,9 +101,9 @@ A `banned-terms` hook (`.pre-commit-config.yaml`) rejects the retired terms unde
 `skills/`. Bare "review" when a specific review is meant, and "trunk" for the default
 branch, are also to be avoided.
 
-## GitHub setup
+## GitHub Setup
 
-[Repository setup](../skills/github-workflow/references/repository-setup.md) lists what
+[Repository Setup](../skills/github-workflow/references/repository-setup.md) lists what
 every repository needs: merge methods, rulesets, the label baseline, templates, and
 Dependabot. It also holds the reason for squash merges and the rule for documented
 deviations.
@@ -115,7 +115,7 @@ as code, for example [OpenTofu](https://opentofu.org). When a repository's agent
 instruction files say its GitHub settings are managed as code, agents change them
 there through a pull request, never with `gh api` or the web UI.
 
-## Local setup
+## Local Setup
 
 Install only what the skills you use need.
 

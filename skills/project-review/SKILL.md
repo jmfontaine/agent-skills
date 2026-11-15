@@ -77,7 +77,9 @@ Offer to review related files the user hasn't mentioned yet.
 
 ## Output Format
 
-For each file, report:
+For each file, report, with headings in US title case (every word capitalized except
+articles, coordinating conjunctions, and prepositions of three letters or fewer, unless
+first or last):
 
 ```text
 ### <filename>

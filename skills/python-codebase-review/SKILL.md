@@ -41,7 +41,7 @@ cite one only when it points at a real behavioral bug.
 If `git status` shows uncommitted changes, mention it in the final report, since
 findings may refer to code that is not committed yet.
 
-## 2. Map the project
+## 2. Map the Project
 
 Read `README`, `pyproject.toml` (or `setup.cfg`/`setup.py`), `AGENTS.md`/`CLAUDE.md` if
 present, the entry points (console scripts, `__main__`, app factories, CLI modules), and
@@ -50,7 +50,7 @@ service, library, data pipeline), Python version, key dependencies, packages and
 roles, entry points, conventions, and what the baseline showed. Every reviewer receives
 this brief, so it is worth getting right.
 
-## 3. Plan slices
+## 3. Plan Slices
 
 Split the code into review slices of roughly 3-8k lines each, along package or module
 boundaries so each reviewer sees code that belongs together. Size the plan to the
@@ -78,7 +78,7 @@ Add cross-cutting reviewers, each covering the whole codebase through its own le
 Add one `security-reviewer` for the whole repository when the code handles untrusted
 input, network, files, auth, secrets, subprocesses, deserialization, or SQL.
 
-## 4. Fan out
+## 4. Fan Out
 
 Launch every reviewer in a single `task` call so they run in parallel. Use the
 `reviewer` agent for slice and cross-cutting reviews. Give every task the contents of
@@ -103,7 +103,7 @@ Output contract for reviewers:
   locations in `problem`.
 - Prefer a short snippet in `fix` over a description of a snippet.
 
-## 5. Verify and merge
+## 5. Verify and Merge
 
 When all reviewers return:
 
@@ -123,7 +123,7 @@ When all reviewers return:
 Use this structure:
 
 ```markdown
-# Code review: <project>
+# Code Review: <project>
 
 <date> · <commit sha> · <lines of Python reviewed>
 Baseline: ruff <n> issues, <checker> <n> errors, tests <pass/fail>, coverage <n>%
@@ -131,7 +131,7 @@ Baseline: ruff <n> issues, <checker> <n> errors, tests <pass/fail>, coverage <n>
 ## Summary
 3-6 sentences: overall health, the most important risks, and where to start.
 
-## Quick wins
+## Quick Wins
 Up to 10 high-value fixes with effort S, one line each, linking to their entries below.
 
 ## Fixes
@@ -142,24 +142,26 @@ Up to 10 high-value fixes with effort S, one line each, linking to their entries
 **Evidence:** how it was confirmed.
 **Fix:** concrete change, with a snippet when useful.
 
-### P1 / P2 / P3 (same format)
+### P1 / P2 / P3 (Same Format)
 
 ## Improvements
 Same format, numbered I1, I2, ..., ordered by priority then effort.
 
-## Baseline diagnostics
+## Baseline Diagnostics
 Counts by rule or error code for ruff and the type checker, with a one-line
 recommendation for each large group (for example, "enable rule X", "fix with ruff
 --fix"). Do not list every diagnostic.
 
-## Not reviewed
+## Not Reviewed
 Paths excluded and why, and any reviewer that failed.
 ```
 
-Omit empty sections. Then reply in chat with the path to `REVIEW.md`, the count of
-findings by priority, and the top five items.
+Omit empty sections. Write every heading in US title case: capitalize every word except
+articles, coordinating conjunctions, and prepositions of three letters or fewer, unless
+the word starts or ends the heading. Then reply in chat with the path to `REVIEW.md`,
+the count of findings by priority, and the top five items.
 
-## After the review
+## After the Review
 
 Recommend a verification pass in a fresh session before acting on REVIEW.md (the
 `review-verification` skill). Then file the confirmed items as issues, as the

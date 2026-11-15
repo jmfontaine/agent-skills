@@ -1,11 +1,11 @@
-# Architecture section
+# Architecture Section
 
 Record what technical choices and constraints future work may safely assume today. The
 Architecture section of AGENTS.md is the project's current technical baseline, not a
 design of the full future architecture. It lives in the agent instruction file so
 contributors and coding agents read it with every task.
 
-## Write or revise the section
+## Write or Revise the Section
 
 If AGENTS.md already has an Architecture section, read it first. When creating one, use
 [`assets/architecture-section-template.md`](../assets/architecture-section-template.md).
@@ -20,7 +20,7 @@ platform support that have not been verified.
 If a repository has both AGENTS.md and CLAUDE.md, put the section where the repository
 already keeps shared guidance, and make the other file point to it.
 
-## Decide where a choice belongs
+## Decide Where a Choice Belongs
 
 | Kind of information | Home |
 | --- | --- |
@@ -41,7 +41,7 @@ Decide deliberately how agents participate as contributors, users, or operators;
 preserve deterministic and verifiable boundaries where needed. Do not introduce AI
 architecture solely because coding agents are used.
 
-## Maintain from evidence
+## Maintain From Evidence
 
 Review the section during each [release review](release-review.md). Promote choices when
 evidence makes them durable; revise or remove statements that are no longer true.

@@ -1,4 +1,4 @@
-# [Decision title]
+# [Decision Title]
 
 - **Date:** [Date]
 - **Status:** [Proposed, accepted, or superseded; link replacement when applicable]
@@ -12,7 +12,7 @@
 
 [State the choice and its scope.]
 
-## Rationale and alternatives
+## Rationale and Alternatives
 
 [Explain why this choice was made, which meaningful alternatives were considered, and
 the tradeoffs.]

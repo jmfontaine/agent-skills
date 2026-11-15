@@ -2,9 +2,9 @@
 
 A brief is an optional spec for work that spans several issues or needs product
 decisions settled first. By default the issue is the spec: its Context, Acceptance
-criteria, Verification, and Out of scope are enough for one bounded change.
+Criteria, Verification, and Out of Scope are enough for one bounded change.
 
-## Decide whether to write one
+## Decide Whether to Write One
 
 Write a brief when at least one of these holds:
 
@@ -18,7 +18,7 @@ Skip it when one issue, or a few independent ones, can state the acceptance crit
 directly. Do not write a brief to restate an issue. The milestone groups the issues;
 no umbrella issue is needed.
 
-## Shape the brief
+## Shape the Brief
 
 Read the milestone, the relevant Product Map and Manifesto sections, the Architecture
 section, relevant ADRs, and agent instruction files. Use
@@ -66,7 +66,7 @@ investigate whether the work is premature, accidental complexity, or evidence th
 higher-level artifact needs a deliberate change. Do not invent alignment to keep a
 desired task.
 
-## Assess readiness
+## Assess Readiness
 
 The work is ready when its scenario is end to end, scope and exclusions are clear,
 acceptance criteria are observable, the cut order and what needs the user are stated,
@@ -86,7 +86,7 @@ milestone. A brief does not require an issue for every requirement. Each issue l
 brief and the acceptance criteria it covers (for example “covers AC2 and AC3”) rather
 than copying them.
 
-## During implementation
+## During Implementation
 
 Treat the brief as the scope boundary. Decide how to record a discovery by what it
 changes:

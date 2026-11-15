@@ -87,9 +87,9 @@ current files yourself: subagents misattribute sessions and invent gaps.
 
 Also record what worked and should be kept, so a later change doesn't remove it.
 
-## 4. Report, then stop
+## 4. Report, Then Stop
 
-Reply in chat, without editing anything:
+Reply in chat, without editing anything, with any heading in US title case:
 
 - findings, highest severity first, each with evidence, root cause and fix;
 - what worked;
@@ -113,8 +113,9 @@ Once the user approves:
 - Independent targets can go to parallel subagents. Give each the exact change, the
   shared contracts (a check name, a section's wording), and the rule that it edits only
   its own files.
-- Write every change as a standalone rule in the target file's own voice. Committed
-  files never cite the retro, session ids, scratch files, or when the user was active.
+- Write every change as a standalone rule in the target file's own voice, with headings
+  in US title case. Committed files never cite the retro, session ids, scratch files, or
+  when the user was active.
 - Respect the user's working-hours and publishing rules for commits and anything posted.
 
 Delete `.scratch/retro/` when the retro is done.

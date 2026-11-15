@@ -1,4 +1,4 @@
-# Python review checklist
+# Python Review Checklist
 
 Prompts for where Python bugs hide. Each item is a place to look, not something to
 report on sight: report only what you can show is wrong in this code.
@@ -17,7 +17,7 @@ report on sight: report only what you can show is wrong in this code.
   mutability.
 - Off-by-one errors in slicing, pagination, ranges, and boundary conditions.
 
-## Errors and resources
+## Errors and Resources
 
 - Bare `except:` or `except Exception` that swallows errors, hides
   `KeyboardInterrupt`/`CancelledError`, or loses the traceback (`raise X` without
@@ -27,7 +27,7 @@ report on sight: report only what you can show is wrong in this code.
 - Retries without backoff or limits; timeouts missing on network and subprocess calls.
 - Errors returned as `None` or sentinel values that callers do not check.
 
-## Concurrency and async
+## Concurrency and Async
 
 - Blocking I/O or CPU work inside `async def` (`requests`, `time.sleep`, sync DB
   drivers, file I/O on hot paths).
@@ -55,7 +55,7 @@ report on sight: report only what you can show is wrong in this code.
   alive).
 - Recompiling regexes, re-reading config, or re-creating clients on every call.
 
-## Design and maintainability
+## Design and Maintainability
 
 - Import cycles and dependency direction that contradicts the layering.
 - God modules or classes; functions doing several unrelated things; deep inheritance

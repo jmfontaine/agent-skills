@@ -1,4 +1,4 @@
-# Release review
+# Release Review
 
 Close the learning loop before the next release. When a milestone's work is done, or the
 user calls the release, compare what was delivered with what was planned, then
@@ -14,7 +14,7 @@ requests, their reviews, and the milestone's issues are evidence too. Distinguis
 observed behavior from assumptions and missing evidence. Do not claim a release is
 complete just because issues were closed.
 
-## Check openly before closing
+## Check Openly Before Closing
 
 When the user asks whether to do more before a release, and before proposing to close a
 milestone, evaluate the question openly. The plan so far is input, not the answer.
@@ -26,7 +26,7 @@ Check:
 
 Answer with options and a recommendation, not a defense of the plan.
 
-## Review four areas
+## Review Four Areas
 
 | Area | Questions |
 | --- | --- |
@@ -38,7 +38,7 @@ Answer with options and a recommendation, not a defense of the plan.
 Recommend Manifesto changes only for evidence that materially challenges product
 direction. Avoid rewriting the north star to rationalize implementation drift.
 
-## Reconcile and replan
+## Reconcile and Replan
 
 For each meaningful finding, name the evidence, implication, and destination:
 
@@ -61,7 +61,7 @@ Decide explicitly what happens to each issue still open in the milestone: finish
 move it to a later milestone, or close it as not planned. Then close the milestone.
 
 Record the actual durations in the review body: agent time and the user's time,
-separately. [Release planning](release-planning.md) estimates from them.
+separately. [Release Planning](release-planning.md) estimates from them.
 
 Finish with the delivery assessment, material learning, changes made or proposed, and
 the next recommended outcome. Continue with [release planning](release-planning.md) for

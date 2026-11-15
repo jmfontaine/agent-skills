@@ -2,21 +2,21 @@
 
 <!-- Replace prompts and remove this comment. Write a brief only for work spanning several issues or needing product decisions settled first. Use existing artifact links or names; do not invent a parallel tracking scheme. -->
 
-## Goal and context
+## Goal and Context
 
 [State the new user capability. Link the milestone, Product Map capability, and relevant
 Architecture section entries or ADRs.]
 
-## Primary scenario
+## Primary Scenario
 
 [Describe one end-to-end workflow from input or trigger to useful output and
 verification. Link the Product Map scenario it refines.]
 
-## In scope
+## In Scope
 
 [List behavior necessary for this work.]
 
-## Out of scope
+## Out of Scope
 
 [Name variations, integrations, and generalizations deliberately deferred.]
 
@@ -26,17 +26,17 @@ verification. Link the Product Map scenario it refines.]
 milestone clear. When the work accepts untrusted input or stores user data, state the
 threats with their mitigations, and the data's lifecycle.]
 
-## Design decisions
+## Design Decisions
 
 [Record decisions constraining this work. Link established durable choices; keep new
 local choices here. Give a hard-to-reverse choice its strong alternatives and why it
 wins; a reversible choice gets one line.]
 
-## Blocking questions
+## Blocking Questions
 
 [List only unresolved questions blocking implementation, or state “None.”]
 
-## Acceptance criteria
+## Acceptance Criteria
 
 [Number observable outcomes, including important failure behavior, so issues can cite
 them, and state how each will be verified.]
@@ -44,12 +44,12 @@ them, and state how each will be verified.]
 - **AC1:** [Outcome and verification]
 - **AC2:** [Outcome and verification]
 
-## Manifesto alignment
+## Manifesto Alignment
 
 [Identify capabilities, principles, and boundaries that this work advances or must
 respect.]
 
-## Scope cuts, user checkpoints, and stop rule
+## Scope Cuts, User Checkpoints, and Stop Rule
 
 [Name what to cut first if scope grows while preserving a meaningful end-to-end
 outcome. List what needs the user, in order: product decisions, checks only the user

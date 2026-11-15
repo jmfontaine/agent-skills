@@ -4,7 +4,7 @@ description: Python package management with uv. Use when installing, adding, rem
 allowed-tools: Bash(uv add:*) Bash(uv remove:*) Bash(uv sync:*)
 ---
 
-# Python Package Management with uv
+# Python Package Management With uv
 
 - Always use `uv` to manage Python packages. Never edit dependency tables in
   `pyproject.toml` by hand; use `uv add` and `uv remove`

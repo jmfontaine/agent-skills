@@ -20,7 +20,7 @@ suits every target: `python-codebase-review` and `parallel-issues` are written f
 
 Some skills need more than basic skill support: tools on the machine, a configured
 environment, or agent features such as subagents.
-[Local setup](docs/workflow.md#local-setup) lists the tools each skill needs, and a
+[Local Setup](docs/workflow.md#local-setup) lists the tools each skill needs, and a
 skill that needs a particular agent or environment says so in the `compatibility` field
 of its `SKILL.md` frontmatter.
 
@@ -51,7 +51,7 @@ Each works on its own.
   verdict and evidence, and add what the review missed.
 - [`uv`](skills/uv/SKILL.md): Python package management with uv.
 
-### Shared workflow
+### Shared Workflow
 
 How I plan products and deliver changes on GitHub. These skills refer to each other and
 expect the repository setup the workflow describes.
@@ -67,10 +67,10 @@ expect the repository setup the workflow describes.
   product vision, mapping, briefs, and release review through focused references and
   templates.
 
-### Unattended agents
+### Unattended Agents
 
 Builds on the workflow skills and needs the most preparation. Read its
-[Before the first run](skills/parallel-issues/SKILL.md#before-the-first-run) section
+[Before the First Run](skills/parallel-issues/SKILL.md#before-the-first-run) section
 before installing it.
 
 - [`parallel-issues`](skills/parallel-issues/SKILL.md): Run unattended agents on several

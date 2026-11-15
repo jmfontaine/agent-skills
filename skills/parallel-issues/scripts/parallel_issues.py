@@ -772,7 +772,7 @@ def reference_section(paths: list[str]) -> str:
         return ""
     listed = "\n".join(f"- {path}" for path in paths)
     return (
-        "\n## Reference material\n\n"
+        "\n## Reference Material\n\n"
         "These locations are outside this worktree. Read them when the repository's"
         " instructions point you at them; never write, edit or delete anything there.\n\n"
         f"{listed}\n"

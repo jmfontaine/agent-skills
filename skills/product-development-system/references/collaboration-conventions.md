@@ -1,11 +1,11 @@
-# Collaboration conventions
+# Collaboration Conventions
 
 Keep the user in the product decision loop. Explain material ambiguities and tradeoffs
 with a concise recommendation. Distinguish a proposal, a settled decision, and an
 observation from implementation. Carry out edits already requested or accepted without
 repeated confirmation.
 
-## Edit the current artifact
+## Edit the Current Artifact
 
 - Read the latest version and relevant comments first.
 - Make the smallest complete change that satisfies the request, preserving unrelated
@@ -24,7 +24,7 @@ identity such as `[Codex]`; honor a user-specified prefix. Do not use an ambiguo
 applies to comments and replies, not every sentence in the finished artifact. It does
 not grant permission to post comments.
 
-## Format for meaning
+## Format for Meaning
 
 Use headings for conceptual sections, introductory prose for umbrella concepts, bullets
 for true peers, and concise emphasis for meaningful labels. Keep equivalent levels

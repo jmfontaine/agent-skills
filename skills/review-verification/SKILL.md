@@ -59,7 +59,7 @@ since fixed. Use False positive for a finding that no longer holds at the reques
 revision, but add "fixed since the reviewed version" and cite the change or old and
 current code. Do not imply the original reviewer was wrong.
 
-## 4. Add omissions
+## 4. Add Omissions
 
 Search for omissions before concluding there are none. Within the review's scope,
 follow the paths you inspected from input validation through side effects and error
@@ -73,7 +73,9 @@ find none, state which adjacent paths you checked.
 
 ## 5. Report
 
-Reply in chat with:
+Reply in chat, with any heading in US title case (every word capitalized except
+articles, coordinating conjunctions, and prepositions of three letters or fewer, unless
+first or last), with:
 
 - a table of counts by verdict;
 - each false positive with a one-line reason;

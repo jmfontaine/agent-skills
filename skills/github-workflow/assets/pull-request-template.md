@@ -18,13 +18,13 @@ against the issue.]
 Closes #[issue]
 
 <details>
-<summary>Agent notes</summary>
+<summary>Agent Notes</summary>
 
 ### Changes
 
 [Describe what changed, area by area, with the paths and names a reviewer needs.]
 
-### Verification details
+### Verification Details
 
 [List each command or scenario you ran and its full result, including measurements.]
 

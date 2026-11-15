@@ -82,6 +82,16 @@ requests to `main`. Dependabot updates the pinned actions and hook revisions wee
   folder's contents.
 - Use the glossary in `docs/workflow.md` for workflow terms. The `banned-terms` hook
   rejects retired terms under `skills/`.
+- Describe other agents with "not tested" or "compatibility not verified", never
+  "unsupported" or "incompatible", and never imply a skill was validated on every
+  target. Add no per-skill compatibility matrix without evidence.
+- A push to `main` prints "Bypassed rule violations … Required status check "CI passed"
+  is expected": the maintainer's role bypasses the required-checks ruleset, and this
+  repository has no pull requests. It is normal.
+- Dependabot can merge a pull request while you work, which makes the push of your
+  commits non-fast-forward. The history must stay linear: run `git pull --rebase`,
+  check that every commit is still signed (`git log --format='%h %G? %s'
+  origin/main..`), run `just qa` again, then push.
 
 ## Shared workflow
 

@@ -74,6 +74,12 @@ and blocking product or technical questions are resolved. The brief must be on t
 default branch before implementation starts. If a required decision is unresolved,
 identify it and continue independent preparation rather than filling it in as fact.
 
+An acceptance criterion that rests on a third-party tool's behavior or on a numeric
+threshold is ready only when a probe or spike has produced that result. Record the
+command and its result in the criterion's Verification. Bound time and memory relative
+to the previous release, timed back to back on the same machine (for example, "at most
+1.1x vX's time"), never as absolute numbers.
+
 A contributor should be able to implement from repository context without private Notion
 discussion. Create issues only after the work has this context and belongs to the
 milestone. A brief does not require an issue for every requirement. Each issue links the

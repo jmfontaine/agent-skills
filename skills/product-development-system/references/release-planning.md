@@ -51,7 +51,9 @@ the outcome.
 
 When the user asks how long something will take, estimate from the recorded durations of
 past milestones; [release reviews](release-review.md) record them. Give agent time and
-the user's time separately. Never estimate as if a person were writing the code.
+the user's time separately. When no durations are recorded yet, give agent time in
+minutes to hours and label it a guess until real durations exist. Never estimate as if a
+person were writing the code.
 
 ## Commit the work
 

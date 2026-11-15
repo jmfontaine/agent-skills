@@ -7,6 +7,20 @@ _list:
 format:
     uvx rumdl fmt
 
+# Install each skill into ~/.agents/skills, then check the installed copies match
+install:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    dest="$HOME/.agents/skills"
+    mkdir -p "$dest"
+    for dir in skills/*/; do
+        skill="$(basename "$dir")"
+        rsync -a --delete --exclude .DS_Store --exclude __pycache__ --exclude '*.pyc' \
+            "skills/$skill/" "$dest/$skill/"
+        diff -rq -x .DS_Store -x __pycache__ -x '*.pyc' "skills/$skill" "$dest/$skill"
+        echo "$dest/$skill"
+    done
+
 # Run linter
 lint:
     uvx rumdl check

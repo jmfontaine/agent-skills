@@ -106,10 +106,10 @@ say how each will ship.
 Once the user approves:
 
 - Change each target by its own rules: skills in their source repository, checked with
-  its QA recipe, then synced to the installed copies; agent instruction files at their
-  source (a dotfiles manager, for example); project repositories through their usual
-  workflow (the `github-workflow` skill, if installed), in worktrees, never in a main
-  checkout that may hold the user's work.
+  its QA recipe, then installed with the repository's install recipe; agent instruction
+  files at their source (a dotfiles manager, for example); project repositories through
+  their usual workflow (the `github-workflow` skill, if installed), in worktrees, never
+  in a main checkout that may hold the user's work.
 - Independent targets can go to parallel subagents. Give each the exact change, the
   shared contracts (a check name, a section's wording), and the rule that it edits only
   its own files.

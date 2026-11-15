@@ -53,6 +53,10 @@ in the `justfile`:
   formatting, lint, spelling, retired terms (the `banned-terms` hook), and general file
   checks. It skips untracked files, so `git add` a new file before running it.
 - `just package`: Zip each skill into `dist/<skill-name>.zip` for Claude and ChatGPT.
+- `just install`: Copy each skill in `skills/` into `~/.agents/skills`, replacing the
+  installed copy, then fail if any installed copy differs from its source. It never
+  touches other directories there, which hold third-party skills, and it does not
+  remove the installed copy of a skill deleted from this repository.
 
 The QA workflow (`.github/workflows/qa.yml`) runs the same hooks on pushes and pull
 requests to `main`. Dependabot updates the pinned actions and hook revisions weekly.
@@ -97,4 +101,4 @@ None.
 
 - `skills/*/SKILL.md`: Skill definitions
 - `README.md`: Installation instructions and skill list
-- `justfile`: Formatting, linting, and pre-commit recipes
+- `justfile`: Formatting, linting, pre-commit, packaging, and install recipes

@@ -105,7 +105,8 @@ npx skills update -g
 
 omp is not an `npx skills` agent target. It loads skills from `~/.agents/skills` and
 `.agents/skills`, so include `-a codex`, which writes there for both project and global
-installs.
+installs. From a clone of this repository, `just install` copies every skill there
+and fails if an installed copy differs from its source.
 
 ### Claude and ChatGPT
 

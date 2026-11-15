@@ -9,11 +9,20 @@ This directory is a dedicated git worktree, created from `$base` on branch
 Edit files only inside this worktree. The only branches you may create, commit to or
 push are $branches.
 
-Nobody is watching this session. Do not stop to ask questions: where a choice is
-open, take the conservative option and record it under "Scope notes" in the pull
-request. If an issue cannot be done as written (its premise is wrong, it depends on
-work that is not merged, or an acceptance criterion cannot be met), stop at that
-issue, keep the layers below it, and explain why in your final message.
+Nobody is watching this session. Do not stop to ask questions. Where a choice is open,
+take the conservative option and record it under "Scope notes" in the pull request,
+but only a choice that leaves every acceptance criterion met and changes no public
+behavior (an output format, a flag, an exit code, documented behavior). A choice
+the user might reverse is also listed under "This needs you" in your final message.
+If an issue cannot be done as written (its premise is wrong, it depends on work that
+is not merged, or an acceptance criterion cannot be met), stop at that issue and
+keep the layers below it. Layers above it that depend on it stop with it; layers that
+do not depend on it continue, stacked on the last completed layer. Explain why under
+"This needs you" in your final message.
+
+Never drive other applications (`osascript`, Finder, System Settings, or any other
+program outside this worktree's tooling). If the user writes to you directly, answer
+in one line that decisions go through the supervising session, and carry on.
 
 Keep every scratch file, such as pull request bodies or notes for a reviewer, in the
 directory `git rev-parse --git-dir` prints. It belongs to this worktree and is removed
@@ -48,10 +57,12 @@ instruction files (AGENTS.md, CLAUDE.md) for its checks and conventions.
    wrong behavior, a failing or flaky test, or a false statement in code, docs or the
    pull request. Everything else, such as polish or extra hardening, is not blocking:
    fix it only when it is small and inside the issue's scope, and otherwise list it
-   under "Scope notes". Fix every blocking finding, rerun the checks, and review
-   again, three reviews at most. If a blocking finding is still open after the third,
-   commit, list it under "Scope notes", and list it under "This needs you" in your
-   final message. Note any finding you rejected and why.
+   under "Scope notes". Never fix silently a finding whose fix changes behavior (an
+   output format, a flag, an exit code, documented behavior): report it as a decision
+   under "This needs you", with the alternatives. Fix every other blocking finding,
+   rerun the checks, and review again, three reviews at most. If a blocking finding is
+   still open after the third, commit, list it under "Scope notes", and list it under
+   "This needs you" in your final message. Note any finding you rejected and why.
 5. Commit. Signing and the author identity are already configured for this session:
    never change `user.*`, `gpg.*` or `commit.gpgsign`, and never pass
    `--no-gpg-sign`. If a commit cannot be signed, stop and report it. Commits must
@@ -78,7 +89,8 @@ When every issue is done, or you stopped at one:
    review findings.
 3. With two or more pull requests, run `gh stack submit --auto` to link them into a
    stack. It keeps the pull requests you opened.
-4. Wait for every pull request's checks: `gh pr checks <n> --watch --interval 60`.
+4. Wait for every pull request's required checks:
+   `gh pr checks <n> --required --watch --interval 60`.
    Fix a failure caused by your change with a new commit on its branch, reviewed like
    any other change, merge it into the layers above as the `git-commit` skill describes,
    push, and wait again. Note a failure your change did not cause in the pull request.
@@ -99,5 +111,7 @@ code or the test results. A criterion that is not met goes under "This needs you
 never under "Scope notes".
 
 End with each issue's pull request URL, or the reason it has none, then either
-"Nothing here needs you" or "This needs you: …" listing each item, such as a push
-GitHub rejected.
+"Nothing here needs you" or "This needs you: …" listing each item. Say "Nothing here
+needs you" only when no acceptance criterion is unmet, no blocking finding is open,
+you made no choice the user might reverse, and nothing you pushed waits on the user.
+Everything else, such as a push GitHub rejected, goes under "This needs you".

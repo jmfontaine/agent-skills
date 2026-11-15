@@ -6,8 +6,9 @@
     parallel_issues.py record          # run by the agent, inside its worktree
     parallel_issues.py status [--wait [--interval SECONDS] [--timeout HOURS] | --ack]
     parallel_issues.py clean [--dry-run]
-    parallel_issues.py key [--load | --unload]
+    parallel_issues.py key [--load [--refresh] | --unload]
     parallel_issues.py env             # export lines: sign and push as the agents do
+    parallel_issues.py exec -- COMMAND [ARGS...]   # run COMMAND with that environment
 
 Each ``launch`` argument is a group: comma-separated issue numbers, bottom of the
 stack first. Run ``launch``, ``status`` and ``clean`` from a Herdr pane inside a
@@ -41,11 +42,15 @@ Each launch records its caffeinate process and ssh-agent socket in
 ``STATE_DIR/RUNS_FILE`` so that ``clean`` can stop them.
 
 ``key`` prints when the loaded key expires and until when launches reuse it, and
-exits 1 when no key is loaded. ``key --load`` reads the key from 1Password and
-restarts its ``KEY_HOURS``; ``key --unload`` removes it. ``env`` prints shell
-``export`` lines that make git sign with the loaded key and reach GitHub over
-HTTPS, for the supervising session's own commits, fetches and pushes. ``env``
-never asks 1Password: it fails when no key is loaded.
+exits 1 when no key is loaded. ``key --load`` reuses the loaded key while it has
+``KEY_MIN_HOURS`` left, as a launch does, and otherwise reads it from 1Password and
+restarts its ``KEY_HOURS``; ``key --load --refresh`` reads it from 1Password even
+when the loaded one could be reused; ``key --unload`` removes it. ``env`` prints
+shell ``export`` lines that make git sign with the loaded key and reach GitHub over
+HTTPS, for the supervising session's own commits, fetches and pushes. ``exec --
+COMMAND [ARGS...]`` runs ``COMMAND`` in the current directory with exactly the
+environment additions ``env`` prints, without ``eval``, and exits with its exit
+code. ``env`` and ``exec`` never ask 1Password: they fail when no key is loaded.
 
 Every check fails hard: an issue that fails one is not launched.
 
@@ -90,7 +95,10 @@ always reported. A group is reported ``done`` only after it has stayed done for
 agent finishes and that starts one more turn, which must not find the group merged
 and cleaned. Until then a report lists it as ``settling``, and the next one reports
 it. A group that resumes working meanwhile is not reported at all; the other
-states are reported at once. ``--wait`` exits 2 on timeout, and 3 when two polls, the
+states are reported at once. ``--wait`` prints one line on stderr per healthy poll
+(the time and every group's state), so that a watcher with nothing to report is
+visibly alive. It exits 2 after ``--timeout`` hours (``WAIT_TIMEOUT_HOURS`` by
+default; a supervising session sets its own), and 3 when two polls, the
 second ``IDLE_RECHECK`` seconds after the first, find nothing working, nothing
 settling and nothing new (the pause covers a watcher started just after messaging an
 agent). A poll that fails (``gh`` or Herdr erroring, or hanging for
@@ -110,7 +118,10 @@ needs them; it exits 1 when the command is not set or fails.
 ``agent.ompConfig`` (an omp config overlay) unless the agent arguments have one.
 Agents sign through git config ``agent.sshProgram`` when it is set, a program that
 takes ``ssh-keygen``'s arguments (such as a wrapper adding a policy), and through
-``ssh-keygen`` otherwise.
+``ssh-keygen`` otherwise. Git config ``agent.readPaths`` (absolute paths, newline- or
+comma-separated, or repeated) lists reference material outside the worktree, such as
+gitignored documentation in the main checkout; ``launch`` appends it to each prompt
+as read-only locations, and refuses a path that is relative or missing.
 
 Python 3.10+, standard library only.
 """
@@ -253,6 +264,7 @@ STATE_LABELS = {
 }
 NOTIFY_SETTING = "agent.notifyCommand"
 OMP_CONFIG_SETTING = "agent.ompConfig"
+READ_PATHS_SETTING = "agent.readPaths"
 SSH_PROGRAM_SETTING = "agent.sshProgram"
 STATE_DIR = (
     Path(os.environ.get("XDG_STATE_HOME") or Path.home() / ".local" / "state") / "agent"
@@ -635,6 +647,14 @@ def load_signing_key(
     # Read through the 1Password app, which can reach personal vaults, rather than
     # a service account the shell may export for other tools.
     app_env = {k: v for k, v in os.environ.items() if k != "OP_SERVICE_ACCOUNT_TOKEN"}
+    # KLUDGE: on macOS 27.2 the system blocks op from reading the 1Password app's
+    # settings.json in its Group Container, so op reports "No accounts configured"
+    # or "not signed in" even with Settings > Developer > Integrate with 1Password
+    # CLI on. This variable, undocumented by 1Password, makes op use the app
+    # integration without that file. It is set here as well as in ~/.zshenv, because
+    # a shell started before that file had it would otherwise fail. Remove it once
+    # `env -u OP_BIOMETRIC_UNLOCK_ENABLED op account list` lists the accounts again.
+    app_env.setdefault("OP_BIOMETRIC_UNLOCK_ENABLED", "true")
     account = ["--account", source.account] if source.account else []
     read = ["op", "read", *account, source.reference]
     key = run(read, env=app_env, timeout=None)  # waits on the user
@@ -669,11 +689,14 @@ def key_lifetime(expires: float) -> str:
     return f"expires {when} ({left:.1f} h left); launches reuse it until {until}"
 
 
-def launch_key(source: KeySource, email: str, allowed_signers: str) -> tuple[str, Path]:
-    """The key for a launch: the loaded one while it has ``KEY_MIN_HOURS`` left,
-    otherwise one read from 1Password, which asks the user.
+def launch_key(
+    source: KeySource, email: str, allowed_signers: str, refresh: bool = False
+) -> tuple[str, Path]:
+    """The key for a launch or ``key --load``: the loaded one while it has
+    ``KEY_MIN_HOURS`` left, otherwise one read from 1Password, which asks the user.
+    ``refresh`` reads it from 1Password even when a loaded one could be reused.
     """
-    current = loaded_key(source, email, allowed_signers)
+    current = None if refresh else loaded_key(source, email, allowed_signers)
     if current and current[2] - time.time() >= KEY_MIN_HOURS * 3600:
         public, socket, expires = current
         print(f"signing key: reused; it {key_lifetime(expires)}")
@@ -717,6 +740,43 @@ def agent_env(public: str, socket: Path) -> dict[str, str]:
         ("commit.gpgsign", "true"),
     ]
     return {"SSH_AUTH_SOCK": str(socket), **config_env(config)}
+
+
+def read_paths() -> list[str]:
+    """Absolute paths from git config ``agent.readPaths`` (newline- or comma-separated)
+    that agents may read but never write: reference material outside the worktree.
+    """
+    result = subprocess.run(
+        ["git", "config", "--get-all", READ_PATHS_SETTING],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    paths = [
+        path.strip()
+        for value in result.stdout.splitlines()
+        for path in value.split(",")
+        if path.strip()
+    ]
+    for path in paths:
+        if not Path(path).is_absolute():
+            raise StepError(f"{READ_PATHS_SETTING} has {path}, which is not absolute")
+        if not Path(path).exists():
+            raise StepError(f"{READ_PATHS_SETTING} has {path}, which does not exist")
+    return paths
+
+
+def reference_section(paths: list[str]) -> str:
+    """The prompt section that lists ``paths`` as read-only reference locations."""
+    if not paths:
+        return ""
+    listed = "\n".join(f"- {path}" for path in paths)
+    return (
+        "\n## Reference material\n\n"
+        "These locations are outside this worktree. Read them when the repository's"
+        " instructions point you at them; never write, edit or delete anything there.\n\n"
+        f"{listed}\n"
+    )
 
 
 def keep_awake() -> int | None:
@@ -798,6 +858,7 @@ def launch(
     if dry_run:
         print(f"agent command: {kind} {shlex.join(agent_args)}")
     template = Template(PROMPT_TEMPLATE.read_text())
+    references = read_paths()
     repo = run_json(
         ["gh", "repo", "view", "--json", "owner,name,nameWithOwner,defaultBranchRef"]
     )
@@ -850,7 +911,7 @@ def launch(
                 bottom=branches[0],
                 issues="\n\n".join(blocks),
                 record=f"python3 {SCRIPT} record",
-            )
+            ) + reference_section(references)
             if dry_run:
                 print(f"{label}: would create {branches[0]} from {base}, agent {agent}")
                 print("-" * 72, prompt.rstrip(), "-" * 72, sep="\n")
@@ -1220,6 +1281,15 @@ def settling(
     return {agent for agent, (_, first) in since.items() if now - first < DONE_SETTLE}
 
 
+def log_poll(reports: dict[str, dict[str, Any]]) -> None:
+    """One line on stderr per poll: the time and every group's state, so that a
+    watcher that polls but has nothing to report is told from one that is stuck.
+    """
+    states = " ".join(f"{agent}={r['state']}" for agent, r in reports.items())
+    line = f"{time.strftime('%H:%M:%S')} poll: {states or 'no groups'}"
+    print(line, file=sys.stderr, flush=True)
+
+
 def wait_for_change(
     herdr: Herdr, interval: float, hours: float, send_notification: bool
 ) -> int:
@@ -1257,6 +1327,7 @@ def wait_for_change(
             pause = retry_pause(interval, failed_polls)
         else:
             failed_polls = 0
+            log_poll(reports)
             pending = settling(groups, reports, since, time.monotonic())
             # A group still settling is neither reported nor acknowledged; the
             # report lists it as `settling` so that no group goes missing from it.
@@ -1516,8 +1587,10 @@ def release_run(dry_run: bool) -> None:
     print(f"stopped {summary}", *notes, sep="\n")
 
 
-def key(action: str | None) -> int:
-    """Print the loaded key's lifetime, or ``load`` or ``unload`` it."""
+def key(action: str | None, refresh: bool = False) -> int:
+    """Print the loaded key's lifetime, or ``load`` (reusing a loaded key unless
+    ``refresh``) or ``unload`` it.
+    """
     email, source, allowed_signers = signing_settings()
     if action == "unload":
         socket = str(key_socket(source))
@@ -1531,9 +1604,10 @@ def key(action: str | None) -> int:
         print("signing key: unloaded")
         return 0
     if action == "load":
-        _, socket, expires = load_signing_key(source, email, allowed_signers)
+        _, socket = launch_key(source, email, allowed_signers, refresh)
         record_run(socket, None)
-    elif current := loaded_key(source, email, allowed_signers):
+        return 0
+    if current := loaded_key(source, email, allowed_signers):
         expires = current[2]
     else:
         print(
@@ -1545,21 +1619,42 @@ def key(action: str | None) -> int:
     return 0
 
 
-def print_env() -> int:
-    """Print ``export`` lines that sign with the loaded key and reach GitHub over
+NO_KEY = (
+    "the agent signing key is not loaded; run `key` to check, then `key --load`"
+    " while the user is present: it reads the key from 1Password, which asks them"
+)
+
+
+def loaded_agent_env() -> dict[str, str]:
+    """The environment additions that sign with the loaded key and reach GitHub over
     HTTPS. Never asks 1Password: with no key loaded, it fails instead.
     """
     email, source, allowed_signers = signing_settings()
     current = loaded_key(source, email, allowed_signers)
     if not current:
-        raise StepError(
-            "the agent signing key is not loaded; `key --load` reads it from"
-            " 1Password, which asks the user"
-        )
+        raise StepError(NO_KEY)
     public, socket, _ = current
-    for name, value in agent_env(public, socket).items():
+    return agent_env(public, socket)
+
+
+def print_env() -> int:
+    """Print ``export`` lines for ``loaded_agent_env``."""
+    for name, value in loaded_agent_env().items():
         print(f"export {name}={shlex.quote(value)}")
     return 0
+
+
+def exec_command(command: list[str]) -> int:
+    """Replace this process with ``command`` run in the current directory with
+    ``loaded_agent_env``, so it exits with the command's own exit code.
+    """
+    if not command:
+        raise StepError("exec needs a command: exec -- COMMAND [ARGS...]")
+    env = {**os.environ, **loaded_agent_env()}
+    try:
+        os.execvpe(command[0], command, env)
+    except OSError as exc:
+        raise StepError(f"cannot run {command[0]}: {exc.strerror}") from exc
 
 
 def leftovers(herdr: Herdr, repo_name: str, entries: dict[str, Any]) -> list[str]:
@@ -1790,7 +1885,8 @@ def main() -> None:
         dest="action",
         action="store_const",
         const="load",
-        help=f"read it from 1Password (asks the user) for {KEY_HOURS} hours",
+        help=f"reuse the loaded key while it has {KEY_MIN_HOURS} hours left, else"
+        f" read it from 1Password (asks the user) for {KEY_HOURS} hours",
     )
     key_action.add_argument(
         "--unload",
@@ -1799,13 +1895,29 @@ def main() -> None:
         const="unload",
         help="remove it now",
     )
+    key_parser.add_argument(
+        "--refresh",
+        action="store_true",
+        help="with --load, read the key from 1Password even when the loaded one "
+        "could be reused",
+    )
+    exec_parser = commands.add_parser(
+        "exec",
+        help="run a command, after `--`, with the environment `env` prints: "
+        "exits with its exit code",
+    )
+    exec_parser.usage = "%(prog)s -- COMMAND [ARGS...]"
     commands.add_parser(
         "env",
         help="print export lines that sign with the loaded key and push over HTTPS",
     )
     args = parser.parse_args(argv)
-    if agent_args is not None and args.command != "launch":
-        parser.error("agent arguments after `--` apply to launch only")
+    if agent_args is not None and args.command not in ("launch", "exec"):
+        parser.error("arguments after `--` apply to launch and exec only")
+    if args.command == "exec" and not agent_args:
+        parser.error("exec needs a command: exec -- COMMAND [ARGS...]")
+    if args.command == "key" and args.refresh and args.action != "load":
+        parser.error("--refresh applies to --load only")
     if args.command == "status" and (args.interval <= 0 or args.timeout <= 0):
         parser.error("--interval and --timeout must be positive")
     if args.command == "status" and args.no_notify and not args.wait:
@@ -1837,9 +1949,11 @@ def main() -> None:
             else:
                 code = status(herdr, args.ack)
         elif args.command == "key":
-            code = key(args.action)
+            code = key(args.action, args.refresh)
         elif args.command == "env":
             code = print_env()
+        elif args.command == "exec":
+            code = exec_command(agent_args or [])
         else:
             code = clean(herdr, args.dry_run)
     except StepError as exc:

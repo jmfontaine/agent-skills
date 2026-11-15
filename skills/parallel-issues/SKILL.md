@@ -1,7 +1,7 @@
 ---
 name: parallel-issues
 description: Work several GitHub issues in parallel with unattended coding agents, one Herdr workspace and git worktree per group of issues, each group delivered as a stack of signed, reviewed pull requests. Use when the user wants to fix a batch, list, or milestone of issues at once, run agents overnight or while away, fan issues out to parallel agents, or check on, review, merge, or clean up such a run. Use it even for short requests such as "work on #12, #13 and #14 in parallel" or "launch the milestone before I go to bed".
-compatibility: Written for omp. Agents start as omp by default, and the agent reviews run as omp task subagents. Requires Herdr (run from a Herdr pane), gh with the github/gh-stack extension and the workflow scope, the 1Password CLI (op), git with SSH commit signing, Python 3.10+, and the github-workflow, git-branch and git-commit skills, which the agents follow.
+compatibility: Written for omp. Agents start as omp by default, and the agent reviews run with omp's reviewer agent. Requires Herdr (run from a Herdr pane), gh with the github/gh-stack extension and the workflow scope, the 1Password CLI (op), git with SSH commit signing, Python 3.10+, and the github-workflow, git-branch and git-commit skills, which the agents follow.
 ---
 
 # Parallel Issues
@@ -26,7 +26,7 @@ run concurrently, in those instruction files rather than in the prompt.
 
 A **batch** is the issues the user approves in one planning session, taken from a
 milestone or from a list the user gives. A **wave** is the groups launched together;
-the user merges between waves, so in practice one wave runs per night. Waves are
+the user merges between waves. Waves are
 numbered 1 to n. A **group** is the issues one agent delivers in one worktree as one
 stack, one pull request per issue, bottom first. A **layer** is one branch and pull
 request of a stack. A group is named after its issues, never with a letter: `#185`
@@ -42,7 +42,8 @@ the work until they return, which defeats the batch.
   and the 1Password prompt that reads the signing key, once per 24 hours (see Signing
   key).
 - **While the agents run: not needed.** Agents never ask; they take the conservative
-  option and note it in the pull request.
+  option, note it in the pull request, and list a choice the user might reverse in
+  their final message.
 - **After the run: needed only for decisions.** Merging, approving the rejected-layer
   procedure (the only force push the workflow allows), pushing a change only the user
   may push, and anything a `keep` or `leftover` line from `clean` asks them to resolve.
@@ -130,20 +131,24 @@ Planning happens with the user, before anything runs.
    deviations, are in the `github-workflow` skill's `references/repository-setup.md`
    (if installed).
 2. Group the issues. Stack issues that depend on each other, and issues that edit the
-   same files, so that the night's run keeps going instead of waiting for a merge.
+   same files, so that the run keeps going instead of waiting for a merge.
    Find the overlap in the code paths the issues cite and in a search of the code.
    Order each group bottom-up: what others depend on first, then smaller changes.
    Stacking issues only because they share files deliberately departs from GitHub's
    rule that stacks follow dependencies. Its cost: a stack merges bottom-up, so a
    rejected lower layer holds back every layer above it (see The rejected layer).
-   Independent issues get their own group.
+   Independent issues get their own group. For every symbol, file or document an
+   issue says already exists, confirm that it is on the default branch. When it comes
+   from an open pull request or another issue, stack the issue above that one or put
+   it in a later wave; never launch against an unmerged prerequisite, such as a brief
+   amendment still in review.
 3. Compare the groups with each other: two groups that edit the same files, including
    shared ones such as test fixtures and configuration, command registries, help text,
    or the documentation index, conflict when the first one merges, and every later one
    pays a merge round. Stack them, or put them in separate waves.
 4. Fill each wave with as many independent groups as the machine and the model quota
    allow: width before depth. Number the waves 1 to n. The user merges between waves,
-   so depth costs a night each.
+   so each level of depth waits for a merge.
 5. Leave out, and say why:
    - issues the user did not open, or that someone else edited (the launcher refuses
      them anyway, because their text could steer an unattended agent);
@@ -179,22 +184,22 @@ reuses the agent signing key already loaded in its private ssh-agent, and reads 
 key from 1Password only when none is loaded or it has under 8 hours left.
 
 Worktrees contain only tracked files. When the repository's instruction files point
-agents at gitignored reference material (for example `docs/vendor-api/`), send each
-agent its absolute path in the main checkout right after the launch
-(`herdr agent prompt <agent> "<message>"`), or the agents will not find it.
+agents at gitignored reference material (for example `docs/vendor-api/`), set the git
+config `agent.readPaths` to its absolute paths in the main checkout, newline- or
+comma-separated. The launcher appends them to each agent's prompt as read-only
+reference locations outside the worktree, which the agents never write, so nothing
+needs sending after the launch. It refuses a path that is relative or missing.
 
-The launcher names every branch with the `git-branch` skill's convention,
-`<type>/issue-<N>-<slug>`. It does not read instruction files, so it cannot follow
-another naming scheme a repository sets there. The type comes
-from the issue's change-type label, as that skill's label table sets it: `bug` →
-`fix`, `enhancement` → `feat`, `documentation` → `docs`, and every other change-type
-label (`test`, `refactor`, `perf`, `build`, `ci`, `chore`) is its own name. The
-launcher also accepts the spellings `tests`, `performance` and `feature`. When an
-issue carries several of these, the most specific wins whatever their order: a label
+The launcher names every branch `<type>/issue-<N>-<slug>`, taking the type from the
+issue's change-type label as the `git-branch` skill's label table sets it. Beyond
+that table it accepts the spellings `tests`, `performance` and `feature`. When an
+issue carries several labels, the most specific wins whatever their order: a label
 named after a commit type first, then `tests`, `performance` and `documentation`, then
 `bug`, `enhancement` and `feature`. With none it is `fix`, so label the issue during
-planning; the dry run shows the branch each issue will get. The branch type does not
-bind the pull request: the agent titles it with what the change actually is.
+planning; the dry run shows the branch each issue will get. The launcher does not
+read instruction files, so it cannot follow another naming scheme a repository sets
+there. The branch type does not bind the pull request: the agent titles it with what
+the change actually is.
 
 A group that fails a check is reported and skipped; the others still launch.
 
@@ -205,27 +210,37 @@ minute when nobody approves it. So read it only while the user is there. It then
 stays loaded for 24 hours, across waves and `clean`, and every launch reuses it.
 
 - `python3 <skill-dir>/scripts/parallel_issues.py key` prints when the key expires
-  and until when launches reuse it (8 hours before it expires). A launch after that
-  reads the key again.
+  and until when launches reuse it (8 hours before it expires). Run it first, every
+  time; it never prompts.
+- Run `key --load` only when no key is loaded or it has under 8 hours left, and only
+  while the user is present: it reads the key from 1Password and restarts its 24
+  hours. With a key that has 8 hours or more left it reuses that key and does not
+  prompt. `key --load --refresh` forces a new read; use it only when the user asks.
 - Before ending a turn with "You can go AFK", run `key`. When a launch the plan still
-  needs may come after that time, or no key is loaded, run `key --load` first, while
-  the user is there: it reads the key and restarts its 24 hours.
+  needs may come after the time it prints, load the key first, while the user is
+  there.
 - `key --unload` removes the key. Run it only when no agent is working.
 - This session's own git commands that sign or reach GitHub (commit, fetch, pull,
   push, `gh stack` commands that push) also use the agent key and HTTPS, never the
   user's SSH agent, which asks for an approval that cannot come while they are away.
-  Run them in a subshell with the launcher's environment, assigned first so that a
-  failed `env` stops the command. `env` never prompts; it fails when no key is loaded.
+  Run them through `exec`, from inside the repository, which runs the command with
+  the launcher's environment and exits with its exit code. It never prompts; it fails
+  when no key is loaded, and then the fix is `key`, then `key --load` with the user
+  present.
 
   ```shell
-  ( e=$(python3 <skill-dir>/scripts/parallel_issues.py env) && eval "$e" && git push )
+  python3 <skill-dir>/scripts/parallel_issues.py exec -- git push
   ```
 
 ## While it runs
 
 - Right after the launch, and after every relaunch or message to an agent, start
-  `parallel_issues.py status --wait --no-notify` as a background job with no time
-  limit. After a message, first wait until that agent works again
+  `parallel_issues.py status --wait --no-notify --timeout 2` as a background job: the
+  limit is in hours, so the watcher never runs unseen for longer. On exit code 2 (the
+  timeout) run `status` once, report, and start the watcher again while any group is
+  still working. Every poll prints one line on stderr, the time and every group's
+  state, so a watcher that stays silent is stuck: check `status` and restart it.
+  After a message, first wait until that agent works again
   (`herdr agent wait <agent> --until working --timeout 15000`). The watcher polls
   every 30 seconds and exits as soon as a group changes to a state not reported yet:
   `needs-you` (Herdr reports the agent blocked, or it finished and its last closing
@@ -266,39 +281,32 @@ stays loaded for 24 hours, across waves and `clean`, and every launch reuses it.
 ## After the run
 
 1. **Agent review.** Each pull request, or each stack, gets the agent review the
-   `github-workflow` skill describes (if installed): a fresh session, preferably on a
-   different model from the author's, that checks the acceptance criteria and
-   verification, scope, correctness on the changed paths, and consistency (docs, agent
-   instructions, a stale brief). Findings are blocking or non-blocking. Run the reviews
-   from this session as `task` subagents, one per pull request or stack, launched in
-   one batch. The local review already looked for defects; the agent review asks
-   whether the delivery matches the issue, and a batch of `reviewer` subagents would
-   spend the costly model that agent defaults to. Changes to a lower layer go back to
-   the group's agent, or are made in an interactive session, as new commits on top, as
-   the `git-commit` skill describes for updating layers. Never rewrite pushed commits.
-2. **Merge.** Squash merges only: the pull request title becomes the one commit on the
-   default branch, and GitHub signs it. Merge as the `github-workflow` skill's merge
-   section describes, for single pull requests and whole stacks alike, running stack
-   merges from the group's worktree, where the stack is checked out. Before the first
-   merge, check that the repository allows squash merges
-   (`gh repo view --json squashMergeAllowed`); if it does not, stop and ask the user.
-   Never bypass a rule: no `--admin`, no ruleset bypass, no unsigned commit let
-   through. When several pull requests are ready, suggest merging them in one request;
-   never require it.
+   `github-workflow` skill describes (if installed): a fresh session that checks the
+   acceptance criteria and verification, scope, correctness on the changed paths, and
+   consistency (docs, agent instructions, a stale brief). Findings are blocking or
+   non-blocking. Run the reviews from this session with omp's `reviewer` agent
+   (`"agent": "reviewer"` in each `task` item), one per pull request or stack,
+   launched in one batch; omp's config chooses its model, not this skill. The local
+   review already looked for defects; the agent review asks whether the delivery
+   matches the issue. Check each finding against the repository's rules before
+   relaying it, and drop one they contradict. Hand back to a group's agent only
+   blocking findings and non-blocking fixes that change no behavior, as new commits
+   on top, as the `git-commit` skill describes for updating layers; or make them in
+   an interactive session. A finding whose fix changes an output format, a flag, an
+   exit code or documented behavior goes to the user as a decision, with the
+   alternatives. Never rewrite pushed commits.
+2. **Merge.** Merge as the `github-workflow` skill's `references/pull-requests.md`
+   describes: squash merges, single pull requests and whole stacks alike, and the
+   `mergeStateStatus` check before each merge. Run stack merges from the group's
+   worktree, where the stack is checked out. Before the first merge, check that the
+   repository allows squash merges (`gh repo view --json squashMergeAllowed`); if it
+   does not, stop and ask the user. Never bypass a rule: no `--admin`, no ruleset
+   bypass, no unsigned commit let through.
 
-   Every merge moves `main`, so check the next pull request with
-   `gh pr view <n> --json mergeStateStatus` before merging it. While it reads
-   `UNKNOWN`, GitHub is still computing it after the previous merge: query again a few
-   seconds later until it changes. Act on the value it settles on:
-   - **`BEHIND`, on a repository whose ruleset requires up-to-date branches:** run
-     `gh pr update-branch <n>` for a single pull request. GitHub adds a merge commit
-     that it signs, and the squash drops it. A stacked pull request refuses it (HTTP
-     403); treat it as the next case. Without that ruleset, `BEHIND` needs nothing.
-   - **`DIRTY` (a conflict), or a stack that must be updated:** hand it back to its
-     agent, since only the agent's key may sign its commits. Tell it to fetch `main`
-     over HTTPS, merge it into the bottom branch, then merge each layer into the next
-     one up, and push normally: no rebase, no force push, so no decision from the
-     user.
+   What a run changes is who updates a branch. A pull request that is `DIRTY`, or a
+   stack that must be updated, goes back to its agent, since only the agent's key may
+   sign its commits. Tell it to fetch the default branch over HTTPS and update as that
+   reference describes: no rebase, no force push, so no decision from the user.
 
    When you hand a branch back, tell the agent to rerun the repository's checks on
    every layer it changed. When there were conflicts, it also has a fresh reviewer

@@ -92,7 +92,9 @@ Load only the reference the task needs. Paths are relative to this skill directo
   sections, a bold lead phrase for a list item that runs past one line, a table to
   compare options or results, and code formatting for commands, paths, and identifiers.
   Keep lists one level deep and one idea per item. Bold marks labels, never whole
-  sentences.
+  sentences. GitHub renders every line break in them as a break, so put each paragraph
+  and each list item on one line, and never wrap at a column limit, even where the
+  repository wraps its Markdown files.
 - **Title case.** Write issue titles, headings, form labels, and bold labels that act
   as headings in US title case: capitalize every word except articles, coordinating
   conjunctions, and prepositions of three letters or fewer, unless the word starts or

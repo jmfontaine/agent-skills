@@ -213,14 +213,18 @@ stays loaded for 24 hours, across waves and `clean`, and every launch reuses it.
 - `python3 <skill-dir>/scripts/parallel_issues.py key` prints when the key expires
   and until when launches reuse it (8 hours before it expires). Run it first, every
   time; it never prompts.
+
 - Run `key --load` only when no key is loaded or it has under 8 hours left, and only
   while the user is present: it reads the key from 1Password and restarts its 24
   hours. With a key that has 8 hours or more left it reuses that key and does not
   prompt. `key --load --refresh` forces a new read; use it only when the user asks.
+
 - Before ending a turn with "You can go AFK", run `key`. When a launch the plan still
   needs may come after the time it prints, load the key first, while the user is
   there.
+
 - `key --unload` removes the key. Run it only when no agent is working.
+
 - This session's own git commands that sign or reach GitHub (commit, fetch, pull,
   push, `gh stack` commands that push) also use the agent key and HTTPS, never the
   user's SSH agent, which asks for an approval that cannot come while they are away.
@@ -296,6 +300,7 @@ stays loaded for 24 hours, across waves and `clean`, and every launch reuses it.
    an interactive session. A finding whose fix changes an output format, a flag, an
    exit code or documented behavior goes to the user as a decision, with the
    alternatives. Never rewrite pushed commits.
+
 2. **Merge.** Merge as the `github-workflow` skill's `references/pull-requests.md`
    describes: squash merges, single pull requests and whole stacks alike, and the
    `mergeStateStatus` check before each merge. Run stack merges from the group's
@@ -324,6 +329,7 @@ stays loaded for 24 hours, across waves and `clean`, and every launch reuses it.
    and to have a fresh reviewer compare each rebuilt layer with its old head
    (`git range-diff`). A rejected layer that can be fixed is not this case: fix it with
    new commits on top.
+
 3. **Clean.** Run it from the main checkout's Herdr workspace, never from an agent's
    workspace, once no agent is working: `clean --dry-run`, then `clean`. Never remove a
    worktree, branch, or workspace by hand: that leaves the Herdr workspace and its idle

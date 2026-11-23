@@ -73,6 +73,7 @@ The first commit of a repository (no commits yet, so `git log` reports none) is 
 exception to "never commit on the default branch":
 
 - It goes straight onto the default branch (`main`), with no split check.
+
 - It uses this exact message, overriding the message style rules above:
 
   ```text

@@ -11,10 +11,13 @@ Review project files across four dimensions, then suggest fixes and improvements
 
 - **Consistency**: Naming conventions, formatting, patterns, and style are uniform
   within and across files.
+
 - **Completeness**: Nothing is missing. All referenced targets, commands, variables, and
   dependencies exist. All expected sections are present.
+
 - **Correctness**: Syntax is valid. Commands work. Paths exist. Versions are compatible.
   Logic is sound.
+
 - **Simplicity**: No accidental complexity, meaning complexity the project's needs do
   not require. Look for:
   - Dead weight: unused targets, variables, dependencies, stages, hooks, and
